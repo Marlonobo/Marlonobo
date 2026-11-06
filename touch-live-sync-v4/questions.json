@@ -84,6 +84,22 @@
     "chapter": 3
   },
   {
+    "id": "K4Z",
+    "type": "zoom",
+    "open": 1415,
+    "close": 1490,
+    "duration": 75,
+    "q": "Zoomt ins Bild: Welches Tier versteckt sich im Fenster des Hauses?",
+    "a": [
+      "Eine Katze",
+      "Ein Hund",
+      "Eine Eule",
+      "Ein Hase"
+    ],
+    "correct": 0,
+    "chapter": 4
+  },
+  {
     "id": "K4Q1",
     "open": 1479,
     "close": 1540,
@@ -169,8 +185,8 @@
   },
   {
     "id": "K7Q1",
-    "open": 2652,
-    "close": 2712,
+    "open": 2662.86,
+    "close": 2722.48,
     "q": "Wann entstanden die frühen Entwicklungen der Touchscreen-Technologie?",
     "a": [
       "1920er-Jahre",
@@ -179,12 +195,14 @@
       "2010er-Jahre"
     ],
     "correct": 1,
-    "chapter": 7
+    "chapter": 7,
+    "hint": "Denkt an E. A. Johnson in England – lange bevor es Handys gab.",
+    "fifty": 2
   },
   {
     "id": "K7Q2",
-    "open": 2727,
-    "close": 2783,
+    "open": 2737.1,
+    "close": 2793.12,
     "q": "Welche Technologie wird häufig in modernen Smartphones eingesetzt?",
     "a": [
       "Kapazitiv",
@@ -193,12 +211,14 @@
       "Optisch mit Laser"
     ],
     "correct": 0,
-    "chapter": 7
+    "chapter": 7,
+    "hint": "Euer Finger leitet ein kleines bisschen Strom – das misst der Bildschirm.",
+    "fifty": 3
   },
   {
     "id": "K7Q3",
-    "open": 2796,
-    "close": 2853,
+    "open": 2806.7,
+    "close": 2863.76,
     "q": "Was ist Multitouch?",
     "a": [
       "Mehrere Lautsprecher",
@@ -207,12 +227,14 @@
       "Ein spezielles Ladekabel"
     ],
     "correct": 2,
-    "chapter": 7
+    "chapter": 7,
+    "hint": "Denkt ans Zoomen mit zwei Fingern.",
+    "fifty": 1
   },
   {
     "id": "K7Q4",
-    "open": 2866,
-    "close": 2923,
+    "open": 2876.87,
+    "close": 2933.77,
     "q": "Wo werden Touchscreens eingesetzt?",
     "a": [
       "Nur in Smartphones",
@@ -221,12 +243,14 @@
       "In vielen unterschiedlichen Lebensbereichen"
     ],
     "correct": 3,
-    "chapter": 7
+    "chapter": 7,
+    "hint": "Denkt an Supermarkt, Auto und Krankenhaus.",
+    "fifty": 0
   },
   {
     "id": "K7Q5",
-    "open": 2936,
-    "close": 2996,
+    "open": 2946.71,
+    "close": 3006.73,
     "q": "Was kann bei Touchscreens zu Problemen führen?",
     "a": [
       "Wasser auf dem Display",
@@ -235,6 +259,8 @@
       "Eine geeignete Bildschirmauflösung"
     ],
     "correct": 0,
-    "chapter": 7
+    "chapter": 7,
+    "hint": "Denkt daran, was Strom leitet.",
+    "fifty": 1
   }
 ]
