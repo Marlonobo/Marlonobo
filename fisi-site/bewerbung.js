@@ -30,12 +30,12 @@ modal.innerHTML=[
 '<label>Wohnort<input id="bp-city" autocomplete="address-level2"></label>',
 '<label>E-Mail<input id="bp-email" type="email" autocomplete="email"></label>',
 '<label>Telefon (optional)<input id="bp-phone"></label>',
-'<label>Empfängeranschrift prüfen<textarea id="bp-recipient" rows="3"></textarea></label>',
+'<label>Firmenanschrift (bereits eingetragen, bei Bedarf korrigieren)<textarea id="bp-recipient" rows="6"></textarea></label>',
 '<label>Persönliche Ergänzung (optional)<textarea id="bp-extra" rows="3" placeholder="Deine echten Stärken oder Projekte"></textarea></label>',
 '<p class="bp-callout">Deine Kontaktdaten und Entwürfe bleiben lokal im Browser. Diese öffentliche Firmenliste überträgt sie nicht auf einen Server.</p>',
 '<button type="button" class="bp-smallbtn" id="bp-rebuild">Anschreiben neu aufbauen</button>',
 '</div><div class="bp-edit"><h3>Bewerbung um eine FISI-Ausbildung 2027</h3><p id="bp-context" class="bp-fine"></p>',
-'<label for="bp-body" class="bp-fine">Du kannst jedes Wort ändern. Prüfe die Anschrift, die Aufgaben und deine Erfahrungen.</label>',
+'<label for="bp-body" class="bp-fine">Das Anschreiben und die Anrede sind für diese Firma vorbereitet. Du kannst alles bearbeiten. Bitte prüfe den Text vor dem Versand.</label>',
 '<textarea id="bp-body" spellcheck="true"></textarea>',
 '<div class="bp-downloads"><button id="bp-pdf" class="bp-primary">PDF herunterladen</button><button id="bp-doc">Word-Datei (.doc)</button><button id="bp-txt">Text herunterladen</button><button id="bp-copy">Text kopieren</button></div>',
 '<p id="bp-warning" class="bp-warn">Prüfe vor dem Versand deine Angaben und die aktuelle Stellenanzeige. Eine Zusage ist nicht garantiert.</p>',
@@ -48,16 +48,32 @@ for(const key of ['name','street','postal','city','email','phone','extra']){
 }
 const subject='Bewerbung um eine Ausbildung zum Fachinformatiker für Systemintegration – 2027';
 function generate(job){
- const texts=why[job.id]||[job.userReason||'Mich interessiert die praktische Ausbildung in der IT-Systemintegration bei Ihnen, weil ich gerne Netzwerke und Computertechnik betreue.','Im IT-Unterricht beschäftige ich mich mit Windows Server und Netzwerken. Während eines Praktikums bei Lufthansa Systems konnte ich erste Erfahrungen mit der IT-Unterstützung sammeln.'];
- return ['Sehr geehrte Damen und Herren,','',texts[0],'','Zurzeit besuche ich eine höhere Berufsfachschule im Bereich Informationstechnik und strebe die Fachhochschulreife an. Ich möchte Fachinformatiker für Systemintegration werden, weil ich technische Probleme gerne praktisch löse.','',texts[1],profile.extra?'\n'+profile.extra:'','Ich arbeite mich gerne in neue Aufgaben ein und möchte im Team dazulernen. Über eine Einladung zu einem persönlichen Gespräch würde ich mich sehr freuen.','','Mit freundlichen Grüßen',profile.name||'Marlon Bonsels'].filter(x=>x!==undefined).join('\n').replace(/\n{4,}/g,'\n\n\n');
+ const texts=why[job.id]||[job.userReason||'Ich interessiere mich für Ihre Ausbildung, weil ich IT-Systeme und Netzwerke nicht nur verstehen, sondern auch praktisch betreuen möchte.','Im IT-Unterricht habe ich mit Windows Server und VirtualBox gearbeitet. Bei meinem Praktikum bei Lufthansa Systems habe ich außerdem erlebt, wie technische Unterstützung im Arbeitsalltag funktioniert.'];
+ const first=(job.salutation||'Sehr geehrte Damen und Herren,');
+ const name=profile.name||'Marlon Bonsels';
+ const paragraphs=[
+ first,
+ texts[0],
+ 'Zurzeit besuche ich die höhere Berufsfachschule im Bereich Informationstechnik und strebe die Fachhochschulreife an. Ich möchte Fachinformatiker für Systemintegration werden, weil ich mich gerne mit Computern, Netzwerken und technischen Problemen beschäftige.',
+ texts[1],
+ profile.extra?.trim()||'',
+ 'Bei der Ausbildung möchte ich mein Wissen vertiefen, zuverlässig mitarbeiten und Schritt für Schritt Verantwortung übernehmen. Über eine Einladung zu einem persönlichen Gespräch freue ich mich.',
+ 'Mit freundlichen Grüßen\n'+name
+ ].filter(Boolean);
+ return paragraphs.join('\n\n');
 }
 function openLetter(id){
  active=FIRMS.find(x=>x.id===id);if(!active)return;
  $('#bp-title').textContent=active.firma;
- $('#bp-context').textContent=active.ort+' · '+(active.official?'Offizielle Ausbildungsseite':'Stellenportal')+' · Bitte vor dem Versand prüfen';
+ $('#bp-context').textContent='Kontakt: '+(active.kontakt||'Kein Name veröffentlicht')+' · '+(active.addressNote||'Anschrift vor Versand prüfen')+' · Quelle vor Versand prüfen.';
  const addresses=read('personal-fisi-addresses-v1',{});
  $('#bp-recipient').value=addresses[id]||active.recipient||active.firma+'\n'+active.ort;
  $('#bp-body').value=drafts[id]||generate(active);
+ if(drafts[id]&&active.salutation&&$('#bp-body').value.startsWith('Sehr geehrte Damen und Herren,')&&active.salutation!=='Sehr geehrte Damen und Herren,'){
+  // Bestehenden Entwurf behalten; nur die generische Anrede auf den verifizierten Kontakt umstellen.
+  $('#bp-body').value=$('#bp-body').value.replace(/^Sehr geehrte Damen und Herren,/,active.salutation);
+  drafts[id]=$('#bp-body').value;save(DRAFT_KEY,drafts);
+ }
  $('#bp-apply').href=active.url;modal.hidden=false;document.body.style.overflow='hidden';
 }
 function closeModal(){modal.hidden=true;document.body.style.overflow=''}
@@ -88,17 +104,17 @@ async function getPDF(){
 $('#bp-pdf').addEventListener('click',async()=>{
  const button=$('#bp-pdf');button.disabled=true;button.textContent='Erstelle PDF ...';
  try{
-  if((!profile.name||!profile.email)&&!confirm('Name oder E-Mail fehlt. Trotzdem herunterladen?'))return;
+  if((!profile.street||!profile.postal||!profile.email)&&!confirm('Deine eigene vollständige Adresse oder E-Mail fehlt noch. Trotzdem PDF herunterladen?'))return;
   const PDF=await getPDF(),d=data(),pdf=new PDF({format:'a4',unit:'mm'});let y=22;
   function add(s,size=10,bold=false,gap=5.4){
    pdf.setFont('helvetica',bold?'bold':'normal');pdf.setFontSize(size);
    const lines=pdf.splitTextToSize(s||' ',162);
    for(const l of lines){if(y>273){pdf.addPage();y=23}pdf.text(l,24,y);y+=gap}
   }
-  d.from.forEach(s=>add(s,9.4,false,5));y+=11;
-  d.to.forEach(s=>add(s,10,false,5));y+=11;
-  add(d.date,10);y+=10;add(d.subject,11,true,6);y+=8;
-  d.body.replace(/\r\n/g,'\n').split('\n').forEach(p=>p.trim()?add(p,10.4,false,5.7):y+=3.5);
+  d.from.forEach(s=>add(s,9.2,false,4.6));y+=10;
+  d.to.forEach(s=>add(s,9.7,false,4.7));y+=10;
+  add(d.date,9.5);y+=8;add(d.subject,10.5,true,5.6);y+=6;
+  d.body.replace(/\r\n/g,'\n').split('\n').forEach(p=>p.trim()?add(p,10.2,false,5.35):y+=3);
   pdf.save(d.filename+'.pdf');$('#bp-warning').textContent='PDF erstellt. Prüfe die heruntergeladene Datei vor dem Versand.';
  }catch(e){$('#bp-warning').textContent='PDF konnte nicht erstellt werden. Alternativ kannst du Word oder Text herunterladen.'}
  finally{button.disabled=false;button.textContent='PDF herunterladen'}
