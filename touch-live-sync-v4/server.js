@@ -84,7 +84,7 @@ async function handler(req,res){
  const b=await read(req,1000);if(s.phase!=='film')return send(res,200,{ok:false});
  const t=Number(b.time);
  if(Number.isFinite(t)&&t>=0&&t<=20000)s.time=Math.round(t*100)/100;
- s.playing=!!b.playing;return send(res,200,{ok:true});
+ s.playing=!!b.playing;if(b.ended===true){s.phase='results';s.playing=false;s.revision++;await persist();}return send(res,200,{ok:true});
  }
  if(m==='POST'&&p==='/api/admin'){
  if(!isAdmin(req))return unauthorized(res);
