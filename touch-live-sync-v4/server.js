@@ -139,7 +139,7 @@ async function handler(req,res){
  if(p==='/api/admin'?!isAdmin(req):!isCohost(req))return unauthorized(res);
  const b=await read(req),cmd=b.cmd;
  if(p==='/api/remote'&&new Set(['welcome','start','pause','play','seek','gestureEnd','zoomEnd']).has(cmd)){s.clockSource='host';s.lastHostTick=Date.now();}
- if(p==='/api/remote'&&!new Set(['welcome','start','pause','play','seek','demo','demoNext','results','handout','end','gestureStart','gestureEnd','zoomStart','zoomEnd']).has(cmd))return unauthorized(res);
+ if(p==='/api/remote'&&!new Set(['welcome','start','pause','play','seek','demo','demoNext','results','handout','end','gestureStart','gestureEnd','zoomStart','zoomEnd','videoYoutube','videoLink']).has(cmd))return unauthorized(res);
  if(cmd==='welcome'){s.phase='welcome';s.time=0;s.playing=false;}
  else if(cmd==='start'){s.phase='film';s.time=0;s.playing=true;s.zoomDone=false;}
  else if(cmd==='pause')s.playing=false;
