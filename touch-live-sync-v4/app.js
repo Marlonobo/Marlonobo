@@ -63,6 +63,12 @@ function bindAdmin(){
  el('saveQuizOffset').onclick=()=>adminAction('quizOffset',{value:Number(el('quizOffset').value)});
  el('uploadVtt').onclick=async()=>{try{const f=el('subtitleFile').files[0];if(!f)throw Error('Bitte erst .vtt-Datei auswählen');await api('/api/vtt','POST',{vtt:await f.text()},adminKey);alert('Untertitel gespeichert.');}catch(e){alert(e.message);}};
  el('uploadButton').onclick=uploadFilm;
+ const timeline=document.createElement('section');timeline.className='card';timeline.style.marginTop='18px';
+ timeline.innerHTML='<span class="label">06 / TIMELINE</span><h2>Quizfragen bearbeiten</h2><p>Fragetext, Antworten, Start- und Endzeit lassen sich hier als JSON anpassen.</p><textarea id="timelineJson" rows="9"></textarea><button id="timelineSave" class="primary">Fragen speichern</button><p id="timelineResult" class="small"></p>';
+ el('adminRoot').appendChild(timeline);
+ el('timelineJson').value=JSON.stringify(adminInfo?.questions||[],null,2);
+ el('timelineSave').onclick=async()=>{try{const questions=JSON.parse(el('timelineJson').value);const r=await api('/api/questions','POST',{questions},adminKey);el('timelineResult').textContent=r.count+' Fragen gespeichert.';}catch(e){el('timelineResult').textContent='Fehler: '+e.message;}};
+
 }
 async function adminAction(cmd,args={}){try{await api('/api/admin','POST',{cmd,...args},adminKey);await poll(true);}catch(e){alert(e.message);}}
 async function uploadFilm(){
