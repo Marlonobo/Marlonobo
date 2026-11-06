@@ -8,7 +8,8 @@ const TV=process.env.TV_KEY||crypto.randomBytes(24).toString('hex');
 if(!process.env.ADMIN_KEY)console.log('TOUCH LIVE ADMIN_KEY: '+ADMIN);
 if(!process.env.TV_KEY)console.log('TOUCH LIVE TV_KEY: '+TV);
 fs.mkdirSync(DIR,{recursive:true});
-const STATE_FILE=path.join(DIR,'live-state.json'), VIDEO_FILE=path.join(DIR,'touchscreen.mp4'), SUB_FILE=path.join(DIR,'untertitel.vtt');
+const STATE_FILE=path.join(DIR,'live-state.json'), VIDEO_FILE=path.join(DIR,'touchscreen.mp4'), SUB_FILE=path.join(DIR,'untertitel.vtt'), QUESTIONS_FILE=path.join(DIR,'custom-questions.json');
+try{const saved=JSON.parse(fs.readFileSync(QUESTIONS_FILE,'utf8'));if(Array.isArray(saved)&&saved.length>=1&&saved.length<=50)Q.splice(0,Q.length,...saved);}catch{}
 const def=()=>({phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,video:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,revision:0});
 let s=def(), users=new Map(), upload=null,feedback=[];
 try{s=Object.assign(def(),JSON.parse(fs.readFileSync(STATE_FILE,'utf8')));}catch{}
@@ -54,7 +55,7 @@ async function handler(req,res){
  if(m==='GET'&&(p==='/app.js'||p==='/style.css'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
  if(m==='GET'&&p==='/api/state')return send(res,200,publicState(u.searchParams.get('id')));
  if(m==='GET'&&p==='/api/health')return send(res,200,{ok:true,questionCount:Q.length,now:Date.now()});
- if(m==='GET'&&p==='/api/admin-info'){if(!isAdmin(req))return unauthorized(res);return send(res,200,{tvKey:TV,questions:Q.map(q=>({id:q.id,open:q.open,close:q.close,q:q.q})),ranking:[...users.values()].map(x=>({name:x.name,role:x.role,score:x.score,answers:x.answers})),feedback});}
+ if(m==='GET'&&p==='/api/admin-info'){if(!isAdmin(req))return unauthorized(res);return send(res,200,{tvKey:TV,questions:Q.map(q=>({id:q.id,open:q.open,close:q.close,q:q.q,a:q.a,correct:q.correct,chapter:q.chapter})),ranking:[...users.values()].map(x=>({name:x.name,role:x.role,score:x.score,answers:x.answers})),feedback});}
  if(m==='GET'&&p==='/captions.vtt')return serve(res,SUB_FILE,mime['.vtt']);
  if((m==='GET'||m==='HEAD')&&p==='/media/video')return media(req,res);
  if(m==='POST'&&p==='/api/join'){
@@ -110,6 +111,17 @@ async function handler(req,res){
  else if(cmd==='subtitles')s.subtitles=!!b.value;
  else return send(res,400,{error:'Unbekannter Befehl'});
  s.revision++;await persist();return send(res,200,{ok:true,state:publicState()});
+ }
+ if(m==='POST'&&p==='/api/questions'){
+ if(!isAdmin(req))return unauthorized(res);
+ const b=await read(req,100000),items=b.questions;
+ if(!Array.isArray(items)||items.length<1||items.length>50)return send(res,400,{error:'Es werden 1 bis 50 Fragen unterstuetzt.'});
+ const next=[];for(const [i,q] of items.entries()){
+ const open=Number(q.open),close=Number(q.close),correct=Number(q.correct);
+ if(!Number.isFinite(open)||!Number.isFinite(close)||open<0||close<=open||close>20000||!Number.isInteger(correct)||correct<0||correct>3||!Array.isArray(q.a)||q.a.length!==4||!String(q.q||'').trim()||String(q.q).length>500||q.a.some(a=>!String(a).trim()||String(a).length>250))return send(res,400,{error:'Frage '+(i+1)+' hat ungueltige Werte.'});
+ next.push({id:/^[A-Za-z0-9_-]{1,32}$/.test(q.id||'')?q.id:'Q'+(i+1),open,close,q:String(q.q).trim(),a:q.a.map(x=>String(x).trim()),correct,chapter:Math.min(7,Math.max(1,Number(q.chapter)||1))});}
+ if(new Set(next.map(x=>x.id)).size!==next.length)return send(res,400,{error:'Fragen-IDs muessen eindeutig sein.'});
+ Q.splice(0,Q.length,...next);await fsp.writeFile(QUESTIONS_FILE,JSON.stringify(Q,null,2),'utf8');s.revision++;await persist();return send(res,200,{ok:true,count:Q.length});
  }
  if(m==='POST'&&p==='/api/vtt'){
  if(!isAdmin(req))return unauthorized(res);
