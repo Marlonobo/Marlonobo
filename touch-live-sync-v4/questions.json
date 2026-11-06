@@ -1,8 +1,8 @@
 [
   {
     "id": "Q1",
-    "open": 268.13,
-    "close": 330.4,
+    "open": 268,
+    "close": 330,
     "q": "Wer entwickelte 1972 am CERN einen kapazitiven Touchscreen?",
     "a": [
       "Steve Jobs",
@@ -10,12 +10,13 @@
       "Bill Gates",
       "Samuel Hurst"
     ],
-    "correct": 1
+    "correct": 1,
+    "chapter": 1
   },
   {
     "id": "Q2",
-    "open": 389.55,
-    "close": 450.12,
+    "open": 389,
+    "close": 450,
     "q": "Gab es schon vor 2007 Smartphones mit Touchscreen?",
     "a": [
       "Ja, z. B. den IBM Simon",
@@ -23,12 +24,13 @@
       "Erst ab 2010",
       "Nur bei Laptops"
     ],
-    "correct": 0
+    "correct": 0,
+    "chapter": 1
   },
   {
     "id": "K2Q1",
-    "open": 628.49,
-    "close": 690.99,
+    "open": 628,
+    "close": 690,
     "q": "Was erkennt ein kapazitiver Touchscreen bei einer Berührung?",
     "a": [
       "Veränderung der Kapazität",
@@ -36,12 +38,13 @@
       "Die Farbe des Fingers",
       "Die Temperatur des Bildschirms"
     ],
-    "correct": 0
+    "correct": 0,
+    "chapter": 2
   },
   {
     "id": "K2Q2",
-    "open": 760.36,
-    "close": 818.45,
+    "open": 760,
+    "close": 818,
     "q": "Welche Aufgabe haben die Pixel eines Displays?",
     "a": [
       "Sie erkennen den Finger",
@@ -49,12 +52,13 @@
       "Sie messen den Druck",
       "Sie speichern die Apps"
     ],
-    "correct": 1
+    "correct": 1,
+    "chapter": 2
   },
   {
     "id": "K3Q1",
-    "open": 972.34,
-    "close": 1030.53,
+    "open": 972,
+    "close": 1030,
     "q": "Welche Technik arbeitet mit zwei Schichten, die sich durch Druck berühren?",
     "a": [
       "Kapazitiv",
@@ -62,12 +66,13 @@
       "Infrarot",
       "Optisch"
     ],
-    "correct": 1
+    "correct": 1,
+    "chapter": 3
   },
   {
     "id": "K3Q2",
-    "open": 1218.55,
-    "close": 1276.64,
+    "open": 1218,
+    "close": 1276,
     "q": "Welche Technik erkennt den Finger, weil er ein unsichtbares Lichtgitter unterbricht?",
     "a": [
       "Resistiv",
@@ -75,12 +80,13 @@
       "Infrarot",
       "SAW"
     ],
-    "correct": 2
+    "correct": 2,
+    "chapter": 3
   },
   {
     "id": "K4Q1",
-    "open": 1479.98,
-    "close": 1540.57,
+    "open": 1479,
+    "close": 1540,
     "q": "Was bedeutet Multitouch?",
     "a": [
       "Der Bildschirm erkennt mehrere Berührungen gleichzeitig",
@@ -88,12 +94,13 @@
       "Er reagiert nur auf Druck",
       "Er hat mehrere Kameras"
     ],
-    "correct": 0
+    "correct": 0,
+    "chapter": 4
   },
   {
     "id": "K4Q2",
-    "open": 1602.13,
-    "close": 1658.56,
+    "open": 1602,
+    "close": 1658,
     "q": "Welches Bauteil erkennt, wo wir den Bildschirm berühren?",
     "a": [
       "Der Lautsprecher",
@@ -101,12 +108,13 @@
       "Der Akku",
       "Die Kamera"
     ],
-    "correct": 1
+    "correct": 1,
+    "chapter": 4
   },
   {
     "id": "K5Q1",
-    "open": 1833.8,
-    "close": 1890.52,
+    "open": 1833,
+    "close": 1890,
     "q": "Warum kann ein Touchscreen im Auto während der Fahrt gefährlich sein?",
     "a": [
       "Er ist zu hell",
@@ -114,12 +122,13 @@
       "Er verbraucht zu viel Strom",
       "Er funktioniert nur im Stand"
     ],
-    "correct": 1
+    "correct": 1,
+    "chapter": 5
   },
   {
     "id": "K5Q2",
-    "open": 1962.43,
-    "close": 2024.76,
+    "open": 1962,
+    "close": 2024,
     "q": "Welche Eigenschaft ist für Touchscreens im Krankenhaus besonders wichtig?",
     "a": [
       "Sie sind besonders bunt",
@@ -127,12 +136,13 @@
       "Sie lassen sich gut desinfizieren und auch mit Handschuhen bedienen",
       "Sie brauchen keinen Strom"
     ],
-    "correct": 2
+    "correct": 2,
+    "chapter": 5
   },
   {
     "id": "K6Q1",
-    "open": 2132.39,
-    "close": 2192.33,
+    "open": 2132,
+    "close": 2192,
     "q": "Warum funktioniert ein normaler Handschuh nicht auf dem Smartphone?",
     "a": [
       "Der Stoff leitet keinen Strom",
@@ -140,12 +150,13 @@
       "Der Handschuh ist zu leicht",
       "Das Handy erkennt nur die Farbe der Haut"
     ],
-    "correct": 0
+    "correct": 0,
+    "chapter": 6
   },
   {
     "id": "K6Q2",
-    "open": 2341.87,
-    "close": 2403.89,
+    "open": 2341,
+    "close": 2403,
     "q": "Was bedeutet haptisches Feedback?",
     "a": [
       "Das Display wird heller",
@@ -153,12 +164,13 @@
       "Das Handy liest den Text vor",
       "Der Bildschirm lässt sich falten"
     ],
-    "correct": 1
+    "correct": 1,
+    "chapter": 6
   },
   {
     "id": "K7Q1",
-    "open": 2652.88,
-    "close": 2712.5,
+    "open": 2652,
+    "close": 2712,
     "q": "Wann entstanden die frühen Entwicklungen der Touchscreen-Technologie?",
     "a": [
       "1920er-Jahre",
@@ -166,12 +178,13 @@
       "1990er-Jahre",
       "2010er-Jahre"
     ],
-    "correct": 1
+    "correct": 1,
+    "chapter": 7
   },
   {
     "id": "K7Q2",
-    "open": 2727.12,
-    "close": 2783.14,
+    "open": 2727,
+    "close": 2783,
     "q": "Welche Technologie wird häufig in modernen Smartphones eingesetzt?",
     "a": [
       "Kapazitiv",
@@ -179,12 +192,13 @@
       "Magnetisch",
       "Optisch mit Laser"
     ],
-    "correct": 0
+    "correct": 0,
+    "chapter": 7
   },
   {
     "id": "K7Q3",
-    "open": 2796.73,
-    "close": 2853.79,
+    "open": 2796,
+    "close": 2853,
     "q": "Was ist Multitouch?",
     "a": [
       "Mehrere Lautsprecher",
@@ -192,12 +206,13 @@
       "Die Erkennung mehrerer gleichzeitiger Berührungen",
       "Ein spezielles Ladekabel"
     ],
-    "correct": 2
+    "correct": 2,
+    "chapter": 7
   },
   {
     "id": "K7Q4",
-    "open": 2866.9,
-    "close": 2923.8,
+    "open": 2866,
+    "close": 2923,
     "q": "Wo werden Touchscreens eingesetzt?",
     "a": [
       "Nur in Smartphones",
@@ -205,12 +220,13 @@
       "Nur in der Industrie",
       "In vielen unterschiedlichen Lebensbereichen"
     ],
-    "correct": 3
+    "correct": 3,
+    "chapter": 7
   },
   {
     "id": "K7Q5",
-    "open": 2936.73,
-    "close": 2996.75,
+    "open": 2936,
+    "close": 2996,
     "q": "Was kann bei Touchscreens zu Problemen führen?",
     "a": [
       "Wasser auf dem Display",
@@ -218,6 +234,7 @@
       "Eine passende Bedienoberfläche",
       "Eine geeignete Bildschirmauflösung"
     ],
-    "correct": 0
+    "correct": 0,
+    "chapter": 7
   }
 ]
