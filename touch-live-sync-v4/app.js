@@ -80,7 +80,7 @@ function tvView(){
  if(!tvKey){app.innerHTML='<div class="wrap page"><h1>Beamer verbinden</h1><p>Bitte den Beamerlink aus der Admin-Ansicht öffnen.</p><label>Beamer-Zugangsschlüssel</label><input type="password" id="tvInput"><p></p><button class="primary" id="tvSubmit">Verbinden</button></div>';el('tvSubmit').onclick=()=>{tvKey=el('tvInput').value;sessionStorage.setItem('touch_tv_key',tvKey);tvView();};return;}
  app.innerHTML='<div id="tvApp"><div id="tvScene" class="tvScene"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock"><button id="tvPlay">▶ Wiedergabe freigeben</button><button id="tvFullscreen">⛶ Vollbild</button></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
  videoEl=el('tvVideo');el('tvPlay').onclick=()=>{playerReady=true;if(mediaType==='youtube'&&ytPlayer){try{ytPlayer.unMute();ytPlayer.playVideo();}catch{}}else if(videoEl){videoEl.muted=false;videoEl.play().catch(()=>{});}};el('tvFullscreen').onclick=()=>el('tvApp').requestFullscreen?.().catch(()=>{});
- videoEl.addEventListener('timeupdate',()=>{updateCaption();});videoEl.addEventListener('ended',()=>{if(state?.phase==='film')sendTick(false);});
+ videoEl.addEventListener('timeupdate',()=>{updateCaption();});videoEl.addEventListener('ended',()=>{if(state?.phase==='film')sendTick(false,true);});
 }
 function tvScene(html){const node=el('tvScene');if(node)node.innerHTML=html;}
 function tvDisplay(){
@@ -116,7 +116,7 @@ function loadYouTube(id){
  window.onYouTubeIframeAPIReady=()=>makeYouTube(id);
 }
 function makeYouTube(id){if(!el('youtubeTarget')||role!=='tv')return;ytPlayer=new YT.Player('youtubeTarget',{videoId:id,playerVars:{rel:0,playsinline:1,enablejsapi:1,controls:1,origin:location.origin},events:{onReady:()=>{if(state?.phase==='film')ensureMedia();}}});}
-async function sendTick(playing){if(role!=='tv'||!tvKey||state?.phase!=='film')return;try{const t=state.video.type==='youtube'&&ytPlayer?ytPlayer.getCurrentTime():videoEl?.currentTime||0;await api('/api/tick','POST',{time:t,playing},tvKey);}catch{}}
+async function sendTick(playing,ended=false){if(role!=='tv'||!tvKey||state?.phase!=='film')return;try{const t=state.video.type==='youtube'&&ytPlayer?ytPlayer.getCurrentTime():videoEl?.currentTime||0;await api('/api/tick','POST',{time:t,playing,ended},tvKey);}catch{}}
 function updateCaption(){const node=el('captionLayer');if(!node||!state?.subtitles){if(node)node.style.display='none';return;}const pos=state.video.type==='youtube'&&ytPlayer?ytPlayer.getCurrentTime():videoEl?.currentTime||0;const now=pos-(state.subtitleOffset||0),c=subtitles.find(v=>now>=v.start&&now<=v.end);node.textContent=c?.text||'';node.style.display=c?'block':'none';}
 async function fetchCaptions(){try{const response=await fetch('/captions.vtt');if(!response.ok)return;subtitles=parseVTT(await response.text());}catch{}}
 function parseVTT(txt){return txt.replace(/\r/g,'').split(/\n\n+/).map(block=>{const lines=block.split('\n'),i=lines.findIndex(x=>x.includes('-->'));if(i<0)return null;const times=lines[i].split('-->');const toSeconds=x=>{const v=x.trim().split(/[.:]/).map(Number);return v.length===4?v[0]*3600+v[1]*60+v[2]+v[3]/1000:v[0]*60+v[1]+(v[2]||0)/1000;};return{start:toSeconds(times[0]),end:toSeconds(times[1]),text:lines.slice(i+1).join('\n')};}).filter(Boolean);}
