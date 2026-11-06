@@ -1,0 +1,236 @@
+(function(){
+'use strict';
+const host=location.pathname==='/host';
+const $=id=>document.getElementById(id);
+const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','&#39;':"'", "'":'&#39;'}[c]));
+const keyStore='touch_party_host_key',idStore='touch_party_'+(host?'host':'viewer')+'_id',nameStore='touch_party_'+(host?'host':'viewer')+'_name';
+const fromUrl=new URL(location.href).searchParams.get('key');
+let key=fromUrl||sessionStorage.getItem(keyStore)||'';
+if(fromUrl){sessionStorage.setItem(keyStore,key);history.replaceState({},'',location.pathname);}
+let state=null,participantId=localStorage.getItem(idStore)||'',participantName=localStorage.getItem(nameStore)||'';
+let screenSignature='',quizSignature='',sourceRef='',activated=false,ytPlayer=null,ytReady=false,ytVideoId='',ytApiLoading=false,localRevision=-1;
+let captions=[],gesturePoints=new Map(),gestureState={x:0,y:0,scale:1,rotation:0},gestureOrigin=null;
+const video=$('partyVideo'),container=$('partyYoutube'),screen=$('partyScene'),capt=$('partyCaption'),playBtn=$('partyEnable');
+let errorTimer=null,pollInFlight=false,tickInFlight=false;
+function showError(msg){const e=$('partyError');e.hidden=false;e.textContent=msg;clearTimeout(errorTimer);errorTimer=setTimeout(()=>e.hidden=true,10500);}
+async function api(path,body,authenticated=false){
+ const headers={'Content-Type':'application/json'};
+ if(authenticated)headers['X-Cohost-Key']=key;
+ const r=await fetch(path,{method:body===undefined?'GET':'POST',headers,body:body===undefined?undefined:JSON.stringify(body),cache:'no-store'});
+ let o={};try{o=await r.json();}catch{}
+ if(!r.ok)throw Error(o.error||'Server antwortet mit '+r.status);
+ return o;
+}
+function sec(n){n=Math.max(0,Math.floor(Number(n)||0));return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');}
+function renderScene(html){
+ if(screenSignature===html)return;
+ screenSignature=html;
+ screen.innerHTML=html;
+}
+function slide(title,subtitle,extra=''){
+ return '<div class="partySceneInner"><img src="/touchscreen-motiv.svg" alt="Touchscreen-Motiv"><h2>'+title+'</h2><p>'+subtitle+'</p>'+extra+'</div>';
+}
+function podium(){
+ const people=state?.ranking||[];
+ const podiumCard=(pos)=>{
+ const p=people[pos-1];return '<div class="partyPodi"><div style="font-size:27px">'+(pos===1?'👑':pos===2?'🥈':'🥉')+'</div><strong>'+(p?safe(p.name):'Noch offen')+'</strong><small>'+(p?p.score+' Punkte':'')+'</small><div class="rise">'+pos+'</div></div>';
+ };
+ return '<div class="partySceneInner"><span class="eyebrow">LIVE-SIEGEREHRUNG</span><h2>Die besten drei!</h2><div class="partyPodium">'+podiumCard(2)+podiumCard(1)+podiumCard(3)+'</div></div>';
+}
+function updateScene(){
+ if(!state)return;
+ const phase=state.phase,haveVideo=state.video&&state.video.type!=='none';
+ const film=phase==='film'&&haveVideo;
+ screen.hidden=film;video.hidden=!film||state.video.type==='youtube';container.hidden=!film||state.video.type!=='youtube';
+ playBtn.hidden=!(film&&!activated);
+ if(film){screenSignature='';return;}
+ let html='';
+ if(phase==='welcome')html=slide('Willkommen bei TOUCH LIVE','Die Dokumentation startet, sobald die Moderatorin bereit ist.','<small>Gemeinsam schauen und mitspielen – egal von welchem Ort.</small>');
+ else if(phase==='film')html=slide('Noch keine Filmquelle','Die Moderatorin kann ihren YouTube-Link oder eine öffentliche MP4 eintragen.','<small>Für einen Film muss dieser online erreichbar sein.</small>');
+ else if(phase==='gesture'||phase==='zoom')html=slide('Mitmach-Spiel läuft!','Schau rechts auf dein Spiel und probiere die Gesten aus.');
+ else if(phase==='demo')html=slide('Quiz-Probelauf','Die Frage erscheint auf beiden Geräten.','<small>Testet jetzt gleichzeitig eure Antworten.</small>');
+ else if(phase==='results')html=podium();
+ else if(phase==='handout')html=slide('Handout · Lernfeld 14','Jetzt das Handout ausfüllen und die Bewertung berechnen.');
+ else if(phase==='end')html=slide('Vielen Dank für eure Aufmerksamkeit!','Das war meine interaktive Dokumentation über Touchscreens.','<small>Ich hoffe, es hat euch gefallen.</small>');
+ else html=slide('TOUCH LIVE','Gemeinsam lernen und spielen.');
+ renderScene(html);
+ stopPlayback();
+}
+function stopPlayback(){try{if(!video.paused)video.pause();if(ytPlayer&&ytPlayer.pauseVideo)ytPlayer.pauseVideo();}catch{}}
+function playerTime(){
+ try{if(state?.video?.type==='youtube')return ytPlayer&&ytReady?Number(ytPlayer.getCurrentTime())||0:null;
+ if(state?.video?.type==='upload'||state?.video?.type==='url')return video.readyState>0&&Number.isFinite(video.currentTime)?video.currentTime:null;}catch{}
+ return null;
+}
+function ytLoad(){
+ if(window.YT?.Player){createYt();return;}
+ if(ytApiLoading)return;ytApiLoading=true;
+ const tag=document.createElement('script');tag.async=true;tag.src='https://www.youtube.com/iframe_api';tag.onerror=()=>{ytApiLoading=false;showError('YouTube konnte nicht geladen werden. Prüfe die Internetverbindung.');};
+ document.head.appendChild(tag);window.onYouTubeIframeAPIReady=()=>{ytApiLoading=false;createYt();};
+}
+function createYt(){
+ if(!window.YT?.Player||!ytVideoId||!$('partyYoutube'))return;
+ const slot=document.createElement('div');slot.id='partyYTEmbed';container.replaceChildren(slot);
+ try{
+ ytPlayer=new window.YT.Player('partyYTEmbed',{videoId:ytVideoId,playerVars:{autoplay:0,playsinline:1,controls:0,rel:0,enablejsapi:1,origin:location.origin},
+ events:{onReady:()=>{ytReady=true;syncMovie(true);},onError:e=>showError('YouTube-Video kann hier nicht eingebettet werden (Fehler '+e.data+'). Nutze ein einbettbares Video oder MP4.'),onStateChange:e=>{if(host&&e.data===0&&state?.phase==='film')sendHostTick(true);}}});
+ }catch(e){showError('YouTube konnte nicht geöffnet werden: '+e.message);}
+}
+function syncMovie(force=false){
+ if(!state||state.phase!=='film'||!state.video||state.video.type==='none'){updateScene();return;}
+ updateScene();
+ const v=state.video,ref=v.type+':'+(v.url||v.id);
+ if(ref!==sourceRef){
+ sourceRef=ref;localRevision=-1;
+ if(ytPlayer){try{ytPlayer.destroy();}catch{}ytPlayer=null;ytReady=false;}
+ video.pause();video.removeAttribute('src');video.load();
+ if(v.type==='youtube'){ytVideoId=v.id||'';ytLoad();}
+ else{ytVideoId='';container.replaceChildren();video.src=v.url;video.load();loadCaptions();}
+ }
+ const serverPos=Number(state.time)||0,change=force||localRevision!==state.revision;
+ if(v.type==='youtube'){
+  if(!ytPlayer||!ytReady)return;
+  try{const local=Number(ytPlayer.getCurrentTime())||0;if(change||Math.abs(local-serverPos)>(host?8:3.5))ytPlayer.seekTo(serverPos,true);
+    if(state.playing&&activated)ytPlayer.playVideo();else if(!state.playing)ytPlayer.pauseVideo();
+  }catch{}
+ }else{
+  if(video.readyState>0){
+   try{if(change||Math.abs((video.currentTime||0)-serverPos)>(host?8:3.5))video.currentTime=serverPos;}catch{}
+  }
+  if(state.playing&&activated&&video.paused)video.play().catch(()=>{$('partyEnable').hidden=false;});
+  if(!state.playing&&!video.paused)video.pause();
+ }
+ localRevision=state.revision;
+ updateCaptions();
+}
+function subtitleTime(text){const a=text.trim().split(':');let secs=0;for(const part of a)secs=secs*60+Number(part.replace(',','.'));return secs;}
+function vttParse(txt){
+ return txt.replace(/\r/g,'').split(/\n\n+/).map(block=>{const lines=block.split('\n');const index=lines.findIndex(x=>x.includes('-->'));if(index<0)return null;const times=lines[index].split('-->');return{start:subtitleTime(times[0]),end:subtitleTime(times[1]),text:lines.slice(index+1).join('\n').replace(/<[^>]*>/g,'')}}).filter(Boolean);
+}
+async function loadCaptions(){try{const r=await fetch('/captions.vtt',{cache:'no-store'});captions=r.ok?vttParse(await r.text()):[];}catch{captions=[];}}
+function updateCaptions(){
+ if(!state?.subtitles||!captions.length){capt.hidden=true;return;}
+ const time=playerTime();if(time===null){capt.hidden=true;return;}
+ const x=captions.find(c=>time-(state.subtitleOffset||0)>=c.start&&time-(state.subtitleOffset||0)<=c.end);
+ capt.textContent=x?.text||'';capt.hidden=!x;
+}
+function landscape(){
+ return '<svg viewBox="0 0 560 370" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="bs" x2="0" y2="1"><stop stop-color="#74cbed"/><stop offset="1" stop-color="#d6f7fc"/></linearGradient></defs><rect width="560" height="370" rx="17" fill="url(#bs)"/><circle cx="448" cy="86" r="43" fill="#ffe17b"/><path d="M0 255L100 124 221 264 360 110 560 275V370H0" fill="#75a9a8"/><path d="M0 302L160 191 282 307 390 202 560 305V370H0" fill="#4a887f"/><path d="M0 320Q240 260 560 334V370H0" fill="#8ac477"/><path d="M240 244L295 202 350 244Z" fill="#975949"/><rect x="253" y="244" width="85" height="78" fill="#f0ca9e"/><rect x="284" y="275" width="23" height="47" fill="#704f42"/><rect x="314" y="258" width="16" height="16" fill="#81cfef"/><g transform="translate(446 316)"><ellipse rx="15" ry="12" fill="#cf7749"/><circle cx="-7" cy="-9" r="9" fill="#df925e"/><path d="M-13 -15l-4 -8 9 5 8 -5 -1 11" fill="#df925e"/><circle cx="-11" cy="-9" r="1.6" fill="#213845"/><circle cx="-5" cy="-9" r="1.6" fill="#213845"/><path d="M13 1Q33 -11 26 -26" stroke="#cf7749" stroke-width="5" fill="none"/></g></svg>';
+}
+function gestureHtml(){
+ return '<div class="partyQuestion"><span class="chip">KAPITEL 4 · GESTEN ÜBEN</span><h3>Zieh mich groß, dreh mich, schieb mich!</h3><p class="partyGestureHelp">Ein Finger = verschieben · zwei Finger = zoomen und drehen.</p><div class="partyGesture" id="partyGesture"><div class="partyGesturePic" id="partyGestureImage">'+landscape()+'</div></div><div class="between"><span id="partyGestureValues" class="small">Zoom: 100 % · Drehung: 0°</span><button id="partyGestureReset">Zurücksetzen</button></div></div>';
+}
+function bindGesture(){
+ const box=$('partyGesture'),pic=$('partyGestureImage'),value=$('partyGestureValues');
+ if(!box)return;gesturePoints=new Map();gestureState={x:0,y:0,scale:1,rotation:0};gestureOrigin=null;
+ function draw(){pic.style.transform='translate('+gestureState.x+'px,'+gestureState.y+'px) rotate('+gestureState.rotation+'deg) scale('+gestureState.scale+')';value.textContent='Zoom: '+Math.round(gestureState.scale*100)+' % · Drehung: '+Math.round(gestureState.rotation)+'°';}
+ function snapshot(){const p=[...gesturePoints.values()];if(p.length===1)gestureOrigin={type:1,x:p[0].x,y:p[0].y,bx:gestureState.x,by:gestureState.y};if(p.length>=2){const dx=p[1].x-p[0].x,dy=p[1].y-p[0].y;gestureOrigin={type:2,cx:(p[0].x+p[1].x)/2,cy:(p[0].y+p[1].y)/2,distance:Math.hypot(dx,dy)||1,angle:Math.atan2(dy,dx),bx:gestureState.x,by:gestureState.y,scale:gestureState.scale,rotation:gestureState.rotation};}}
+ box.addEventListener('pointerdown',e=>{e.preventDefault();box.setPointerCapture(e.pointerId);gesturePoints.set(e.pointerId,{x:e.clientX,y:e.clientY});snapshot();});
+ box.addEventListener('pointermove',e=>{if(!gesturePoints.has(e.pointerId))return;e.preventDefault();gesturePoints.set(e.pointerId,{x:e.clientX,y:e.clientY});const p=[...gesturePoints.values()],g=gestureOrigin;if(!g)return;if(p.length===1&&g.type===1){gestureState.x=g.bx+p[0].x-g.x;gestureState.y=g.by+p[0].y-g.y;}if(p.length>=2&&g.type===2){const dx=p[1].x-p[0].x,dy=p[1].y-p[0].y;gestureState.scale=Math.max(.35,Math.min(5,g.scale*Math.hypot(dx,dy)/g.distance));gestureState.rotation=g.rotation+(Math.atan2(dy,dx)-g.angle)*180/Math.PI;gestureState.x=g.bx+(p[0].x+p[1].x)/2-g.cx;gestureState.y=g.by+(p[0].y+p[1].y)/2-g.cy;}draw();});
+ const stop=e=>{gesturePoints.delete(e.pointerId);snapshot();};box.addEventListener('pointerup',stop);box.addEventListener('pointercancel',stop);
+ $('partyGestureReset').onclick=()=>{gestureState={x:0,y:0,scale:1,rotation:0};snapshot();draw();};draw();
+}
+function interaction(){
+ if(!state)return;
+ const q=state.quiz,p=state.player,part=$('partyInteraction'),status=$('joinStatus');
+ const phase=state.phase;
+ if(status&&participantId&&participantName)status.textContent=participantName+' · angemeldet und mit der Live-Sitzung verbunden.';
+ const sig=[phase,q?.id||'',q?.type||'',q?.accepting||false,p?.choice??'unanswered',p?.score??'unknown',state.revision,participantId,(state.ranking||[]).length].join('|');
+ if(sig===quizSignature){const timer=$('partyTimer');if(timer&&q)timer.textContent=q.remaining+' s';return;}
+ quizSignature=sig;
+ if(phase==='gesture'){
+  part.innerHTML=gestureHtml();bindGesture();return;
+ }
+ if(phase==='zoom'&&q){/* The zoom question below contains its own practice image. */}
+ if(q){
+  const answered=p?.choice!==null&&p?.choice!==undefined;
+  const allow=!!participantId&&q.accepting&&!answered;
+  part.innerHTML='<div class="partyQuestion"><div class="between"><span class="chip">'+(q.type==='zoom'?'ZOOM-SPIEL':'QUIZFRAGE '+(Number(q.index)+1)+' / '+q.total)+'</span><span class="timer" id="partyTimer">'+q.remaining+' s</span></div><h3>'+safe(q.q)+'</h3>'+(q.type==='zoom'?'<div class="partyGesture" id="partyGesture"><div class="partyGesturePic" id="partyGestureImage">'+landscape()+'</div></div><p class="small" id="partyGestureValues">Zoome, um die Katze zu entdecken.</p><button id="partyGestureReset" style="margin-bottom:14px">Bild zurücksetzen</button>':'')+'<div class="partyAnswerGrid">'+q.a.map((answer,i)=>'<button class="partyAnswer'+(answered&&p.choice===i?' selected':'')+'" data-choice="'+i+'" '+(allow?'':'disabled')+'><b>'+String.fromCharCode(65+i)+'</b><span>'+safe(answer)+'</span></button>').join('')+'</div><p class="partyHint" style="margin-top:15px">'+(!participantId?'Gib oben deinen Namen ein, um mitzumachen.':answered?'Antwort gespeichert! Du kannst weiter auf den Film schauen.':!q.accepting?'Die Antwortzeit ist vorbei.':'Wähle jetzt eine Antwort – das Quiz wird automatisch ausgewertet.')+'</p></div>';
+  if(q.type==='zoom')bindGesture();
+  part.querySelectorAll('[data-choice]').forEach(btn=>btn.onclick=async()=>{btn.disabled=true;try{await api('/api/answer',{id:participantId,choice:Number(btn.dataset.choice)});quizSignature='';await poll();}catch(e){showError(e.message);quizSignature='';await poll();}});
+  return;
+ }
+ if(['results','end','handout'].includes(phase)){
+  const ranking=(state.ranking||[]).slice(0,6).map((u,i)=>'<tr><td>'+(i+1)+'</td><td>'+safe(u.name)+'</td><td>'+u.score+'</td></tr>').join('');
+  part.innerHTML='<div class="partyFinal"><span class="eyebrow">ERGEBNISSE & HANDOUT</span><h2>Vielen Dank fürs Mitmachen!</h2><p>Dein Punktestand</p><div class="partyScore">'+(p?.score===null||p?.score===undefined?'–':p.score)+' Punkte</div><table class="partyRanking"><thead><tr><th>Platz</th><th>Name</th><th>Punkte</th></tr></thead><tbody>'+ranking+'</tbody></table><a href="/#handout" class="btn primary" style="margin-top:20px">Lernfeld-14-Handout ausfüllen</a></div>';return;
+ }
+ part.innerHTML='<div class="centerstage partyWait"><div><span class="eyebrow">TOUCH LIVE</span><h2>'+(phase==='welcome'?'Die Sendung beginnt gleich.':'Film ansehen')+'</h2><p>Das Video läuft links. Quizfragen und Spiele erscheinen automatisch hier.</p></div></div>';
+}
+async function sendHostTick(ended=false){
+ if(!host||!key||!state||state.phase!=='film'||tickInFlight)return;
+ const t=playerTime();if(t===null)return;
+ tickInFlight=true;
+ try{
+  const actuallyPlaying=state.video.type==='youtube'?!!ytPlayer&&ytReady&&ytPlayer.getPlayerState()===1:!video.paused;
+  await api('/api/host/tick',{time:t,playing:ended?false:actuallyPlaying,ended},true);
+ }catch(e){if(ended)showError(e.message);}finally{tickInFlight=false;}
+}
+function connectButtons(){
+ $('partyEnable').onclick=async()=>{
+  activated=true;playBtn.textContent='▶ Ton erneut aktivieren';playBtn.hidden=true;
+  try{if(state?.video?.type==='youtube'){if(ytPlayer&&ytReady){ytPlayer.unMute();ytPlayer.playVideo();if(!state.playing)ytPlayer.pauseVideo();}}
+   else if(video.src){video.muted=false;await video.play();if(!state?.playing)video.pause();}}
+  catch(e){playBtn.hidden=false;showError('Ton oder Autoplay wurde vom Browser blockiert. Tippe erneut auf „Film mit Ton aktivieren“.');}
+  if(host&&state?.phase==='film'&&!state.playing){await hostCommand('play');}
+ };
+ $('partyFullscreen').onclick=()=>{$('partyScreen').requestFullscreen?.().catch(()=>{showError('Vollbild wurde vom Browser nicht erlaubt.');});};
+ video.addEventListener('ended',()=>{if(host&&state?.phase==='film')sendHostTick(true);});
+ if(host){
+  document.querySelectorAll('[data-host]').forEach(b=>b.addEventListener('click',()=>hostCommand(b.dataset.host)));
+  $('partySeekGo').onclick=()=>hostCommand('seek',{time:Number($('partySeek').value)});
+  $('partyYouTubeForm').onsubmit=async e=>{
+   e.preventDefault();const link=$('partySource').value.trim();
+   const yt=/^(https:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//i.test(link);
+   await hostCommand(yt?'videoYoutube':'videoLink',{url:link});
+  };
+ }
+ $('partyJoinForm').onsubmit=async e=>{
+  e.preventDefault();
+  const name=$('partyName').value.trim();if(!name)return;
+  try{
+   const r=await api('/api/join',{name,role:'student',id:participantId||undefined});
+   participantId=r.id;participantName=name;
+   localStorage.setItem(idStore,participantId);localStorage.setItem(nameStore,participantName);
+   $('partyJoinForm').hidden=true;$('participantTitle').textContent='Hallo, '+name+'!';
+   quizSignature='';await poll();
+  }catch(e){showError('Anmeldung fehlgeschlagen: '+e.message);}
+ };
+}
+async function hostCommand(cmd,body={}){
+ if(!key)return showError('Du brauchst einen Mitsteuer-Code.');
+ try{await api('/api/remote',{cmd,...body},true);await poll();if(cmd==='start'||cmd==='play'){$('partyEnable').hidden=!(!activated);}}
+ catch(e){showError('Steuerung fehlgeschlagen: '+e.message);}
+}
+function connectedUI(){
+ $('hostUnlock').hidden=true;$('partyMain').hidden=false;
+ $('hostPanel').hidden=!host;$('partyRole').textContent=host?'Moderatorin · Steuerung':'Zuschauer · nur mitspielen';
+ $('partyTitle').innerHTML=host?'Du führst <em>Regie.</em>':'Gemeinsam <em>schauen.</em>';
+ $('partySub').textContent=host?'Du spielst die Doku hier ab und steuerst gleichzeitig das Quiz für beide Geräte.':'Du siehst denselben Film, beantwortest Fragen und kannst beim Gesten-Spiel mitmachen. Du kannst die Sendung nicht steuern.';
+ if(participantName&&participantId){$('partyJoinForm').hidden=true;$('participantTitle').textContent='Hallo, '+participantName+'!';$('joinStatus').textContent='Du bist beim gemeinsamen Quiz angemeldet.';}else $('partyJoinForm').hidden=false;
+ connectButtons();poll();
+}
+async function poll(){
+ if(pollInFlight||$('partyMain').hidden)return;
+ pollInFlight=true;
+ try{
+  const path='/api/state'+(participantId?'?id='+encodeURIComponent(participantId):'');
+  state=await api(path);
+  const p=$('partyStatus');p.textContent=({'welcome':'Wartet auf Start','film':'Film läuft','demo':'Testquiz','zoom':'Zoom-Spiel','gesture':'Gesten-Spiel','results':'Siegerehrung','handout':'Handout','end':'Abschluss'})[state.phase]||state.phase;
+  $('partyTime').textContent=sec(state.time)+' / 51:47 · '+state.participants+' angemeldet';
+  syncMovie();interaction();
+ }catch(e){showError('Keine Verbindung zur gemeinsamen Sitzung: '+e.message);}
+ finally{pollInFlight=false;}
+}
+function init(){
+ $('hostUnlock').hidden=true;
+ if(host&&!key){
+  $('hostUnlock').hidden=false;
+  $('hostConnect').onclick=()=>{key=$('hostKey').value.trim();if(!key)return;sessionStorage.setItem(keyStore,key);connectedUI();};
+  return;
+ }
+ connectedUI();
+}
+init();
+setInterval(poll,1100);
+setInterval(()=>{if(host&&state?.phase==='film'&&state?.video?.type!=='none')sendHostTick();},1300);
+})();
