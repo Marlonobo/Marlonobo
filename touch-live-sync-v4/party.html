@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#071827"><meta name="referrer" content="no-referrer"><title>TOUCH LIVE – Gemeinsam anschauen</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/party.css"></head>
+<body><header class="nav wrap"><a class="logo" href="/">TOUCH <span>LIVE</span></a><div class="navlinks"><a href="/watch">Gemeinsam schauen</a><a href="/#handout">Handout</a></div></header><main class="wrap party">
+<section class="partyHero"><div><span class="eyebrow">TOUCHSCREEN · GEMEINSAME ONLINE-VORFÜHRUNG</span><h1 id="partyTitle">Gemeinsam <em>erleben.</em></h1><p id="partySub">Ein Film, eine Quizrunde – auch aus zwei verschiedenen Städten.</p></div><span id="partyRole" class="chip">Zuschauen</span></section>
+<div id="partyError" class="partyError" hidden role="alert"></div>
+<section id="hostUnlock" class="card" hidden><h2>Privater Moderatorinnen-Zugang</h2><p>Trage den Mitsteuer-Code ein, den du persönlich erhalten hast.</p><label>Mitsteuer-Code</label><input type="password" id="hostKey" autocomplete="off"><button id="hostConnect" class="primary" style="margin-top:12px">Mit der Sendung verbinden</button></section>
+<div id="partyMain" class="partyLayout" hidden>
+ <div class="partyLeft"><div class="partyScreen" id="partyScreen">
+  <div id="partyScene" class="partyScene"><div class="partySceneInner"><img src="/touchscreen-motiv.svg" alt="Touchscreen"><h2>Willkommen bei TOUCH LIVE</h2><p>Die gemeinsame Doku beginnt gleich.</p></div></div>
+  <video id="partyVideo" playsinline preload="metadata" controlslist="nodownload noremoteplayback" disablepictureinpicture></video>
+  <div id="partyYoutube" hidden></div>
+  <div id="partyCaption" class="partyCaption" hidden></div>
+  <div class="partyScreenControls"><button id="partyEnable" class="primary">▶ Film mit Ton aktivieren</button><button id="partyFullscreen">⛶ Vollbild</button></div>
+ </div><div class="partyStatus"><span id="partyStatus" class="chip">Verbindung wird hergestellt …</span><span id="partyTime" class="small">00:00 / 51:47</span></div>
+ <section id="hostPanel" class="card" hidden><span class="label">MODERATORIN · BERLIN</span><h2>Du steuerst die Vorführung</h2><div class="partyControls">
+ <button data-host="welcome">✦ Willkommen</button><button data-host="start" class="primary">▶ Doku starten</button><button data-host="pause">Ⅱ Pause</button><button data-host="play">▶ Weiter</button>
+ <button data-host="demo">Testquiz starten</button><button data-host="demoNext">Nächste Testfrage</button><button data-host="gestureStart">Gesten-Spiel starten</button><button data-host="gestureEnd">Spiel beenden</button>
+ <button data-host="zoomStart">Zoom-Spiel starten</button><button data-host="zoomEnd">Zoom-Spiel beenden</button><button data-host="results">🏆 Top 3 anzeigen</button><button data-host="handout">Handout zeigen</button><button data-host="end">Dankeschön-Folie</button>
+ </div><div class="partySeek"><label>Filmzeit (Sekunden)</label><input id="partySeek" type="number" min="0" max="3107" value="0"><button id="partySeekGo">Springen</button></div>
+ <form id="partyYouTubeForm"><label>Dein eigener YouTube-Film oder ein direkter MP4-Link</label><input id="partySource" type="url" placeholder="https://www.youtube.com/watch?v=…"><button>Filmquelle übernehmen</button></form>
+ <p class="small">Nur du steuerst. Der andere Zugang kann ausschließlich schauen und mitspielen. Mit dem Filmstart wird deine Videoposition als gemeinsame Zeit verwendet.</p>
+ </section></div>
+ <div class="partyRight">
+  <section id="participant" class="card"><span class="label">MITMACHEN</span><h2 id="participantTitle">Jetzt mitspielen</h2><p>Vorname eingeben, dann werden Quiz und Gesten-Spiel automatisch mit der Doku synchronisiert.</p><form id="partyJoinForm"><label>Dein Name</label><input id="partyName" maxlength="26" autocomplete="nickname" placeholder="Vorname oder Spitzname" required><button class="primary" style="margin-top:12px">Am Quiz teilnehmen</button></form><p class="small" id="joinStatus"></p></section>
+  <section class="card" id="partyInteraction"><div class="centerstage partyWait"><div><span class="eyebrow">TOUCH LIVE</span><h2>Schau auf den Film.</h2><p>Die nächste Frage öffnet sich passend zur Dokumentation.</p></div></div></section>
+  <section class="card" id="partyNotes"><span class="label">ZUM ABSCHLUSS</span><h3>Ergebnisse und Handout</h3><p class="small">Nach dem Film erscheint die gemeinsame Top-3-Siegerehrung. Anschließend kannst du den Lernfeld-14-Bogen ausfüllen.</p><a href="/#handout" class="btn">Handout öffnen</a></section>
+ </div>
+</div></main><footer>TOUCH LIVE · Gemeinsam schauen und lernen · Lernfeld 14</footer><script src="/party.js" defer></script></body></html>
