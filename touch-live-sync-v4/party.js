@@ -2,7 +2,7 @@
 'use strict';
 const host=location.pathname==='/host';
 const $=id=>document.getElementById(id);
-const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','&#39;':"'", "'":'&#39;'}[c]));
+const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const keyStore='touch_party_host_key',idStore='touch_party_'+(host?'host':'viewer')+'_id',nameStore='touch_party_'+(host?'host':'viewer')+'_name';
 const fromUrl=new URL(location.href).searchParams.get('key');
 let key=fromUrl||sessionStorage.getItem(keyStore)||'';
@@ -42,7 +42,7 @@ function updateScene(){
  const phase=state.phase,haveVideo=state.video&&state.video.type!=='none';
  const film=phase==='film'&&haveVideo;
  screen.hidden=film;video.hidden=!film||state.video.type==='youtube';container.hidden=!film||state.video.type!=='youtube';
- playBtn.hidden=!(film&&!activated);
+ playBtn.hidden=!(film&&(!activated||(state.playing&&((state.video.type==='youtube'&&ytPlayer&&ytReady&&ytPlayer.getPlayerState()!==1)||(state.video.type!=='youtube'&&video.paused)))));
  if(film){screenSignature='';return;}
  let html='';
  if(phase==='welcome')html=slide('Willkommen bei TOUCH LIVE','Die Dokumentation startet, sobald die Moderatorin bereit ist.','<small>Gemeinsam schauen und mitspielen – egal von welchem Ort.</small>');
@@ -97,7 +97,7 @@ function syncMovie(force=false){
   if(video.readyState>0){
    try{if(change||Math.abs((video.currentTime||0)-serverPos)>(host?8:3.5))video.currentTime=serverPos;}catch{}
   }
-  if(state.playing&&activated&&video.paused)video.play().catch(()=>{$('partyEnable').hidden=false;});
+  if(state.playing&&activated&&video.paused)video.play().catch(()=>{activated=false;$('partyEnable').hidden=false;});
   if(!state.playing&&!video.paused)video.pause();
  }
  localRevision=state.revision;
