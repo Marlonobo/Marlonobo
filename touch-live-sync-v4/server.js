@@ -11,7 +11,7 @@ if(!process.env.TV_KEY)console.log('TOUCH LIVE TV_KEY: '+TV);
 fs.mkdirSync(DIR,{recursive:true});
 const USERS_FILE=path.join(DIR,'users.json'),STATE_FILE=path.join(DIR,'live-state.json'), VIDEO_FILE=path.join(DIR,'touchscreen.mp4'), SUB_FILE=path.join(DIR,'untertitel.vtt'), QUESTIONS_FILE=path.join(DIR,'custom-questions.json');
 try{const saved=JSON.parse(fs.readFileSync(QUESTIONS_FILE,'utf8'));if(Array.isArray(saved)&&saved.length>=1&&saved.length<=50)Q.splice(0,Q.length,...saved);}catch{}
-const def=()=>({phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,video:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,resultsAt:0,revision:0});
+const def=()=>({phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,video:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,resultsAt:0,clockSource:'tv',lastHostTick:0,revision:0});
 let s=def(), users=new Map(), upload=null,feedback=[];
 try{s=Object.assign(def(),JSON.parse(fs.readFileSync(STATE_FILE,'utf8')));}catch{}
 try{users=new Map(Object.entries(JSON.parse(fs.readFileSync(USERS_FILE,'utf8'))));}catch{}
@@ -49,7 +49,7 @@ function publicState(id){
   if(q&&jk.hint===q.id)player.hint=q.hint||'';}
  const z=ZOOM();let zoomResult=null;
  if(final&&z){const found=[...users.values()].filter(x=>x.answers[z.id]===z.correct).map(x=>x.name);zoomResult={q:z.q,answer:z.a[z.correct],found:found.length,names:found.slice(0,12),total:[...users.values()].filter(x=>Object.hasOwn(x.answers,z.id)).length};}
- return {phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,video:s.video,subtitles:s.subtitles,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,
+ return {phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,video:s.video,subtitles:s.subtitles,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',
   quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,a:q.a,remaining:a.remaining,accepting:a.accepting,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
   player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:fs.existsSync(SUB_FILE)};
 }
@@ -74,6 +74,8 @@ async function handler(req,res){
  if(m==='GET'&&(p==='/'||p==='/index.html'))return serve(res,path.join(ROOT,'index.html'),mime['.html']);
  if(m==='GET'&&(p==='/app.js'||p==='/style.css'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
  if(m==='GET'&&p==='/touchscreen-motiv.svg')return serve(res,path.join(ROOT,'touchscreen-motiv.svg'),'image/svg+xml');
+ if(m==='GET'&&(p==='/watch'||p==='/host'))return serve(res,path.join(ROOT,'party.html'),'text/html; charset=utf-8');
+ if(m==='GET'&&(p==='/party.js'||p==='/party.css'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
  if(m==='GET'&&p==='/api/state')return send(res,200,publicState(u.searchParams.get('id')));
  if(m==='GET'&&p==='/api/health')return send(res,200,{ok:true,questionCount:Q.length,now:Date.now()});
  if(m==='GET'&&p==='/api/admin-info'){if(!isAdmin(req))return unauthorized(res);return send(res,200,{tvKey:TV,cohostKey:COHOST,questions:Q.map(q=>({id:q.id,type:q.type||'quiz',open:q.open,close:q.close,duration:q.duration,q:q.q,a:q.a,correct:q.correct,chapter:q.chapter,hint:q.hint,fifty:q.fifty})),ranking:[...users.values()].map(x=>({name:x.name,role:x.role,score:x.score,answers:x.answers,jokers:x.jokers||{}})).sort((a,b)=>b.score-a.score),feedback});}
@@ -86,7 +88,7 @@ async function handler(req,res){
  if(!users.has(id))users.set(id,{name,role,answers:{},score:0,jokers:{}});
  else {users.get(id).name=name;users.get(id).role=role;}
  saveUsers();
- return(res,200,{ok:true,id});
+ return send(res,200,{ok:true,id});
  }
  if(m==='POST'&&p==='/api/answer'){
  const b=await read(req,1000),x=users.get(String(b.id||'')),a=active();
@@ -112,10 +114,23 @@ async function handler(req,res){
  const b=await read(req,3000);
  feedback.push({text:String(b.text||'').trim().slice(0,1000),rating:Math.min(10,Math.max(0,Number(b.rating)||0))});return send(res,200,{ok:true});
  }
+ if(m==='POST'&&p==='/api/host/tick'){
+ if(!isCohost(req))return unauthorized(res);
+ const b=await read(req,1000);
+ if(s.phase!=='film')return send(res,200,{ok:false,phase:s.phase});
+ const t=Number(b.time);
+ if(!Number.isFinite(t)||t<0||t>20000)return send(res,400,{error:'Ungueltige Filmzeit'});
+ s.clockSource='host';s.lastHostTick=Date.now();s.time=Math.round(t*100)/100;
+ const z=ZOOM();if(z&&!s.zoomDone&&s.time>=z.open&&s.time<z.open+20){startZoom();return send(res,200,{ok:true,zoom:true});}
+ s.playing=!!b.playing;
+ if(b.ended===true){s.phase='results';s.resultsAt=Date.now();s.playing=false;s.revision++;await persist();}
+ return send(res,200,{ok:true,time:s.time,playing:s.playing});
+ }
  if(m==='POST'&&p==='/api/tick'){
  if(!isTv(req))return unauthorized(res);
  const b=await read(req,1000);if(s.phase!=='film')return send(res,200,{ok:false});
- const t=Number(b.time);
+ if(s.clockSource==='host'&&Date.now()-(s.lastHostTick||0)<20000)return send(res,200,{ok:true,ignored:'host_is_primary'});
+ s.clockSource='tv';const t=Number(b.time);
  if(Number.isFinite(t)&&t>=0&&t<=20000)s.time=Math.round(t*100)/100;
  const z=ZOOM();if(z&&!s.zoomDone&&s.time>=z.open&&s.time<z.open+20){startZoom();return send(res,200,{ok:true,zoom:true});}
  s.playing=!!b.playing;if(b.ended===true){s.phase='results';s.resultsAt=Date.now();s.playing=false;s.revision++;await persist();}return send(res,200,{ok:true});
@@ -123,6 +138,7 @@ async function handler(req,res){
  if(m==='POST'&&(p==='/api/admin'||p==='/api/remote')){
  if(p==='/api/admin'?!isAdmin(req):!isCohost(req))return unauthorized(res);
  const b=await read(req),cmd=b.cmd;
+ if(p==='/api/remote'&&new Set(['welcome','start','pause','play','seek','gestureEnd','zoomEnd']).has(cmd)){s.clockSource='host';s.lastHostTick=Date.now();}
  if(p==='/api/remote'&&!new Set(['welcome','start','pause','play','seek','demo','demoNext','results','handout','end','gestureStart','gestureEnd','zoomStart','zoomEnd']).has(cmd))return unauthorized(res);
  if(cmd==='welcome'){s.phase='welcome';s.time=0;s.playing=false;}
  else if(cmd==='start'){s.phase='film';s.time=0;s.playing=true;s.zoomDone=false;}
