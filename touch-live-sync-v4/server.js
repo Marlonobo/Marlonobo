@@ -27,7 +27,7 @@ function active(){
  else if(s.phase==='demo')i=Math.max(0,Math.min(Q.length-1,s.demoIndex));
  if(i<0)return {index:-1,remaining:0,accepting:false};
  const q=Q[i];
- const left=s.phase==='demo'?45-(Date.now()-s.demoStart)/1000:Math.min(q.open+s.quizOffset+45,q.close+s.quizOffset)-s.time;
+ const left=s.phase==='demo'?60-(Date.now()-s.demoStart)/1000:q.close+s.quizOffset-s.time;
  remaining=Math.max(0,Math.ceil(left));
  return {index:i,remaining,accepting:left>0};
 }
@@ -96,6 +96,9 @@ async function handler(req,res){
  else if(cmd==='demo'){s.phase='demo';s.demoIndex=Math.max(0,Math.min(Q.length-1,Number(b.index)||0));s.demoStart=Date.now();s.playing=false;}
  else if(cmd==='demoNext'){s.phase='demo';s.demoIndex=(s.demoIndex+1)%Q.length;s.demoStart=Date.now();}
  else if(cmd==='results'){s.phase='results';s.playing=false;}
+ else if(cmd==='handout'){s.phase='handout';s.playing=false;}
+ else if(cmd==='gestureStart'){s.phase='gesture';s.playing=false;}
+ else if(cmd==='gestureEnd'){s.phase='film';s.playing=true;}
  else if(cmd==='end'){s.phase='end';s.playing=false;}
  else if(cmd==='reset'){s=def();users=new Map();feedback=[];}
  else if(cmd==='videoYoutube'){const id=youtubeId(b.url);if(!id)return send(res,400,{error:'Kein gueltiger YouTube-Link'});s.video={type:'youtube',id,url:'https://www.youtube.com/watch?v='+id};}
