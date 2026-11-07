@@ -227,6 +227,7 @@ async function poll(){
   state=await api(path);
   const p=$('partyStatus');p.textContent=({'welcome':'Wartet auf Start','film':'Film läuft','demo':'Testquiz','zoom':'Zoom-Spiel','gesture':'Gesten-Spiel','results':'Siegerehrung','handout':'Handout','end':'Abschluss'})[state.phase]||state.phase;
   $('partyTime').textContent=sec(state.time)+' / 51:47 · '+state.participants+' angemeldet';
+  const titleNode=$('partyFilmTitle');if(titleNode)titleNode.textContent='🎬 '+(state.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation');
   syncMovie();interaction();
  }catch(e){showError('Keine Verbindung zur gemeinsamen Sitzung: '+e.message);}
  finally{pollInFlight=false;}
