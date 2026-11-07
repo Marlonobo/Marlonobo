@@ -73,8 +73,8 @@ function publicState(id){
   player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)};
 }
 function startZoom(){const z=ZOOM();if(!z)return false;s.phase='zoom';s.playing=false;s.time=z.open;s.zoomStart=Date.now();s.zoomDone=true;s.revision++;persist();return true;}
-function endZoom(){if(s.phase!=='zoom')return;s.phase='film';s.playing=true;s.revision++;persist();}
-setInterval(()=>{const z=ZOOM();if(s.phase==='zoom'&&z&&Date.now()-s.zoomStart>((z.duration||75)+8)*1000)endZoom();},1000);
+function endZoom(){if(s.phase!=='zoom')return;const z=ZOOM();s.phase='film';s.time=z?.close??s.time;s.playing=true;s.revision++;persist();}
+setInterval(()=>{const z=ZOOM();if(s.phase==='zoom'&&z&&Date.now()-s.zoomStart>=(z.duration||30)*1000+250)endZoom();},1000);
 setInterval(()=>{if(s.phase==='results'&&s.resultsAt&&Date.now()-s.resultsAt>=28000){s.phase='end';s.playing=false;s.revision++;persist();}},1000);
 function youtubeId(link){try{const u=new URL(link);if(['youtu.be','www.youtu.be'].includes(u.hostname))return /^[\w-]{11}$/.test(u.pathname.slice(1,12))?u.pathname.slice(1,12):null;
  if(['youtube.com','www.youtube.com','m.youtube.com','www.youtube-nocookie.com'].includes(u.hostname)){const id=u.searchParams.get('v')||(u.pathname.match(/\/(?:embed|shorts|live)\/([\w-]{11})/)||[])[1];return /^[\w-]{11}$/.test(id||'')?id:null;}}catch{}return null;}
@@ -159,11 +159,11 @@ async function handler(req,res){
  if(!z||s.phase!=='zoom'||a.index<0||!a.accepting)return send(res,409,{error:'Die Easter-Egg-Suche läuft gerade nicht mehr.'});
  if(Object.hasOwn(x.answers,z.id))return send(res,409,{error:'Easter Egg wurde bereits gefunden.'});
  const px=Number(b.x),py=Number(b.y),zoom=Number(b.zoom);
- if(!Number.isFinite(px)||!Number.isFinite(py)||!Number.isFinite(zoom)||px<0||px>1000||py<0||py>620||zoom<2.25||zoom>7.05)return send(res,400,{error:'Zoome ins Bild und tippe das versteckte Objekt an.'});
- if(Math.abs(px-746)>20||Math.abs(py-332)>19)return send(res,400,{error:'Dort ist es nicht! Suche weiter.'});
- const bonus=Math.min(150,Math.max(0,Math.round(a.remaining/(z.duration||75)*150/10)*10)),points=150+bonus;
+ if(!Number.isFinite(px)||!Number.isFinite(py)||!Number.isFinite(zoom)||px<0||px>1000||py<0||py>620||zoom<1.7||zoom>7.05)return send(res,400,{error:'Zoome ins Bild und tippe das versteckte Objekt an.'});
+ if(Math.abs(px-746)>27||Math.abs(py-332)>25)return send(res,400,{error:'Noch nicht richtig – such weiter! Es gibt keinen Punktabzug.'});
+ const bonus=Math.min(130,Math.max(0,Math.round(a.remaining/(z.duration||30)*130/10)*10)),points=170+bonus;
  x.answers[z.id]=z.correct;x.zoomPoints=points;x.score+=points;saveUsers();
- return send(res,200,{ok:true,points,bonus,foundCount:[...users.values()].filter(u=>Object.hasOwn(u.answers,z.id)).length});
+ return send(res,200,{ok:true,correct:true,message:'RICHTIG! Easter Egg gefunden!',points,bonus,foundCount:[...users.values()].filter(u=>Object.hasOwn(u.answers,z.id)).length});
  }
  if(m==='POST'&&p==='/api/answer'){
  const b=await read(req,1000),x=users.get(String(b.id||'')),a=active();
