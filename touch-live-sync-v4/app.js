@@ -933,6 +933,11 @@ async function poll(force=false){
  const rp=role==='join'?'student':role==='teacher'?'teacher':role;
  const id=(rp==='student'||rp==='teacher')?(localStorage.getItem('touch_'+rp+'_id')||''):'';
  const next=await api('/api/state'+(id?'?id='+encodeURIComponent(id):''));const old=state;state=next;
+ // A phone may start the film while this Spotify-connected PC is the music controller.
+ // Stop any independent Spotify Connect audio so it cannot overlap film sound.
+ if((role==='admin'||role==='control')&&old?.phase!=='film'&&next.phase==='film'&&next.playing&&window.SpotifyConnect?.connected?.()){
+  window.SpotifyConnect.pauseForFilm().catch(()=>{});
+ }
  if(role==='join'||role==='teacher'){const player=state.player||{};const q=state.quiz;const sig=[role,state.phase,q?.id||'',q?.accepting||false,player.choice,player.score,state.revision,state.participants,JSON.stringify(player.jokers||{}),(player.hide||[]).join(),player.hint||'',JSON.stringify(state.zoomResult||'')].join('|');if(force||renderSignature!==sig){renderSignature=sig;userPage();participantMode();}else if(q){if(el('liveTimer'))el('liveTimer').textContent=q.remaining+' s';if(state.phase==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!state.player?.zoomFound});}}
  if(role==='tv'){tvDisplay();}
  if(role==='control'){
