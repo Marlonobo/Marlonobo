@@ -187,7 +187,7 @@ async function uploadFilm(){
 function secText(n){n=Math.max(0,Math.floor(Number(n)||0));return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');}
 function tvView(){
  if(!tvKey){app.innerHTML='<div class="wrap page"><h1>Beamer verbinden</h1><p>Bitte den Beamerlink aus der Admin-Ansicht öffnen.</p><label>Beamer-Zugangsschlüssel</label><input type="password" id="tvInput"><p></p><button class="primary" id="tvSubmit">Verbinden</button></div>';el('tvSubmit').onclick=()=>{tvKey=el('tvInput').value;sessionStorage.setItem('touch_tv_key',tvKey);tvView();};return;}
- app.innerHTML='<div id="tvApp"><div id="tvScene" class="tvScene"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock"><button id="tvPlay">▶ Wiedergabe freigeben</button><button id="tvFullscreen">⛶ Vollbild</button></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
+ app.innerHTML='<div id="tvApp"><div id="tvScene" class="tvScene"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock"><button id="tvPlay">▶ Wiedergabe freigeben</button><button id="tvFullscreen">⛶ Vollbild</button></div><div class="tvBroadcastHud" id="tvBroadcastHud" style="display:none"><div class="tvBroadcastTop"><strong>TOUCH <span>LIVE</span></strong><span id="tvChapterLabel">Kapitel 1 · Geschichte</span><span id="tvClockLabel">00:00 / 51:47</span></div><div class="tvBroadcastTrack"><div id="tvProgressBar"></div></div></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
  videoEl=el('tvVideo');el('tvPlay').onclick=()=>{playerReady=true;if(mediaType==='youtube'&&ytPlayer){try{ytPlayer.unMute();ytPlayer.playVideo();}catch{}}else if(videoEl){videoEl.muted=false;videoEl.play().catch(()=>{});}};el('tvFullscreen').onclick=()=>el('tvApp').requestFullscreen?.().catch(()=>{});
  videoEl.addEventListener('timeupdate',()=>{updateCaption();});videoEl.addEventListener('ended',()=>{if(state?.phase==='film')sendTick(false,true);});
 }
@@ -195,6 +195,7 @@ function tvScene(html){const node=el('tvScene');if(node&&node.__h!==html){node.i
 function tvDisplay(){
  if(!state||role!=='tv'||!el('tvScene'))return;
  const phase=state.phase;const videoMode=phase==='film';
+ const hud=el('tvBroadcastHud');if(hud){hud.style.display=videoMode&&state.video?.type!=='none'?'block':'none';if(videoMode){const starts=[120,564,855,1304,1702,2060,2634];let chapter=1;starts.forEach((t,i)=>{if(state.time>=t)chapter=i+1;});if(el('tvChapterLabel'))el('tvChapterLabel').textContent='KAPITEL '+chapter+' / 7 · '+(CH[chapter-1]||'Touchscreen');if(el('tvClockLabel'))el('tvClockLabel').textContent=secText(state.time)+' / 51:47';if(el('tvProgressBar'))el('tvProgressBar').style.width=(Math.min(100,state.time/3107*100))+'%';}}
  const layer=el('videoLayer');if(layer)layer.style.display=videoMode&&state.video.type!=='none'?'block':'none';
  const scene=el('tvScene');
  if(phase==='welcome'){scene.style.display='flex';tvScene('<div class="welcomeArtwork"><div><span class="eyebrow">LERNFELD 14 · INTERAKTIVE DOKUMENTATION</span><h1>TOUCH<em>SCREEN</em></h1><p>Geschichte, Technik und Zukunft – gemeinsam entdecken.</p><p class="welcomePrompt">Öffnet den Schülerlink auf eurem iPad. Gleich geht es los!</p></div><img src="/touchscreen-motiv.svg" alt="Leuchtender Touchscreen mit Berührungswellen"></div>');pauseTV();}
@@ -211,6 +212,7 @@ function pauseTV(){try{videoEl?.pause();if(ytPlayer)ytPlayer.pauseVideo();}catch
 function ensureMedia(){
  if(!state||role!=='tv'||state.phase!=='film')return;
  const video=state.video,ref=video.type+':'+video.url;
+ if(state.captionsAvailable&&lastCaptionRevision!==state.captionsRevision){lastCaptionRevision=state.captionsRevision;fetchCaptions();}
  if(ref!==mediaType){mediaType=ref;subtitles=[];lastRevision=-1;
  if(ytPlayer){try{ytPlayer.destroy();}catch{}ytPlayer=null;}el('youtubeTarget').style.display='none';videoEl.style.display='none';videoEl.pause();
  if(video.type==='youtube'){el('youtubeTarget').style.display='block';loadYouTube(video.id);}
@@ -228,7 +230,15 @@ function loadYouTube(id){
 }
 function makeYouTube(id){if(!el('youtubeTarget')||role!=='tv')return;ytPlayer=new YT.Player('youtubeTarget',{videoId:id,playerVars:{rel:0,playsinline:1,enablejsapi:1,controls:1,origin:location.origin},events:{onReady:()=>{if(state?.phase==='film')ensureMedia();}}});}
 async function sendTick(playing,ended=false){if(role!=='tv'||!tvKey||state?.phase!=='film')return;try{const t=state.video.type==='youtube'&&ytPlayer?ytPlayer.getCurrentTime():videoEl?.currentTime||0;await api('/api/tick','POST',{time:t,playing,ended},tvKey);}catch{}}
-function updateCaption(){const node=el('captionLayer');if(!node||!state?.subtitles){if(node)node.style.display='none';return;}const pos=state.video.type==='youtube'&&ytPlayer?ytPlayer.getCurrentTime():videoEl?.currentTime||0;const now=pos-(state.subtitleOffset||0),c=subtitles.find(v=>now>=v.start&&now<=v.end);node.textContent=c?.text||'';node.style.display=c?'block':'none';}
+function updateCaption(){
+ const node=el('captionLayer');if(!node)return;
+ if(!state?.subtitles||!state?.captionsAvailable){node.style.display='none';return;}
+ const pos=state.video.type==='youtube'&&ytPlayer?Number(ytPlayer.getCurrentTime())||0:videoEl?.currentTime||0;
+ const now=pos-(state.subtitleOffset||0),c=subtitles.find(v=>now>=v.start&&now<=v.end);
+ node.textContent=c?.text||'';node.style.display=c?'block':'none';
+ node.style.bottom=(state.captionPosition||11)+'%';
+ node.style.fontSize='clamp(19px, '+((state.captionSize||100)/100*2.5).toFixed(2)+'vw, 49px)';
+}
 async function fetchCaptions(){try{const response=await fetch('/captions.vtt');if(!response.ok)return;subtitles=parseVTT(await response.text());}catch{}}
 function parseVTT(txt){return txt.replace(/\r/g,'').split(/\n\n+/).map(block=>{const lines=block.split('\n'),i=lines.findIndex(x=>x.includes('-->'));if(i<0)return null;const times=lines[i].split('-->');const toSeconds=x=>{const v=x.trim().split(/[.:]/).map(Number);return v.length===4?v[0]*3600+v[1]*60+v[2]+v[3]/1000:v[0]*60+v[1]+(v[2]||0)/1000;};return{start:toSeconds(times[0]),end:toSeconds(times[1]),text:lines.slice(i+1).join('\n')};}).filter(Boolean);}
 function handout(){
