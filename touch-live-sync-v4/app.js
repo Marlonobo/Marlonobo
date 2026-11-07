@@ -38,15 +38,25 @@ function requestParticipantFullscreen(){
   }
  }catch{}
 }
+function refreshStudentScoreBadge(){
+ if(role!=='join')return;
+ const badge=el('studentScoreValue');
+ if(!badge)return;
+ const amount=state?.player?.liveScore;
+ badge.textContent=Number.isFinite(amount)?Math.round(amount).toLocaleString('de-DE'):'—';
+}
 function participantMode(){
  const on=(role==='join'||role==='teacher')&&!!userName;
  document.body.classList.toggle('touchStudent',on);
  if(!on)return;
  const main=document.querySelector('main.wrap');if(!main||el('participantFullscreen'))return;
  const bar=document.createElement('div');bar.className='participantFullBar';
- bar.innerHTML='<span class="small">TOUCH LIVE · LIVE-QUIZ</span><button id="participantFullscreen" class="participantFullBtn">⛶ Vollbild öffnen</button>';
+ bar.innerHTML='<span class="small">TOUCH LIVE · LIVE-QUIZ</span><div class="participantBarActions">'+
+  (role==='join'?'<div class="studentLiveScore" aria-label="Dein aktueller Punktestand"><span class="studentLiveScoreLabel">🏆 Deine Punkte</span><strong id="studentScoreValue" aria-live="polite">—</strong></div>':'')+
+  '<button id="participantFullscreen" class="participantFullBtn">⛶ Vollbild öffnen</button></div>';
  main.prepend(bar);
  el('participantFullscreen').onclick=()=>requestParticipantFullscreen();
+ refreshStudentScoreBadge();
 }
 function userPage(){
  const isTeacher=role==='teacher',userRole=isTeacher?'teacher':'student';
@@ -62,7 +72,7 @@ function userPage(){
  else if(q&&!q.accepting)body=waiting('Schau auf den Beamer.','Die Antwortzeit ist vorbei. Die Dokumentation läuft weiter.','◉');
   else if(q){const hide=p.hide||[],jk=p.jokers||{},canJ=q.jokers&&q.accepting&&!answered;
   const jbar=q.jokers?'<div class="jokers">'+(jk.fifty?'':'<button class="joker" data-joker="fifty" '+(canJ?'':'disabled')+'>50:50</button>')+(jk.hint?'':'<button class="joker" data-joker="hint" '+(canJ?'':'disabled')+'>💡 Tipp</button>')+(jk.fifty&&jk.hint?'<span class="small">Alle Joker eingesetzt</span>':'<span class="small">Jeder Joker nur einmal im ganzen Abschlussquiz</span>')+'</div>':'';
-  body='<div class="card quiz"><div class="between"><span class="chip">'+(q.jokers?'ABSCHLUSSQUIZ · ':'')+'FRAGE '+(q.index+1)+' / '+q.total+'</span><div id="liveTimer" class="timer">'+q.remaining+' s</div></div>'+jbar+'<h2>'+esc(q.q)+'</h2>'+(p.hint?'<div class="hintbox">💡 '+esc(p.hint)+'</div>':'')+'<div class="answers">'+q.a.map((v,i)=>'<button class="answer'+(answered&&p.choice===i?' chosen':'')+(hide.includes(i)?' gone':'')+'" data-choice="'+i+'" '+(answered||!q.accepting||hide.includes(i)?'disabled':'')+'><b>'+String.fromCharCode(65+i)+'</b><span>'+esc(v)+'</span></button>').join('')+'</div><p class="small" style="margin-top:17px">'+(answered?'Deine Antwort ist gespeichert. Ob sie richtig ist, erfahrt ihr erst ganz am Ende. Schau jetzt wieder auf den Beamer.':q.accepting?'Wähle eine Antwort. Jede Frage kann nur einmal beantwortet werden.':'Antwortzeit vorbei. Bitte wieder auf den Beamer schauen.')+'</p></div>';}
+  body='<div class="card quiz"><div class="between"><span class="chip">'+(q.jokers?'ABSCHLUSSQUIZ · ':'')+'FRAGE '+(q.index+1)+' / '+q.total+'</span><div id="liveTimer" class="timer">'+q.remaining+' s</div></div>'+jbar+'<h2>'+esc(q.q)+'</h2>'+(p.hint?'<div class="hintbox">💡 '+esc(p.hint)+'</div>':'')+'<div class="answers">'+q.a.map((v,i)=>'<button class="answer'+(answered&&p.choice===i?' chosen':'')+(hide.includes(i)?' gone':'')+'" data-choice="'+i+'" '+(answered||!q.accepting||hide.includes(i)?'disabled':'')+'><b>'+String.fromCharCode(65+i)+'</b><span>'+esc(v)+'</span></button>').join('')+'</div><p class="small" style="margin-top:17px">'+(answered?'Deine Antwort ist gespeichert. Dein Punktestand oben wird automatisch aktualisiert. Schau jetzt wieder auf den Film.':q.accepting?'Wähle eine Antwort. Jede Frage kann nur einmal beantwortet werden.':'Antwortzeit vorbei. Bitte wieder auf den Beamer schauen.')+'</p></div>';}
  else if(state.phase==='results'||state.phase==='end'||state.phase==='handout')body='<div class="card"><span class="eyebrow">ABSCHLUSS</span><h2>Danke für deine Rückmeldung!</h2><p>Dein Punktestand</p><div class="values">'+(p.score||0)+'</div>'+prizeCard()+zoomSolution()+'<h3>Gemeinsame Rangliste</h3>'+ranking()+'<div class="flex" style="margin-top:23px"><a href="/#handout" class="btn primary">Handout ausfüllen & PDF speichern</a></div></div>';
  else body=waiting('Bitte auf den Beamer schauen.','Die Dokumentation läuft. Die nächste Frage erscheint automatisch.','◉');
  const notes=isTeacher?'<div class="card" style="margin-top:17px"><span class="label">LEHRER · PRIVAT</span><h2>Notizen zur Dokumentation</h2><p>Deine Notizen bleiben auf diesem Gerät und sind für Schüler nicht sichtbar.</p><textarea id="teacherNotes" rows="6" placeholder="Beobachtungen, Rückfragen, Feedback …">'+esc(localStorage.getItem('touch_teacher_notes')||'')+'</textarea><div class="flex" style="margin-top:12px"><button id="saveNotes">Notizen als Textdatei speichern</button></div></div>':'';
@@ -73,13 +83,13 @@ function userPage(){
  if(isTeacher){el('teacherNotes').oninput=e=>localStorage.setItem('touch_teacher_notes',e.target.value);el('saveNotes').onclick=()=>saveText('TOUCH-LIVE-Lehrernotizen.txt',el('teacherNotes').value);}
  if(state.phase==='gesture'||state.sideGame==='gesture')initGesture();
 }
-function zoomCard(q,p,answered){return '<section class="easter-live"><div class="between" style="margin-bottom:10px"><span class="chip">🎮 KAPITEL 4 · MULTITOUCH-CHALLENGE</span><span class="small">Bereits gefunden: '+(q.foundCount||0)+' von '+state.participants+'</span></div><div id="easterMount"></div><p class="small" style="margin-top:12px">'+(p.zoomFound?'✅ RICHTIG! Du hast die Katze gefunden. Deine Punkte werden erst in der Ergebnisshow angezeigt.':!q.accepting?'Die Suche ist beendet. Wichtig: Pinch-to-Zoom, Pan und Tap sind echte Touchscreen-Gesten.':'Teste, was du in Kapitel 4 gelernt hast: mit zwei Fingern vergrößern, Bild verschieben und das versteckte Detail direkt antippen.')+'</p></section>';}
+function zoomCard(q,p,answered){return '<section class="easter-live"><div class="between" style="margin-bottom:10px"><span class="chip">🎮 KAPITEL 4 · MULTITOUCH-CHALLENGE</span><span class="small">Bereits gefunden: '+(q.foundCount||0)+' von '+state.participants+'</span></div><div id="easterMount"></div><p class="small" style="margin-top:12px">'+(p.zoomFound?'✅ RICHTIG! Du hast die Katze gefunden. Deine Punkte werden oben direkt aktualisiert.':!q.accepting?'Die Suche ist beendet. Wichtig: Pinch-to-Zoom, Pan und Tap sind echte Touchscreen-Gesten.':'Teste, was du in Kapitel 4 gelernt hast: mit zwei Fingern vergrößern, Bild verschieben und das versteckte Detail direkt antippen.')+'</p></section>';}
 function initEaster(){
  const host=el('easterMount'),q=state?.quiz,p=state?.player;
  if(!host||!q||!window.EasterGame)return;
  easterInstance=window.EasterGame.mount(host,{
   remaining:q.remaining,found:!!p?.zoomFound,
-  disabled:!q.accepting,
+  showLiveScore:role==='join',disabled:!q.accepting,
   onFind:async ({x,y,zoom})=>{
    if(!userId)throw Error('Bitte erst einen Namen eingeben.');
    const result=await api('/api/easter/find','POST',{id:userId,x,y,zoom});
@@ -1069,6 +1079,7 @@ async function poll(force=false){
   window.SpotifyConnect.pauseForFilm().catch(()=>{});
  }
  if(role==='join'||role==='teacher'){const player=state.player||{};const q=state.quiz;const sig=[role,state.phase,q?.id||'',q?.accepting||false,player.choice,player.score,state.revision,state.participants,JSON.stringify(player.jokers||{}),(player.hide||[]).join(),player.hint||'',JSON.stringify(state.zoomResult||'')].join('|');if(force||renderSignature!==sig){renderSignature=sig;userPage();participantMode();}else if(q){if(el('liveTimer'))el('liveTimer').textContent=q.remaining+' s';if(q?.type==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!state.player?.zoomFound});}}
+ if(role==='join')refreshStudentScoreBadge();
  if(role==='tv'){tvDisplay();
    const signal=Number(state.tvReloadRequest||0);
    if(window.__touchTVReloadSeen===undefined)window.__touchTVReloadSeen=signal;
