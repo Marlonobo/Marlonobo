@@ -17,7 +17,32 @@
   <div id="partyCaption" class="partyCaption" hidden></div>
   <div class="partyScreenControls"><button id="partyEnable" class="primary">▶ Film mit Ton aktivieren</button><button id="partyFullscreen">⛶ Vollbild</button></div>
  </div><div class="partyStatus"><span id="partyStatus" class="chip">Verbindung wird hergestellt …</span><span id="partyTime" class="small">00:00 / 51:47</span></div><div id="partyFilmTitle" class="partyFilmTitle">TOUCHSCREEN – Interaktive Dokumentation</div>
- <section id="hostPanel" class="card" hidden><span class="label">DEINE REGIE · GEMEINSAMER FILM</span><h2>Du steuerst – alle schauen und spielen mit</h2><div class="partyShare"><div><b>Link für Zuschauer in anderen Städten</b><p>Sie sehen denselben online verfügbaren Film und beantworten die Quizfragen automatisch zur richtigen Zeit, ohne Regie-Zugriff.</p><code>https://touch-live-unterricht-2026.onrender.com/watch</code></div><button id="partyCopyFriend" class="primary" type="button">Zuschauerlink kopieren</button></div><div class="partyControls">
+ <section id="hostPanel" class="card" hidden><span class="label">DEINE REGIE · GEMEINSAMER FILM</span><h2>Du steuerst – alle schauen und spielen mit</h2><div class="partyShare"><div><b>Link für Zuschauer in anderen Städten</b><p>Sie sehen denselben online verfügbaren Film und beantworten die Quizfragen automatisch zur richtigen Zeit, ohne Regie-Zugriff.</p><code>https://touch-live-unterricht-2026.onrender.com/watch</code></div><button id="partyCopyFriend" class="primary" type="button">Zuschauerlink kopieren</button></div><section class="partyHostUpload" aria-label="Gemeinsamen Film aus deinen Dateien hochladen">
+  <span class="label">01 / VIDEO VON DEINEM GERÄT</span>
+  <h3>Eigene MP4 hochladen und gemeinsam starten</h3>
+  <p>Wähle deine MP4 aus Dateien, Downloads oder Fotos/Dateien. TOUCH LIVE lädt sie in wiederaufnehmbaren Teilen direkt in deinen Cloud-Speicher. Danach könnt ihr den Film auf beiden Geräten ansehen und beim Quiz mitmachen.</p>
+  <div id="partyStorageStatus" class="partyUploadStatus" role="status">Cloud-Speicher wird geprüft …</div>
+  <label for="partyUploadFile">MP4 aus Dateien auswählen (bis 10 GB)</label>
+  <input type="file" id="partyUploadFile" accept=".mp4,video/mp4">
+  <div class="partyUploadButtons">
+    <button type="button" class="primary" id="partyUploadStart" disabled>⬆ MP4 hochladen</button>
+    <button type="button" id="partyWatchStored" disabled>Gespeicherten Film verwenden</button>
+  </div>
+  <progress id="partyUploadProgress" value="0" max="100" aria-label="Video-Upload-Fortschritt" hidden></progress>
+  <p id="partyUploadInfo" class="small" role="status">Die Datei wird nur einmal hochgeladen und anschließend auf beiden Geräten gestreamt.</p>
+  <div class="partyCloudInstructions" id="partyCloudInstructions" hidden>
+    <b>Cloud-Speicher noch nicht verbunden</b>
+    <p>Für 3,03 GB brauchst du dauerhaft verfügbaren Speicher. Richte einmalig Cloudflare R2 (Standard) ein und trage die R2-Zugangsdaten in die Render-Einstellungen ein. Danach ist der Upload hier freigeschaltet. Deine Zugangsdaten gehören niemals in diese Webseite oder in den Zuschauerlink.</p>
+    <a href="https://dash.cloudflare.com/" target="_blank" rel="noopener noreferrer">Cloudflare R2 einrichten</a>
+    <a href="https://dashboard.render.com/web/srv-dbn0f7ei0phs73d16p20" target="_blank" rel="noopener noreferrer">Render-Einstellungen öffnen</a>
+    <a href="https://github.com/Marlonobo/Marlonobo/blob/main/touch-live-sync-v4/SPEICHER_EINRICHTEN.md" target="_blank" rel="noopener noreferrer">Einrichtungsanleitung</a>
+  </div>
+  <div class="partyStartShared">
+    <button id="partyStartHere" type="button" class="primary">▶ Film auf meinem Gerät &amp; gemeinsam starten</button>
+    <p class="small">Ein Knopf startet eure gemeinsame Sitzung. Falls Browser oder iPad den Ton blockieren, direkt danach „Film mit Ton aktivieren“ tippen. Zuschauer können vorab ihren Ton auf dem Gerät freigeben.</p>
+  </div>
+</section>
+<div class="partyControls">
  <button data-host="welcome">✦ Willkommen</button><button data-host="start" class="primary">▶ Doku starten</button><button data-host="restartVideo" title="Film von vorne vorbereiten, Quizpunkte bleiben">⏮ Film auf Anfang</button><button data-host="pause">Ⅱ Pause</button><button data-host="play">▶ Weiter</button>
  <button data-host="demo">Testquiz starten</button><button data-host="demoNext">Nächste Testfrage</button><button data-host="gestureStart">Gesten-Spiel starten</button><button data-host="gestureEnd">Spiel beenden</button>
  <button data-host="zoomStart">Zoom-Spiel starten</button><button data-host="zoomEnd">Zoom-Spiel beenden</button><button data-host="results">🏆 Top 3 anzeigen</button><button data-host="handout">Handout zeigen</button><button data-host="end">Dankeschön-Folie</button>
