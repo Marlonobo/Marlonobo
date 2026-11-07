@@ -10,6 +10,53 @@ if(fromUrl){sessionStorage.setItem(keyStore,key);history.replaceState({},'',loca
 let state=null,participantId=localStorage.getItem(idStore)||'',participantName=localStorage.getItem(nameStore)||'';
 let screenSignature='',quizSignature='',sourceRef='',activated=false,ytPlayer=null,ytReady=false,ytVideoId='',ytApiLoading=false,localRevision=-1,lastCaptionRevision=-1;
 let easterInstance=null,cloudFallback=false;
+let partyViewMode=localStorage.getItem('touch_party_view_mode')==='side'?'side':'auto';
+let lastFocusKey='',lastFocusTransition=0;
+const onlineVideo=()=>state?.video?.type==='local'?(state.remoteVideo||{type:'none',id:null,url:null}):(state?.video||{type:'none',id:null,url:null});
+function updatePartyViewMode(){
+ const toggle=$('partyModeToggle'),stage=$('partyMain'),note=$('partyModeStatus');
+ if(!stage||!state)return;
+ const q=state.quiz,questionActive=state.phase==='zoom'||state.phase==='gesture'||state.phase==='demo'||(state.phase==='film'&&!!q?.accepting);
+ stage.classList.toggle('partyAutoQuizFocus',partyViewMode==='auto'&&questionActive);
+ if(toggle){toggle.setAttribute('aria-pressed',String(partyViewMode==='auto'));toggle.textContent=partyViewMode==='auto'?'✓ Automatischer Wechsel: EIN':'Automatischer Wechsel: AUS';}
+ if(note){
+  const source=onlineVideo();
+  if(state.video?.type==='local'&&source.type==='none')note.textContent='⚠ Die HDMI-MP4 bleibt lokal. Für andere Städte muss die Regie zusätzlich ein Online-Video hinterlegen. Quiz und Spiele funktionieren trotzdem.';
+  else if(questionActive)note.textContent='🎮 '+(q?.type==='zoom'?'Zoom-Spiel':state.phase==='gesture'?'Gesten-Spiel':'Quizfrage')+' läuft · '+(q?.remaining??'')+' s · '+(partyViewMode==='auto'?'Antworten im Vordergrund':'Quiz rechts/unten öffnen');
+  else note.textContent=partyViewMode==='auto'?'🎬 Schau auf den Film · beim Quiz wird automatisch gewechselt.':'🎬 Film und Quiz bleiben auf derselben Seite sichtbar.';
+ }
+ const focusKey=questionActive?'q:'+(q?.id||state.phase):'film';
+ if(partyViewMode!=='auto'){lastFocusKey=focusKey;return;}
+ if(lastFocusKey===focusKey)return;
+ const wasQuestion=lastFocusKey.startsWith('q:');
+ lastFocusKey=focusKey;lastFocusTransition++;
+ if(!questionActive&&!wasQuestion)return;
+ const transition=lastFocusTransition;
+ setTimeout(()=>{
+  if(partyViewMode!=='auto'||transition!==lastFocusTransition)return;
+  const target=questionActive?(participantId?'partyInteraction':'participant'):'partyScreen';
+  const element=$(target);if(!element)return;
+  try{element.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});}catch{element.scrollIntoView();}
+ },120);
+}
+function setupPartyViewMode(){
+ const panel=$('partyModePanel');if(panel)panel.hidden=false;
+ const toggle=$('partyModeToggle');
+ if(toggle)toggle.onclick=()=>{
+  partyViewMode=partyViewMode==='auto'?'side':'auto';
+  localStorage.setItem('touch_party_view_mode',partyViewMode);
+  lastFocusKey='';lastFocusTransition++;
+  if(state)updatePartyViewMode();
+ };
+ const copy=$('partyCopyQuiz');
+ if(copy)copy.onclick=()=>{
+  const link=location.origin+'/join';
+  const copied=()=>{copy.textContent='✓ Quiz-Link kopiert';};
+  if(navigator.clipboard?.writeText)navigator.clipboard.writeText(link).then(copied).catch(()=>prompt('Quiz-Link für das zweite Gerät:',link));
+  else prompt('Quiz-Link für das zweite Gerät:',link);
+ };
+}
+
 let captions=[],gesturePoints=new Map(),gestureState={x:0,y:0,scale:1,rotation:0},gestureOrigin=null;
 const video=$('partyVideo'),container=$('partyYoutube'),screen=$('partyScene'),capt=$('partyCaption'),playBtn=$('partyEnable');
 video.addEventListener('error',()=>{
@@ -45,20 +92,21 @@ function podium(){
 }
 function updateScene(){
  if(!state)return;
- const phase=state.phase,haveVideo=state.video&&state.video.type!=='none';
- const film=phase==='film'&&haveVideo;
+ const phase=state.phase,source=onlineVideo(),haveVideo=source.type!=='none';
+ const film=phase==='film'&&haveVideo&&source.type!=='local';
  screen.hidden=film;
- video.hidden=!film||state.video.type==='youtube'||state.video.type==='icloud'||(state.video.type==='drive'&&cloudFallback);
- container.hidden=!film||state.video.type!=='youtube';
+ video.hidden=!film||source.type==='youtube'||source.type==='icloud'||(source.type==='drive'&&cloudFallback);
+ container.hidden=!film||source.type!=='youtube';
  const driveFrame=$('partyDrivePreview'),iCloudBox=$('partyCloudExternal');
- if(driveFrame)driveFrame.hidden=!(film&&state.video.type==='drive'&&cloudFallback);
- if(iCloudBox)iCloudBox.hidden=!(film&&state.video.type==='icloud');
- if(iCloudBox&&film&&state.video.type==='icloud')$('partyCloudLink').href=state.video.shareUrl||state.video.url;
- playBtn.hidden=!(film&&state.video.type!=='icloud'&&!(state.video.type==='drive'&&cloudFallback)&&(!activated||(state.playing&&((state.video.type==='youtube'&&ytPlayer&&ytReady&&ytPlayer.getPlayerState()!==1)||(state.video.type!=='youtube'&&video.paused)))));
+ if(driveFrame)driveFrame.hidden=!(film&&source.type==='drive'&&cloudFallback);
+ if(iCloudBox)iCloudBox.hidden=!(film&&source.type==='icloud');
+ if(iCloudBox&&film&&source.type==='icloud')$('partyCloudLink').href=source.shareUrl||source.url;
+ playBtn.hidden=!(film&&source.type!=='icloud'&&!(source.type==='drive'&&cloudFallback)&&(!activated||(state.playing&&((source.type==='youtube'&&ytPlayer&&ytReady&&ytPlayer.getPlayerState()!==1)||(source.type!=='youtube'&&video.paused)))));
  if(film){screenSignature='';return;}
  let html='';
  if(phase==='welcome')html=slide('Willkommen bei TOUCH LIVE','Die Dokumentation startet, sobald die Moderatorin bereit ist.','<small>Gemeinsam schauen und mitspielen – egal von welchem Ort.</small>');
- else if(phase==='film')html=slide('Noch keine Filmquelle','Die Moderatorin kann ihren YouTube-Link oder eine öffentliche MP4 eintragen.','<small>Für einen Film muss dieser online erreichbar sein.</small>');
+ else if(phase==='film'&&state.video?.type==='local')html=slide('Film läuft am HDMI-PC','Die lokale MP4 wird nicht ins Internet übertragen. Die Regie kann eine nicht gelistete YouTube-Version oder eine direkte Online-MP4 für Zuschauer in anderen Städten eintragen.','<small>Quiz und Spiele funktionieren hier weiterhin · oder auf /join.</small>');
+ else if(phase==='film')html=slide('Noch keine Online-Filmquelle','Die Regie kann einen nicht gelisteten YouTube-Link oder eine direkt erreichbare MP4 eintragen.','<small>Die Bildübertragung erfordert eine Online-Videoquelle.</small>');
  else if(phase==='gesture')html=slide('Multitouch trainieren!','Verschieben, Vergrößern und Drehen – das Spiel läuft rechts.');
  else if(phase==='zoom')html='<div class="partySceneInner egg-broadcast"><span class="eyebrow">KAPITEL 4 · MULTITOUCH-PRAXIS</span><h2>Multitouch-Challenge!</h2><img src="/easter-scene.svg" alt="Berglandschaft mit versteckter Katze"><p>Genauso wie in der Doku: Vergrößern mit zwei Fingern, Bild verschieben und das versteckte Detail antippen.</p><strong>'+(state.quiz?.remaining||0)+' Sekunden · '+(state.quiz?.foundCount||0)+' gefunden</strong></div>';
  else if(phase==='demo')html=slide('Quiz-Probelauf','Die Frage erscheint auf beiden Geräten.','<small>Testet jetzt gleichzeitig eure Antworten.</small>');
@@ -71,8 +119,8 @@ function updateScene(){
 }
 function stopPlayback(){try{if(!video.paused)video.pause();if(ytPlayer&&ytPlayer.pauseVideo)ytPlayer.pauseVideo();}catch{}}
 function playerTime(){
- try{if(state?.video?.type==='youtube')return ytPlayer&&ytReady?Number(ytPlayer.getCurrentTime())||0:null;
- if(state?.video?.type==='upload'||state?.video?.type==='url'||(state?.video?.type==='drive'&&!cloudFallback))return video.readyState>0&&Number.isFinite(video.currentTime)?video.currentTime:null;}catch{}
+ try{const source=onlineVideo();if(source.type==='youtube')return ytPlayer&&ytReady?Number(ytPlayer.getCurrentTime())||0:null;
+ if(source.type==='upload'||source.type==='url'||(source.type==='drive'&&!cloudFallback))return video.readyState>0&&Number.isFinite(video.currentTime)?video.currentTime:null;}catch{}
  return null;
 }
 function ytLoad(){
@@ -90,9 +138,9 @@ function createYt(){
  }catch(e){showError('YouTube konnte nicht geöffnet werden: '+e.message);}
 }
 function syncMovie(force=false){
- if(!state||state.phase!=='film'||!state.video||state.video.type==='none'){updateScene();return;}
+ if(!state||state.phase!=='film'||['none','local'].includes(onlineVideo().type)){stopPlayback();updateScene();return;}
  updateScene();
- const v=state.video,ref=v.type+':'+(v.url||v.id);
+ const v=onlineVideo(),ref=v.type+':'+(v.url||v.id);
  if(state.captionsAvailable&&lastCaptionRevision!==state.captionsRevision){lastCaptionRevision=state.captionsRevision;loadCaptions();}
  if(ref!==sourceRef){
  sourceRef=ref;localRevision=-1;cloudFallback=false;
@@ -181,11 +229,11 @@ function interaction(){
  part.innerHTML='<div class="centerstage partyWait"><div><span class="eyebrow">TOUCH LIVE</span><h2>'+(phase==='welcome'?'Die Sendung beginnt gleich.':'Film ansehen')+'</h2><p>Das Video läuft links. Quizfragen und Spiele erscheinen automatisch hier.</p></div></div>';
 }
 async function sendHostTick(ended=false){
- if(!host||!key||!state||state.phase!=='film'||tickInFlight)return;
+ if(!host||!key||!state||state.phase!=='film'||state.video?.type==='local'||tickInFlight)return;
  const t=playerTime();if(t===null)return;
  tickInFlight=true;
  try{
-  const actuallyPlaying=state.video.type==='youtube'?!!ytPlayer&&ytReady&&ytPlayer.getPlayerState()===1:!video.paused;
+  const actuallyPlaying=onlineVideo().type==='youtube'?!!ytPlayer&&ytReady&&ytPlayer.getPlayerState()===1:!video.paused;
   await api('/api/host/tick',{time:t,playing:ended?false:actuallyPlaying,ended},true);
  }catch(e){if(ended)showError(e.message);}finally{tickInFlight=false;}
 }
