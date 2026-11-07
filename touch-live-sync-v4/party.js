@@ -78,7 +78,7 @@ video.addEventListener('error',()=>{
  cloudFallback=true;const frame=$('partyDrivePreview');if(frame){frame.src=state.video.previewUrl||state.video.shareUrl;frame.hidden=false;}
  updateScene();showError('Google Drive öffnet die Vorschau. Sie kann nicht automatisch zur Quiz-Zeit synchronisiert werden; dafür einen direkten MP4-Link oder YouTube nutzen.');
 });
-let errorTimer=null,pollInFlight=false,tickInFlight=false,rejoinBusy=false,lastRejoinAt=0;
+let errorTimer=null,pollInFlight=false,tickInFlight=false,rejoinBusy=false,lastRejoinAt=0,ytWarnedShortId='';
 function showError(msg){const e=$('partyError');e.hidden=false;e.textContent=msg;clearTimeout(errorTimer);errorTimer=setTimeout(()=>e.hidden=true,10500);}
 async function api(path,body,authenticated=false){
  const headers={'Content-Type':'application/json'};
@@ -171,7 +171,21 @@ function createYt(){
  const slot=document.createElement('div');slot.id='partyYTEmbed';container.replaceChildren(slot);
  try{
  ytPlayer=new window.YT.Player('partyYTEmbed',{videoId:ytVideoId,playerVars:{autoplay:0,playsinline:1,controls:0,rel:0,cc_load_policy:0,enablejsapi:1,origin:location.origin},
- events:{onReady:()=>{ytReady=true;updateCaptionPreference();syncMovie(true);},onError:e=>showError('YouTube-Video kann hier nicht eingebettet werden (Fehler '+e.data+'). Nutze ein einbettbares Video oder MP4.'),onStateChange:e=>{if(host&&e.data===0&&state?.phase==='film')sendHostTick(true);}}});
+ events:{
+   onReady:()=>{ytReady=true;updateCaptionPreference();syncMovie(true);},
+   onAutoplayBlocked:()=>{activated=false;playBtn.hidden=false;showError('YouTube benötigt auf diesem Gerät einmal einen Klick auf „Film mit Ton aktivieren“.');},
+   onError:e=>showError('YouTube-Video kann hier nicht eingebettet werden (Fehler '+e.data+'). Nutze ein einbettbares Video oder MP4.'),
+   onStateChange:e=>{
+    if(host&&e.data===1&&state?.phase==='film'){
+     const dur=Number(ytPlayer?.getDuration?.())||0;
+     if(dur>0&&dur<2781&&ytWarnedShortId!==ytVideoId){
+      ytWarnedShortId=ytVideoId;
+      showError('Dieses YouTube-Video ist nur '+sec(dur)+' lang. Die TOUCH-LIVE-Quizfragen reichen bis 46:21. Bitte prüfe, ob du die vollständige Dokumentation verlinkt hast.');
+     }
+    }
+    if(host&&e.data===0&&state?.phase==='film')sendHostTick(true);
+   }
+  }});
  }catch(e){showError('YouTube konnte nicht geöffnet werden: '+e.message);}
 }
 function syncMovie(force=false){
