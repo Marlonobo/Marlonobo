@@ -215,6 +215,7 @@ function interaction(){
   return;
  }
  if(q){
+  if(!q.accepting){part.innerHTML='<div class="centerstage partyWait"><div><h2>Schau wieder auf den Film.</h2><p>Die Antwortzeit ist vorbei. Die nächste Frage erscheint automatisch.</p></div></div>';return;}
   const answered=p?.choice!==null&&p?.choice!==undefined;
   const allow=!!participantId&&q.accepting&&!answered;
   part.innerHTML='<div class="partyQuestion"><div class="between"><span class="chip">'+(q.type==='zoom'?'ZOOM-SPIEL':'QUIZFRAGE '+(Number(q.index)+1)+' / '+q.total)+'</span><span class="timer" id="partyTimer">'+q.remaining+' s</span></div><h3>'+safe(q.q)+'</h3>'+(q.type==='zoom'?'<div class="partyGesture" id="partyGesture"><div class="partyGesturePic" id="partyGestureImage">'+landscape()+'</div></div><p class="small" id="partyGestureValues">Zoome, um die Katze zu entdecken.</p><button id="partyGestureReset" style="margin-bottom:14px">Bild zurücksetzen</button>':'')+'<div class="partyAnswerGrid">'+q.a.map((answer,i)=>'<button class="partyAnswer'+(answered&&p.choice===i?' selected':'')+'" data-choice="'+i+'" '+(allow?'':'disabled')+'><b>'+String.fromCharCode(65+i)+'</b><span>'+safe(answer)+'</span></button>').join('')+'</div><p class="partyHint" style="margin-top:15px">'+(!participantId?'Gib oben deinen Namen ein, um mitzumachen.':answered?'Antwort gespeichert! Du kannst weiter auf den Film schauen.':!q.accepting?'Die Antwortzeit ist vorbei.':'Wähle jetzt eine Antwort – das Quiz wird automatisch ausgewertet.')+'</p></div>';
@@ -226,7 +227,7 @@ function interaction(){
   const ranking=(state.ranking||[]).slice(0,6).map((u,i)=>'<tr><td>'+(i+1)+'</td><td>'+safe(u.name)+'</td><td>'+u.score+'</td></tr>').join('');
   part.innerHTML='<div class="partyFinal"><span class="eyebrow">ERGEBNISSE & HANDOUT</span><h2>Vielen Dank fürs Mitmachen!</h2><p>Dein Punktestand</p><div class="partyScore">'+(p?.score===null||p?.score===undefined?'–':p.score)+' Punkte</div><table class="partyRanking"><thead><tr><th>Platz</th><th>Name</th><th>Punkte</th></tr></thead><tbody>'+ranking+'</tbody></table><a href="/#handout" class="btn primary" style="margin-top:20px">Lernfeld-14-Handout ausfüllen</a></div>';return;
  }
- part.innerHTML='<div class="centerstage partyWait"><div><span class="eyebrow">TOUCH LIVE</span><h2>'+(phase==='welcome'?'Die Sendung beginnt gleich.':'Film ansehen')+'</h2><p>Das Video läuft links. Quizfragen und Spiele erscheinen automatisch hier.</p></div></div>';
+ part.innerHTML='<div class="centerstage partyWait"><div><span class="eyebrow">TOUCH LIVE</span><h2>'+(phase==='welcome'?'Die Sendung beginnt gleich.':'Schau auf den Film.')+'</h2><p>Quizfragen und Spiele erscheinen hier automatisch und werden auf dem Server ausgewertet.</p></div></div>';
 }
 async function sendHostTick(ended=false){
  if(!host||!key||!state||state.phase!=='film'||state.video?.type==='local'||tickInFlight)return;
@@ -240,10 +241,10 @@ async function sendHostTick(ended=false){
 function connectButtons(){
  $('partyEnable').onclick=async()=>{
   activated=true;playBtn.textContent='▶ Ton erneut aktivieren';playBtn.hidden=true;
-  try{if(state?.video?.type==='youtube'){if(ytPlayer&&ytReady){ytPlayer.unMute();ytPlayer.playVideo();if(!state.playing)ytPlayer.pauseVideo();}}
+  try{if(onlineVideo().type==='youtube'){if(ytPlayer&&ytReady){ytPlayer.unMute();ytPlayer.playVideo();if(!state.playing)ytPlayer.pauseVideo();}}
    else if(video.src){video.muted=false;await video.play();if(!state?.playing)video.pause();}}
   catch(e){playBtn.hidden=false;showError('Ton oder Autoplay wurde vom Browser blockiert. Tippe erneut auf „Film mit Ton aktivieren“.');}
-  if(host&&state?.phase==='film'&&!state.playing){await hostCommand('play');}
+  if(host&&state?.phase==='film'&&!state.playing&&state.video?.type!=='local'){await hostCommand('play');}
  };
  $('partyFullscreen').onclick=()=>{$('partyScreen').requestFullscreen?.().catch(()=>{showError('Vollbild wurde vom Browser nicht erlaubt.');});};
  video.addEventListener('ended',()=>{if(host&&state?.phase==='film')sendHostTick(true);});
@@ -253,7 +254,8 @@ function connectButtons(){
   $('partyYouTubeForm').onsubmit=async e=>{
    e.preventDefault();const link=$('partySource').value.trim();
    const yt=/^(https:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//i.test(link);
-   await hostCommand(yt?'videoYoutube':'videoLink',{url:link});
+   const remote=state?.video?.type==='local';
+   await hostCommand(remote?(yt?'remoteVideoYoutube':'remoteVideoLink'):(yt?'videoYoutube':'videoLink'),{url:link});
   };
  }
  const copyFriend=$('partyCopyFriend');if(copyFriend)copyFriend.onclick=()=>{const url=location.origin+'/watch';if(navigator.clipboard?.writeText)navigator.clipboard.writeText(url).then(()=>{copyFriend.textContent='✓ Zuschauerlink kopiert';}).catch(()=>prompt('Diesen Link verschicken:',url));else prompt('Diesen Link verschicken:',url);};
@@ -265,7 +267,7 @@ function connectButtons(){
    participantId=r.id;participantName=name;
    localStorage.setItem(idStore,participantId);localStorage.setItem(nameStore,participantName);
    $('partyJoinForm').hidden=true;$('participantTitle').textContent='Hallo, '+name+'!';
-   quizSignature='';await poll();
+   quizSignature='';lastFocusKey='';await poll();
   }catch(e){showError('Anmeldung fehlgeschlagen: '+e.message);}
  };
 }
@@ -276,11 +278,11 @@ async function hostCommand(cmd,body={}){
 }
 function connectedUI(){
  $('hostUnlock').hidden=true;$('partyMain').hidden=false;
- $('hostPanel').hidden=!host;$('partyRole').textContent=host?'Deine Regie · Film & Quiz':'Deine Freundin · Zuschauen & Quiz';
+ $('hostPanel').hidden=!host;$('partyRole').textContent=host?'Regie · Film & Quiz':'Online zuschauen & mitspielen';
  $('partyTitle').innerHTML=host?'Du steuerst <em>die Doku.</em>':'Ihr schaut <em>zusammen.</em>';
  $('partySub').textContent=host?'Du startest den Film, pausierst und öffnest Quiz oder Gesten-Spiel. Deine Freundin sieht die gleiche Filmstelle. Du kannst selbst beim Quiz mitmachen.':'Der Film läuft synchron zum Gerät deines Freundes. Du kannst Fragen beantworten und das Gesten-Spiel nutzen, aber die Sendung nicht steuern.';
  if(participantName&&participantId){$('partyJoinForm').hidden=true;$('participantTitle').textContent='Hallo, '+participantName+'!';$('joinStatus').textContent='Du bist beim gemeinsamen Quiz angemeldet.';}else $('partyJoinForm').hidden=false;
- connectButtons();poll();
+ connectButtons();setupPartyViewMode();poll();
 }
 async function poll(){
  if(pollInFlight||$('partyMain').hidden)return;
@@ -291,7 +293,7 @@ async function poll(){
   const p=$('partyStatus');p.textContent=({'welcome':'Wartet auf Start','film':'Film läuft','demo':'Testquiz','zoom':'Zoom-Spiel','gesture':'Gesten-Spiel','results':'Siegerehrung','handout':'Handout','end':'Abschluss'})[state.phase]||state.phase;
   $('partyTime').textContent=sec(state.time)+' / 51:47 · '+state.participants+' angemeldet';
   const titleNode=$('partyFilmTitle');if(titleNode)titleNode.textContent='🎬 '+(state.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation');
-  syncMovie();interaction();
+  syncMovie();interaction();updatePartyViewMode();
  }catch(e){showError('Keine Verbindung zur gemeinsamen Sitzung: '+e.message);}
  finally{pollInFlight=false;}
 }
@@ -306,5 +308,5 @@ function init(){
 }
 init();
 setInterval(poll,1100);
-setInterval(()=>{if(host&&state?.phase==='film'&&state?.video?.type!=='none')sendHostTick();},1300);
+setInterval(()=>{if(host&&state?.phase==='film'&&state?.video?.type!=='none'&&state?.video?.type!=='local')sendHostTick();},1300);
 })();
