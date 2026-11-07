@@ -485,12 +485,16 @@ function tvRemoteKeydown(e){
 window.addEventListener('keydown',tvRemoteKeydown);
 function tvView(){
  if(!tvKey){app.innerHTML='<div class="wrap page"><h1>Beamer verbinden</h1><p>Bitte den Beamerlink aus der Admin-Ansicht öffnen.</p><label>Beamer-Zugangsschlüssel</label><input type="password" id="tvInput"><p></p><button class="primary" id="tvSubmit">Verbinden</button></div>';el('tvSubmit').onclick=()=>{tvKey=el('tvInput').value;sessionStorage.setItem('touch_tv_key',tvKey);localStorage.setItem('touch_tv_key',tvKey);tvView();};return;}
- app.innerHTML='<div id="tvApp"><div id="tvScene" class="tvScene"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><iframe id="cloudFrame" title="Google Drive Filmvorschau" allow="autoplay; fullscreen; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvFullscreen" type="button" tabindex="0">⛶ Vollbild</button><button id="tvCloudOpen" type="button" tabindex="0" hidden>☁ iCloud-Datei öffnen</button><button id="tvCaptionSync" type="button" tabindex="0" hidden>⏱ Untertitel synchronisieren</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><div id="tvSpotifyDock" class="tvSpotifyDock" hidden aria-label="Optionale Spotify-Willkommensmusik"></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
+ app.innerHTML='<div id="tvApp"><div id="tvScene" class="tvScene"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><iframe id="cloudFrame" title="Google Drive Filmvorschau" allow="autoplay; fullscreen; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvFullscreen" type="button" tabindex="0">⛶ Vollbild</button><button id="tvSpotifyPlay" type="button" tabindex="0" hidden>♫ Willkommensmusik ▶</button><button id="tvCloudOpen" type="button" tabindex="0" hidden>☁ iCloud-Datei öffnen</button><button id="tvCaptionSync" type="button" tabindex="0" hidden>⏱ Untertitel synchronisieren</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><div id="tvSpotifyDock" class="tvSpotifyDock" hidden aria-label="Optionale Spotify-Willkommensmusik"></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
  videoEl=el('tvVideo');
  // Never intentionally start the TV movie muted.
  videoEl.muted=false;videoEl.defaultMuted=false;videoEl.volume=1;
  el('tvPlay').onclick=tvEnablePlayback;
  el('tvFullscreen').onclick=()=>tvRemoteFullscreen(false);
+ el('tvSpotifyPlay').onclick=()=>{
+  if(spotifyController){try{spotifyController.play();tvControlsVisible(false);}catch{tvControlsVisible(true);}}
+  else{const frame=el('tvSpotifyDock')?.querySelector('iframe');if(frame){frame.focus();tvControlsVisible(false);}else tvControlsVisible(true);}
+ };
  el('tvHideControls').onclick=()=>tvControlsVisible(false);
  el('tvCloudOpen').onclick=()=>{if(state?.video?.type==='icloud'){const url=state.video.shareUrl||state.video.url;if(url)window.open(url,'_blank','noopener');}};
  el('tvCaptionSync').onclick=()=>{
@@ -526,6 +530,7 @@ function syncWelcomeMusic(){
  const dock=el('tvSpotifyDock'),music=state?.welcomeMusic||{};
  if(!dock)return;
  const wanted=state?.phase==='welcome'&&music.on===true&&['track','album','playlist'].includes(music.type)&&/^[A-Za-z0-9]{22}$/.test(music.id||'');
+ const musicButton=el('tvSpotifyPlay');if(musicButton)musicButton.hidden=!wanted;
  if(!wanted){
   if(spotifyController&&spotifyWanted){try{spotifyController.pause();}catch{}}
   // For a plain Spotify iframe fallback, removing the iframe is necessary to stop its audio.
@@ -569,6 +574,8 @@ function syncWelcomeMusic(){
  };
  script.onerror=()=>{spotifyScriptLoading=false;if(spotifyUri===uri)mount();};
  document.head.appendChild(script);
+ // LG's older WebKit may silently fail to load external APIs without firing onerror.
+ setTimeout(()=>{if(spotifyScriptLoading&&spotifyUri===uri){spotifyScriptLoading=false;mount();}},5500);
 }
 function tvDisplay(){
  if(!state||role!=='tv'||!el('tvScene'))return;
