@@ -13,7 +13,7 @@ fs.mkdirSync(DIR,{recursive:true});
 const USERS_FILE=path.join(DIR,'users.json'),STATE_FILE=path.join(DIR,'live-state.json'), VIDEO_FILE=path.join(DIR,'touchscreen.mp4'), SUB_FILE=path.join(DIR,'untertitel.vtt'), QUESTIONS_FILE=path.join(DIR,'custom-questions.json');
 try{const saved=JSON.parse(fs.readFileSync(QUESTIONS_FILE,'utf8'));if(Array.isArray(saved)&&saved.length>=1&&saved.length<=50)Q.splice(0,Q.length,...saved);}catch{}
 const def=()=>({phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,resultsAt:0,clockSource:'tv',lastHostTick:0,revision:0});
-let s=def(), users=new Map(), upload=null,feedback=[];
+let s=def(), users=new Map(), upload=null,feedback=[],cloudManifest=null;
 try{s=Object.assign(def(),JSON.parse(fs.readFileSync(STATE_FILE,'utf8')));}catch{}
 try{users=new Map(Object.entries(JSON.parse(fs.readFileSync(USERS_FILE,'utf8'))));}catch{}
 let usersTimer=null;function saveUsers(){clearTimeout(usersTimer);usersTimer=setTimeout(()=>fsp.writeFile(USERS_FILE,JSON.stringify(Object.fromEntries(users))).catch(console.error),400);}
@@ -22,6 +22,7 @@ async function hydrateCloudMedia(){
  if(!S3.enabled)return;
  try{const manifest=await S3.manifest();
  if(!manifest)return;
+ cloudManifest=manifest;
  if(manifest.video&&(s.video.type==='none'||s.video.storage==='s3'))s.video={type:'url',url:'/api/storage/video',id:null,storage:'s3'};
  if(manifest.captions)s.cloudCaptions=true;
  await persist();
@@ -96,7 +97,7 @@ async function handler(req,res){
  if(m==='GET'&&(p==='/party.js'||p==='/party.css'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
  if(m==='GET'&&p==='/api/state')return send(res,200,publicState(u.searchParams.get('id')));
  if(m==='GET'&&p==='/api/health')return send(res,200,{ok:true,questionCount:Q.length,now:Date.now(),cloudStorageConfigured:S3.enabled});
- if(m==='GET'&&p==='/api/storage/status')return send(res,200,{configured:S3.enabled,durable:S3.enabled,videoReady:s.video.storage==='s3',subtitlesReady:!!s.cloudCaptions,maximumBytes:10*1024**3,partSize:16*1024**2});
+ if(m==='GET'&&p==='/api/storage/status')return send(res,200,{configured:S3.enabled,durable:S3.enabled,videoReady:!!cloudManifest?.video,subtitlesReady:!!cloudManifest?.captions,maximumBytes:10*1024**3,partSize:16*1024**2});
  if((m==='GET'||m==='HEAD')&&p==='/api/storage/video'){
   if(!S3.enabled)return send(res,503,{error:'Cloud-Speicher nicht eingerichtet.'});
   res.writeHead(302,{'Location':S3.videoUrl(),'Cache-Control':'private, no-store','Referrer-Policy':'no-referrer'});return res.end();
@@ -127,7 +128,7 @@ async function handler(req,res){
   await S3.complete(b.uploadId,parts);
   let config={};try{config=await S3.manifest()||{};}catch(e){console.error(e.message);}
   config.video={name:String(b.name||'touchscreen.mp4').slice(0,120),size,uploadedAt:new Date().toISOString()};
-  await S3.putManifest(config);
+  await S3.putManifest(config);cloudManifest=config;
   s.video={type:'url',url:'/api/storage/video',id:null,storage:'s3'};s.revision++;await persist();
   return send(res,200,{ok:true,videoReady:true,durable:true});
  }
@@ -215,6 +216,7 @@ async function handler(req,res){
  else if(cmd==='videoYoutube'){const id=youtubeId(b.url);if(!id)return send(res,400,{error:'Kein gueltiger YouTube-Link'});s.video={type:'youtube',id,url:'https://www.youtube.com/watch?v='+id};}
  else if(cmd==='videoLink'){try{const link=new URL(b.url);if(link.protocol!=='https:')throw Error();s.video={type:'url',url:link.toString(),id:null};}catch{return send(res,400,{error:'Bitte HTTPS-MP4-Link eingeben.'});}}
  else if(cmd==='videoUpload'){if(!fs.existsSync(VIDEO_FILE))return send(res,404,{error:'Noch kein Video hochgeladen'});s.video={type:'upload',url:'/media/video',id:null};}
+ else if(cmd==='videoStored'){if(!S3.enabled||!cloudManifest?.video)return send(res,404,{error:'Noch kein dauerhaft gespeichertes Video vorhanden.'});s.video={type:'url',url:'/api/storage/video',id:null,storage:'s3'};}
  else if(cmd==='captionOffset'){const v=Number(b.value);if(!Number.isFinite(v)||Math.abs(v)>3600)return send(res,400,{error:'Offset ungueltig'});s.subtitleOffset=v;}
  else if(cmd==='quizOffset'){const v=Number(b.value);if(!Number.isFinite(v)||Math.abs(v)>3600)return send(res,400,{error:'Offset ungueltig'});s.quizOffset=v;}
  else if(cmd==='subtitles')s.subtitles=!!b.value;
@@ -243,7 +245,7 @@ async function handler(req,res){
  let v;try{v=convertSubtitles(b.vtt);}catch(e){return send(res,400,{error:e.message});}
  if(Buffer.byteLength(v)>1200000)return send(res,413,{error:'Untertitel sind zu groß.'});
  await fsp.writeFile(SUB_FILE,v,'utf8');
- if(S3.enabled){await S3.put(S3.CAPTIONS,v,'text/vtt');let manifest={};try{manifest=await S3.manifest()||{};}catch{}manifest.captions={name:String(b.name||'untertitel.vtt').slice(0,120),uploadedAt:new Date().toISOString()};await S3.putManifest(manifest);s.cloudCaptions=true;}
+ if(S3.enabled){await S3.put(S3.CAPTIONS,v,'text/vtt');let manifest={};try{manifest=await S3.manifest()||{};}catch{}manifest.captions={name:String(b.name||'untertitel.vtt').slice(0,120),uploadedAt:new Date().toISOString()};await S3.putManifest(manifest);cloudManifest=manifest;s.cloudCaptions=true;}
  s.captionsRevision=(s.captionsRevision||0)+1;s.revision++;await persist();return send(res,200,{ok:true,durable:S3.enabled});
 
  }
