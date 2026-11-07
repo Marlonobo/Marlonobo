@@ -344,11 +344,27 @@ async function handler(req,res){
  const b=await read(req),cmd=b.cmd;
  if(p==='/api/remote'&&s.video?.type!=='local'&&new Set(['welcome','start','pause','play','seek','restartVideo','gestureEnd','zoomEnd']).has(cmd)){s.clockSource='host';s.lastHostTick=Date.now();}
  if(p==='/api/admin'&&new Set(['welcome','start','pause','play','seek','restartVideo']).has(cmd)){s.clockSource='tv';s.lastHostTick=0;}
- if(p==='/api/remote'&&!new Set(['welcome','start','pause','play','seek','restartVideo','demo','demoNext','results','handout','end','gestureStart','gestureEnd','zoomStart','zoomEnd','videoYoutube','videoLink','remoteVideoYoutube','remoteVideoLink','videoStored','musicOn','musicOff']).has(cmd))return unauthorized(res);
+ if(p==='/api/remote'&&!new Set(['welcome','start','pause','play','seek','restartVideo','demo','demoNext','results','handout','end','gestureStart','gestureEnd','zoomStart','zoomEnd','videoYoutube','videoLink','startOnline','remoteVideoYoutube','remoteVideoLink','videoStored','musicOn','musicOff']).has(cmd))return unauthorized(res);
  if(cmd==='start'&&s.video?.type==='local'&&(!localMedia.lastSeen||Date.now()-localMedia.lastSeen>25000))return send(res,409,{error:'Lokale MP4 am HDMI-PC noch nicht bereit. Öffne den Beamerlink auf dem Windows-PC und wähle dort die MP4-Datei.'});
  if(cmd==='reloadPresentation'){if(!['welcome','end','handout'].includes(s.phase))return send(res,409,{error:'Fernseher nur vor oder nach der Vorführung neu laden.'});s.tvReloadRequest=(s.tvReloadRequest||0)+1;}
  else if(cmd==='welcome'){s.phase='welcome';s.time=0;s.playing=false;if(s.welcomeMusic)s.welcomeMusic.on=false;}
- else if(cmd==='start'){s.phase='film';s.time=0;s.playing=true;s.zoomDone=false;s.resultsAt=0;if(s.welcomeMusic)s.welcomeMusic.on=false;}
+ else if(cmd==='startOnline'){
+   // Shared online watch is distinct from an HDMI-only screening. Without a
+   // browser-readable source, do not fake a stream or ask for a TV file.
+   const current=s.video||{type:'none'};
+   const mirror=s.remoteVideo||{type:'none'};
+   const canStream=v=>v&&['youtube','url','upload'].includes(v.type)&&typeof v.url==='string'&&!!v.url;
+   let chosen=canStream(current)?current:canStream(mirror)?{...mirror}:null;
+   if(!chosen&&S3.enabled&&cloudManifest?.video)chosen={type:'url',url:'/api/storage/video',id:null,storage:'s3'};
+   if(!chosen)return send(res,409,{error:'Für „Zusammen schauen“ fehlt ein Online-Film. Lade die MP4 in deinen Cloud-Speicher hoch oder hinterlege einen YouTube-/direkten HTTPS-MP4-Link. Eine lokale HDMI-MP4 ist in anderen Städten nicht sichtbar.'});
+   const promoted=!canStream(current);
+   if(promoted)s.video=chosen;
+   s.clockSource='host';s.lastHostTick=Date.now();
+   s.phase='film';s.time=0;s.playing=true;s.zoomDone=false;s.zoomStart=0;s.resultsAt=0;
+   if(s.welcomeMusic)s.welcomeMusic.on=false;
+   if(promoted&&S3.enabled)await saveDurableMediaSettings();
+  }
+  else if(cmd==='start'){s.phase='film';s.time=0;s.playing=true;s.zoomDone=false;s.resultsAt=0;if(s.welcomeMusic)s.welcomeMusic.on=false;}
  else if(cmd==='restartVideo'){s.phase='film';s.time=0;s.playing=false;s.zoomDone=false;s.resultsAt=0;s.zoomStart=0;if(s.welcomeMusic)s.welcomeMusic.on=false;}
  else if(cmd==='pause')s.playing=false;
  else if(cmd==='play'){if(s.phase!=='film')s.phase='film';s.playing=true;}
