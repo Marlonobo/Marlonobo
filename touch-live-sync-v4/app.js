@@ -374,19 +374,30 @@ function tvRemoteKeydown(e){
 window.addEventListener('keydown',tvRemoteKeydown);
 function tvView(){
  if(!tvKey){app.innerHTML='<div class="wrap page"><h1>Beamer verbinden</h1><p>Bitte den Beamerlink aus der Admin-Ansicht öffnen.</p><label>Beamer-Zugangsschlüssel</label><input type="password" id="tvInput"><p></p><button class="primary" id="tvSubmit">Verbinden</button></div>';el('tvSubmit').onclick=()=>{tvKey=el('tvInput').value;sessionStorage.setItem('touch_tv_key',tvKey);localStorage.setItem('touch_tv_key',tvKey);tvView();};return;}
- app.innerHTML='<div id="tvApp"><div id="tvScene" class="tvScene"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvFullscreen" type="button" tabindex="0">⛶ Vollbild</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
+ app.innerHTML='<div id="tvApp"><div id="tvScene" class="tvScene"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><iframe id="cloudFrame" title="Google Drive Filmvorschau" allow="autoplay; fullscreen; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><div id="cloudPlaybackInfo" class="cloudPlaybackInfo" hidden></div><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvFullscreen" type="button" tabindex="0">⛶ Vollbild</button><button id="tvCloudOpen" type="button" tabindex="0" hidden>☁ iCloud-Datei öffnen</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
  videoEl=el('tvVideo');
  // Never intentionally start the TV movie muted.
  videoEl.muted=false;videoEl.defaultMuted=false;videoEl.volume=1;
  el('tvPlay').onclick=tvEnablePlayback;
  el('tvFullscreen').onclick=()=>tvRemoteFullscreen(false);
  el('tvHideControls').onclick=()=>tvControlsVisible(false);
+ el('tvCloudOpen').onclick=()=>{if(state?.video?.type==='icloud'){const url=state.video.shareUrl||state.video.url;if(url)window.open(url,'_blank','noopener');}};
  tvControlsVisible(true);
  // Start the browser-sized cinematic layout immediately; attempt native fullscreen.
  // TV firmware may reject native fullscreen without OK.
  if(!tvAutoCinemaTried){tvAutoCinemaTried=true;tvRemoteFullscreen(true);}
  setTimeout(()=>{if(role==='tv'&&!tvSoundBlocked)tvControlsVisible(false);},6500);
  videoEl.addEventListener('loadedmetadata',()=>{videoEl.muted=false;videoEl.volume=1;});
+ videoEl.addEventListener('error',()=>{
+  if(role!=='tv'||state?.video?.type!=='drive'||state.phase!=='film'||videoEl.getAttribute('src')!==state.video.url)return;
+  const iframe=el('cloudFrame'),notice=el('cloudPlaybackInfo');
+  videoEl.style.display='none';
+  if(iframe){iframe.src=state.video.previewUrl||state.video.shareUrl;iframe.style.display='block';}
+  if(notice){notice.hidden=false;notice.textContent='Google Drive zeigt jetzt die Dateivorschau. Starte das Video darin mit der Fernbedienung. Automatisches Pausieren und die exakte Quiz-Synchronisierung sind in diesem Vorschau-Modus nicht möglich.';}
+  tvControlsVisible(false);
+ });
+ videoEl.addEventListener('canplay',()=>{if(state?.video?.type==='drive'){const notice=el('cloudPlaybackInfo');if(notice){notice.hidden=true;notice.textContent='';}}});
+
  videoEl.addEventListener('timeupdate',()=>{updateCaption();});
  videoEl.addEventListener('ended',()=>{if(state?.phase==='film')sendTick(false,true);});
 }
@@ -412,9 +423,20 @@ function ensureMedia(){
  const video=state.video,ref=video.type+':'+video.url;
  if(state.captionsAvailable&&lastCaptionRevision!==state.captionsRevision){lastCaptionRevision=state.captionsRevision;fetchCaptions();}
  if(ref!==mediaType){mediaType=ref;subtitles=[];lastRevision=-1;tvSoundBlocked=false;
+  const iframe=el('cloudFrame'),notice=el('cloudPlaybackInfo'),external=el('tvCloudOpen');
+  if(iframe){iframe.style.display='none';iframe.removeAttribute('src');}
+  if(notice){notice.hidden=true;notice.textContent='';}
+  if(external)external.hidden=video.type!=='icloud';
  if(ytPlayer){try{ytPlayer.destroy();}catch{}ytPlayer=null;}el('youtubeTarget').style.display='none';videoEl.style.display='none';videoEl.pause();
  if(video.type==='youtube'){el('youtubeTarget').style.display='block';loadYouTube(video.id);}
- else if(video.type==='upload'||video.type==='url'){videoEl.style.display='block';videoEl.muted=false;videoEl.volume=1;videoEl.src=video.url;videoEl.load();fetchCaptions();}
+ else if(video.type==='drive'||video.type==='upload'||video.type==='url'){
+  videoEl.style.display='block';videoEl.muted=false;videoEl.volume=1;videoEl.src=video.url;videoEl.load();fetchCaptions();
+  if(video.type==='drive'){const notice=el('cloudPlaybackInfo');if(notice){notice.hidden=false;notice.textContent='Google Drive: Direktstream wird geprüft …';}}
+ }
+ else if(video.type==='icloud'){
+  const notice=el('cloudPlaybackInfo');if(notice){notice.hidden=false;notice.textContent='iCloud Drive bietet hier keinen sicher steuerbaren MP4-Stream. Wähle „iCloud-Datei öffnen“ per Fernbedienung. Für automatische Quiz-Zeitmarken nutze einen direkten MP4-Link oder YouTube.';}
+  tvControlsVisible(true);
+ }
  }
  if(state.video.type==='youtube'){
   if(ytPlayer){
@@ -426,6 +448,9 @@ function ensureMedia(){
     else if(!state.playing)ytPlayer.pauseVideo();
    }catch{tvShowSoundPrompt();}
   }
+ }else if(video.type==='icloud'||(video.type==='drive'&&el('cloudFrame')?.style.display==='block')){
+  // Shared cloud viewers provide no reliable currentTime API; never send false video clocks.
+  updateCaption();
  }else if(videoEl.src){
   videoEl.muted=false;
   const cur=videoEl.currentTime||0;
@@ -455,7 +480,9 @@ function makeYouTube(id){
   }
  });
 }
-async function sendTick(playing,ended=false){if(role!=='tv'||!tvKey||state?.phase!=='film')return;try{const t=state.video.type==='youtube'&&ytPlayer?ytPlayer.getCurrentTime():videoEl?.currentTime||0;await api('/api/tick','POST',{time:t,playing,ended},tvKey);}catch{}}
+async function sendTick(playing,ended=false){if(role!=='tv'||!tvKey||state?.phase!=='film')return;
+ if(state.video.type==='icloud'||(state.video.type==='drive'&&el('cloudFrame')?.style.display==='block'))return;
+ try{const t=state.video.type==='youtube'&&ytPlayer?ytPlayer.getCurrentTime():videoEl?.currentTime||0;await api('/api/tick','POST',{time:t,playing,ended},tvKey);}catch{}}
 function updateCaption(){
  const node=el('captionLayer');if(!node)return;
  if(!state?.subtitles||!state?.captionsAvailable){node.style.display='none';return;}
