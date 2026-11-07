@@ -147,7 +147,7 @@ function bindAdmin(){
   const prev=(()=>{try{return JSON.parse(localStorage.getItem('touch_last_cloud_source')||'null');}catch{return null;}})();
   if(!prev?.url)return;
   el('cloudProvider').value=prev.provider||'drive';el('cloudUrl').value=prev.url;
-  try{await api('/api/admin','POST',{cmd:'videoCloud',provider:prev.provider,url:prev.url},adminKey);el('cloudSaveStatus').textContent='✓ Letzte Cloud-Quelle wiederhergestellt.';await poll(true);}catch(e){el('cloudSaveStatus').textContent='Wiederherstellen fehlgeschlagen: '+e.message;}
+  try{await api('/api/admin','POST',{cmd:'videoCloud',provider:prev.provider,url:prev.url},adminKey);rememberMediaSource('videoCloud',{provider:prev.provider,url:prev.url});el('cloudSaveStatus').textContent='✓ Letzte Cloud-Quelle wiederhergestellt.';await poll(true);}catch(e){el('cloudSaveStatus').textContent='Wiederherstellen fehlgeschlagen: '+e.message;}
  };
  el('youtubeForm').onsubmit=async e=>{
   e.preventDefault();const url=el('youtubeInput').value.trim(),title=el('videoTitleInput').value.trim();
@@ -168,7 +168,7 @@ function bindAdmin(){
   try{
    await api('/api/admin','POST',{cmd:'videoYoutube',url:x.url},adminKey);
    if(x.title)await api('/api/admin','POST',{cmd:'videoTitle',value:x.title},adminKey);
-   el('youtubeSaveStatus').textContent='✓ Der letzte YouTube-Link wurde wiederhergestellt.';await poll(true);
+   rememberMediaSource('videoYoutube',{url:x.url});el('youtubeSaveStatus').textContent='✓ Der letzte YouTube-Link wurde wiederhergestellt.';await poll(true);
   }catch(err){el('youtubeSaveStatus').textContent='Wiederherstellung fehlgeschlagen: '+err.message;}
  };
  el('subtitleQuickToggle').onclick=async()=>{
@@ -183,7 +183,7 @@ function bindAdmin(){
   catch(err){alert('MP4-Link nicht gespeichert: '+err.message);}
  };
  el('copyTv').onclick=()=>copy(ORIGIN+'#tv?key='+encodeURIComponent(adminInfo?.tvKey||''));
- el('copyStudent').onclick=()=>copy(ORIGIN+'#join');
+ el('copyStudent').onclick=()=>copy(location.origin+'/join');
  el('copyTeacher').onclick=()=>copy(ORIGIN+'#teacher');
  el('saveSubOffset').onclick=()=>adminAction('captionOffset',{value:Number(el('subOffset').value)});
  el('saveQuizOffset').onclick=()=>adminAction('quizOffset',{value:Number(el('quizOffset').value)});
