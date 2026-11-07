@@ -6,11 +6,11 @@ function button(text,action,tip=''){return '<button type="button" class="egg-btn
 function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
 function mount(container,options={}){
  if(!container)return null;
- const onFind=typeof options.onFind==='function'?options.onFind:async()=>({ok:true,points:240});
- const hints=['Tipp 1: Ein Tier versteckt sich nicht auf dem Boden.','Tipp 2: Suche in der Nähe der Berghütte.','Tipp 3: Schau im kleinen Dachfenster nach.'];
+ const onFind=typeof options.onFind==='function'?options.onFind:async()=>({ok:true});
+ const hints=['Tipp 1: Das Easter Egg ist nicht im See.','Tipp 2: Schau genauer bei der Berghütte.','Tipp 3: Ein kleines Dachfenster ist besonders interessant.'];
  let z=1,pan={x:0,y:0},pointers=new Map(),dragging=false,pinch=null,down=null,found=!!options.found,disabled=!!options.disabled,
- remaining=typeof options.remaining==='number'?options.remaining:75,trying=false,hintIndex=-1,misses=0,soundOn=true,audioCtx=null,hasPanned=false,hasZoomed=false;
- container.innerHTML='<div class="egg-game"><div class="egg-topline"><div><span class="egg-kicker">KAPITEL 4 · MULTITOUCH IN DER PRAXIS</span><h3>Mission: Entdecke den versteckten Touchpunkt!</h3><p>Ein verstecktes Easter Egg wartet auf diesem virtuellen Touchscreen. Nutze die Gesten aus der Doku: zoomen, verschieben und antippen.</p></div><div class="egg-game-clock"><span>ZEIT</span><strong data-egg-time>'+remaining+' s</strong></div></div><div class="egg-lesson"><span data-step="zoom">① <b>ZOOMEN</b><small>Zwei Finger auseinanderziehen</small></span><span data-step="pan">② <b>VERSCHIEBEN</b><small>Bild mit einem Finger bewegen</small></span><span data-step="tap">③ <b>ANTIPPEN</b><small>Easter Egg direkt auswählen</small></span></div><div class="egg-hardware"><div class="egg-hardware-top"><span>TOUCH LIVE · MULTITOUCH-LAB</span><span class="egg-hardware-camera" aria-hidden="true"></span></div><div class="egg-stage" data-egg-stage><svg class="egg-svg" data-egg-svg viewBox="0 0 1000 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Zoombares Wimmelbild mit Bergen, einem See und einer Hütte. Eine Katze ist versteckt." tabindex="0"><g data-egg-world><image href="/easter-scene.svg" x="0" y="0" width="1000" height="620"/></g></svg><div class="egg-location">🔎 SUCHBILD · TOUCHSCREEN 01</div><div class="egg-zoom-indicator" data-egg-zoom>100 %</div><div class="egg-tap" data-egg-tap aria-live="polite">👆 Vergrößere das Bild und finde das versteckte Detail!</div><div class="egg-celebration" data-egg-celebration hidden><div class="egg-confetti" aria-hidden="true"></div><span class="egg-star">🏆</span><h4>EASTER EGG GEFUNDEN!</h4><p>Super! Du hast den kleinen Touchpunkt gefunden!</p><strong data-egg-points></strong><div class="egg-learned">Das war echte Touchscreen-Bedienung: <b>Pinch-to-Zoom</b> zum Vergrößern, <b>Pan</b> zum Verschieben und <b>Tap</b> zum Auswählen.</div></div></div></div><div class="egg-tools">'+button('−','minus','Verkleinern')+button('＋','plus','Vergrößern')+button('⟲','reset','Bild zurücksetzen')+button('💡 Hinweis','hint','Einen Tipp anzeigen')+button('🔊 Ton','sound','Spielton ein- oder ausschalten')+'<span class="egg-tools-help">iPad: Pinch-to-Zoom & Pan · PC: Mausrad & Ziehen</span></div><div class="egg-hint" data-egg-hint aria-live="polite">🎓 So lernst du genau die Gesten, die in Kapitel 4 erklärt werden. Schnelle Funde bringen Bonuspunkte.</div></div>';
+ remaining=typeof options.remaining==='number'?options.remaining:30,trying=false,hintIndex=-1,misses=0,soundOn=true,audioCtx=null,hasPanned=false,hasZoomed=false;
+ container.innerHTML='<div class="egg-game"><div class="egg-topline"><div><span class="egg-kicker">KAPITEL 4 · MULTITOUCH IN DER PRAXIS</span><h3>Mission: Entdecke den versteckten Touchpunkt!</h3><p>Ein verstecktes Easter Egg wartet auf diesem virtuellen Touchscreen. Nutze die Gesten aus der Doku: zoomen, verschieben und antippen.</p></div><div class="egg-game-clock"><span>ZEIT</span><strong data-egg-time>'+remaining+' s</strong></div></div><div class="egg-lesson"><span data-step="zoom">① <b>ZOOMEN</b><small>Zwei Finger auseinanderziehen</small></span><span data-step="pan">② <b>VERSCHIEBEN</b><small>Bild mit einem Finger bewegen</small></span><span data-step="tap">③ <b>ANTIPPEN</b><small>Easter Egg direkt auswählen</small></span></div><div class="egg-hardware"><div class="egg-hardware-top"><span>TOUCH LIVE · MULTITOUCH-LAB</span><span class="egg-hardware-camera" aria-hidden="true"></span></div><div class="egg-stage" data-egg-stage><svg class="egg-svg" data-egg-svg viewBox="0 0 1000 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Zoombares Wimmelbild mit Bergen, einem See und einer Hütte. Eine Katze ist versteckt." tabindex="0"><g data-egg-world><image href="/easter-scene.svg" x="0" y="0" width="1000" height="620"/></g></svg><div class="egg-location">🔎 SUCHBILD · TOUCHSCREEN 01</div><div class="egg-zoom-indicator" data-egg-zoom>100 %</div><div class="egg-tap" data-egg-tap aria-live="polite">👆 Vergrößere das Bild und finde das versteckte Detail!</div><div class="egg-celebration" data-egg-celebration hidden><div class="egg-confetti" aria-hidden="true"></div><span class="egg-star">🏆</span><h4>RICHTIG! 🎉</h4><p>Super, du hast die versteckte Katze gefunden!</p><strong data-egg-points>Punkte gibt es erst am Ende zu sehen.</strong><div class="egg-learned">Das war echte Touchscreen-Bedienung: <b>Pinch-to-Zoom</b> zum Vergrößern, <b>Pan</b> zum Verschieben und <b>Tap</b> zum Auswählen.</div></div></div></div><div class="egg-tools">'+button('−','minus','Verkleinern')+button('＋','plus','Vergrößern')+button('⟲','reset','Bild zurücksetzen')+button('💡 Hinweis','hint','Einen Tipp anzeigen')+button('🔊 Ton','sound','Spielton ein- oder ausschalten')+'<span class="egg-tools-help">iPad: Pinch-to-Zoom & Pan · PC: Mausrad & Ziehen</span></div><div class="egg-hint" data-egg-hint aria-live="polite">🎓 So lernst du genau die Gesten, die in Kapitel 4 erklärt werden. Für jeden Fund gibt es Punkte – wie viele, erfährst du erst bei der Siegerehrung.</div></div>';
  const game=container.querySelector('.egg-game'),svg=container.querySelector('[data-egg-svg]'),world=container.querySelector('[data-egg-world]');
  const readout=container.querySelector('[data-egg-tap]'),counter=container.querySelector('[data-egg-zoom]'),clock=container.querySelector('[data-egg-time]');
  const lessonZoom=container.querySelector('[data-step="zoom"]'),lessonPan=container.querySelector('[data-step="pan"]'),lessonTap=container.querySelector('[data-step="tap"]');
@@ -28,35 +28,35 @@ function mount(container,options={}){
  }
  function message(txt,bad=false){readout.textContent=txt;readout.classList.toggle('egg-miss',bad);if(bad){game.classList.remove('egg-shake');void game.offsetWidth;game.classList.add('egg-shake');}}
  function constrain(){const maxX=(z-1)*VIEW.w/2+80,maxY=(z-1)*VIEW.h/2+80;pan.x=clamp(pan.x,-maxX,maxX);pan.y=clamp(pan.y,-maxY,maxY);}
- function draw(){if(z>=2.25&&!hasZoomed){hasZoomed=true;lessonZoom.classList.add('egg-step-done');}constrain();world.setAttribute('transform','translate('+pan.x+' '+pan.y+') translate('+VIEW.cx+' '+VIEW.cy+') scale('+z+') translate(-'+VIEW.cx+' -'+VIEW.cy+')');counter.textContent=Math.round(z*100)+' %';game.classList.toggle('egg-zoomed',z>=2.25);}
+ function draw(){if(z>=1.7&&!hasZoomed){hasZoomed=true;lessonZoom.classList.add('egg-step-done');}constrain();world.setAttribute('transform','translate('+pan.x+' '+pan.y+') translate('+VIEW.cx+' '+VIEW.cy+') scale('+z+') translate(-'+VIEW.cx+' -'+VIEW.cy+')');counter.textContent=Math.round(z*100)+' %';game.classList.toggle('egg-zoomed',z>=1.7);}
  function zoomAt(value,anchor){
   const next=clamp(value,1,7),old=z;if(Math.abs(next-old)<.0001)return;
   const a=anchor||{x:VIEW.cx,y:VIEW.cy},f=next/old;
   pan.x=a.x-VIEW.cx-(a.x-VIEW.cx-pan.x)*f;
   pan.y=a.y-VIEW.cy-(a.y-VIEW.cy-pan.y)*f;
   z=next;draw();
-  if(z>=2.25&&!found&&!disabled)message('🎯 Jetzt such das kleine Dachfenster und tippe auf die Katze.');
+  if(z>=1.7&&!found&&!disabled)message('🔎 Jetzt kannst du das kleine Detail genauer untersuchen.');
  }
  function finish(result){
   if(!found)playSound('win');lessonZoom.classList.add('egg-step-done');lessonTap.classList.add('egg-step-done');found=true;disabled=true;game.classList.add('egg-found');
   celebration.hidden=false;
-  pointsNode.textContent=(result?.points??240)+' PUNKTE';
-  message('🏆 Super! Easter Egg gefunden!');
+  pointsNode.textContent='Deine Punkte siehst du erst bei den Ergebnissen.';
+  message('✅ RICHTIG! Easter Egg gefunden!');
   hint.textContent='Geschafft! Damit hast du gezeigt, wie Multitouch und das Antippen eines kleinen Ziels funktionieren. Gleich geht es mit der Doku weiter.';
   try{if(global.navigator?.vibrate)global.navigator.vibrate([70,70,120]);}catch{}
  }
  async function tryFind(e){
   if(disabled||found||trying)return;
-  if(z<2.25){playSound('miss');message('🔎 Das ist noch zu weit weg. Zoome mindestens auf 225 %.',true);return;}
+  if(z<1.7){playSound('miss');message('🔎 Noch etwas vergrößern – ab 170 % kannst du das Easter Egg finden.',true);return;}
   const pos=worldPt({x:e.clientX,y:e.clientY});
-  if(Math.abs(pos.x-VIEW.targetX)>20||Math.abs(pos.y-VIEW.targetY)>19){
+  if(Math.abs(pos.x-VIEW.targetX)>27||Math.abs(pos.y-VIEW.targetY)>25){
    misses++;playSound('miss');
-   message(misses>2?'🧐 Noch nicht! Probiere das kleine Fenster unter dem Dach.':'Da ist kein Easter Egg. Such weiter!',true);
+   message(misses>2?'❌ FALSCH – probier es nochmal. Tipp: Schau bei der Berghütte.':'❌ FALSCH – hier ist es nicht. Versuch es nochmal!',true);
    return;
   }
-  trying=true;message('🎉 Treffer! Der Fund wird gespeichert …');
-  try{const result=await onFind({x:pos.x,y:pos.y,zoom:z,elapsed:75-remaining});if(result?.ok===false)throw Error(result.error||'Fund wurde nicht bestätigt.');finish(result||{});}
-  catch(e){trying=false;message('Dein Fund konnte nicht gespeichert werden: '+(e?.message||'Bitte erneut versuchen.'),true);}
+  trying=true;message('✅ RICHTIG! Dein Fund wird gespeichert …');
+  try{const result=await onFind({x:pos.x,y:pos.y,zoom:z,elapsed:(options.duration||30)-remaining});if(result?.ok===false)throw Error(result.error||'Fund wurde nicht bestätigt.');finish(result||{});}
+  catch(e){trying=false;message('⚠️ Der Fund wurde nicht gespeichert: '+(e?.message||'Versuch es bitte erneut.'),true);}
  }
  function snapshot(){
   const values=[...pointers.values()];
@@ -111,12 +111,12 @@ function mount(container,options={}){
   else if(b.dataset.egg==='reset'){z=1;pan={x:0,y:0};draw();message('Startklar: Suche mit dem Zoom!');}
  }));
  function update(next={}){
-  if(typeof next.remaining==='number'&&Number.isFinite(next.remaining)){remaining=next.remaining;clock.textContent=remaining+' s';game.classList.toggle('egg-clock-low',remaining<=15&&remaining>0);if(remaining<=0&&!found){disabled=true;message('⏱ Die Zeit ist um! Das Easter Egg wird am Ende aufgelöst.');}}
-  if(next.found&&!found)finish({points:next.points??'✓'});
+  if(typeof next.remaining==='number'&&Number.isFinite(next.remaining)){remaining=next.remaining;clock.textContent=remaining+' s';game.classList.toggle('egg-clock-low',remaining<=8&&remaining>0);if(!found&&!disabled){if(remaining<=11&&hintIndex<1){hintIndex=1;hint.textContent='💡 Tipp: Schau bei der Berghütte – nicht beim See.';}else if(remaining<=19&&hintIndex<0){hintIndex=0;hint.textContent='💡 Tipp: Nicht alles ist auf den ersten Blick sichtbar.';}}if(remaining<=0&&!found){disabled=true;message('⏱ Die Zeit ist um! Das Easter Egg wird am Ende aufgelöst.');}}
+  if(next.found&&!found)finish({});
   if(next.disabled===true)disabled=true;
  }
  draw();update(options);
- if(found){finish({points:options.points??'✓'});}
+ if(found){finish({});}
  return {update,reset(){if(found)return;z=1;pan={x:0,y:0};draw();},destroy(){}};
 }
 global.EasterGame={mount,position:{x:VIEW.targetX/VIEW.w,y:VIEW.targetY/VIEW.h},version:'1.0'};
