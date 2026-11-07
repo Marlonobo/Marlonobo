@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" role="img" aria-label="Wimmelbild: Bergsee und Hütte mit verstecktem Easter Egg">
+<defs>
+<linearGradient id="sky" x2="0" y2="1"><stop stop-color="#1c668d"/><stop offset=".55" stop-color="#80d2e2"/><stop offset="1" stop-color="#fbf7d3"/></linearGradient>
+<linearGradient id="water" x2="0" y2="1"><stop stop-color="#46b8c3"/><stop offset="1" stop-color="#145d78"/></linearGradient>
+<linearGradient id="grass" x2="0" y2="1"><stop stop-color="#a7d66f"/><stop offset="1" stop-color="#307b5c"/></linearGradient>
+<linearGradient id="wall"><stop stop-color="#eccc8e"/><stop offset=".5" stop-color="#f9dda8"/><stop offset="1" stop-color="#bb865c"/></linearGradient>
+<linearGradient id="roof" x2="0" y2="1"><stop stop-color="#a7624a"/><stop offset="1" stop-color="#563d48"/></linearGradient>
+<radialGradient id="sunGlow"><stop stop-color="#fff4b3" stop-opacity=".9"/><stop offset="1" stop-color="#fff4b3" stop-opacity="0"/></radialGradient>
+<filter id="softShadow"><feGaussianBlur stdDeviation="5"/></filter>
+<pattern id="grassTuft" width="45" height="35" patternUnits="userSpaceOnUse"><path d="M8 25l-4 -6m4 6l4 -11m-4 11v-12" fill="none" stroke="#377749" stroke-width="1.4" opacity=".4"/></pattern>
+</defs>
+<rect width="1000" height="620" fill="url(#sky)"/>
+<circle cx="835" cy="98" r="108" fill="url(#sunGlow)"/><circle cx="835" cy="98" r="40" fill="#fff5b0"/>
+<g fill="#f2fbfb" opacity=".82"><ellipse cx="170" cy="103" rx="82" ry="24"/><ellipse cx="211" cy="96" rx="50" ry="27"/><ellipse cx="586" cy="95" rx="84" ry="20"/><ellipse cx="622" cy="82" rx="39" ry="27"/><ellipse cx="706" cy="155" rx="65" ry="14"/></g>
+<path d="M0 340L150 130 262 280 388 92 542 305 646 175 778 308 901 192 1000 320V390H0Z" fill="#698ca4"/>
+<path d="M0 343L150 130 191 206 151 192 121 226 98 204M289 240L388 92 441 192 394 172 370 197 354 169M611 230L646 175 692 230 654 217 639 233" fill="#e9f3f0" opacity=".8"/>
+<path d="M0 372L135 262 275 365 390 229 547 365 675 253 820 367 927 286 1000 348V490H0" fill="#397f82"/>
+<path d="M0 390Q250 340 515 380Q755 348 1000 410V620H0Z" fill="url(#grass)"/>
+<path d="M0 392Q250 351 515 381Q755 352 1000 410V620H0Z" fill="url(#grassTuft)"/>
+<path d="M0 458Q155 417 295 453Q440 435 536 469Q649 507 761 469Q870 440 1000 476V620H0Z" fill="#338b6d" opacity=".58"/>
+<path d="M40 477Q206 428 342 482Q421 540 316 583Q176 621 40 570Q-12 535 40 477Z" fill="url(#water)" stroke="#a5d5c9" stroke-width="6"/>
+<path d="M104 501Q202 488 277 509M100 531Q206 520 296 544" fill="none" stroke="#b7ecdd" stroke-width="4" opacity=".42"/>
+<g stroke-linecap="round" fill="none" stroke="#2d795d" stroke-width="8"><path d="M512 465L499 396M544 477L555 398M895 467L891 389"/></g>
+<g fill="#1d6d5d"><path d="M477 413L504 318 535 413Z"/><path d="M517 423L556 300 592 423Z"/><path d="M852 430L895 297 935 430Z"/></g>
+<g fill="#2e846a"><path d="M483 385L505 295 525 385Z"/><path d="M527 383L557 273 581 383Z"/><path d="M867 391L894 270 922 391Z"/></g>
+<g stroke="#e0f1c1" stroke-width="3" fill="none" opacity=".7"><path d="M94 392q15-20 28 0M420 411q20-12 41 0M936 478q24-10 40 0"/></g>
+<!-- farmhouse / tiny attic window, the concealed cat sits in this real location -->
+<ellipse cx="745" cy="493" rx="149" ry="22" fill="#132f37" opacity=".2" filter="url(#softShadow)"/>
+<path d="M632 353L743 288 861 355V479H632Z" fill="url(#wall)" stroke="#7e5f58" stroke-width="3"/>
+<path d="M611 352L744 267 881 351L868 371 744 293 625 371Z" fill="url(#roof)" stroke="#553b40" stroke-width="5"/>
+<g stroke="#ad6b48" stroke-width="3" opacity=".44"><path d="M635 393H859M635 423H859M635 453H859M644 354V479M858 353V477"/></g>
+<path d="M699 478V415q0-9 8-9h34q8 0 8 9v63Z" fill="#724b3e" stroke="#603a35" stroke-width="4"/><circle cx="737" cy="449" r="3.5" fill="#e7c781"/>
+<rect x="779" y="396" width="48" height="47" rx="4" fill="#654c43" stroke="#f6e9b7" stroke-width="6"/>
+<path d="M803 395V444M778 418H828" stroke="#f6e9b7" stroke-width="5"/>
+<!-- attic window: 24x21 across a 1000x620 viewbox, must pinch-zoom to discover the cat -->
+<g id="easter-egg-target">
+<rect x="731" y="319" width="31" height="27" rx="2" fill="#fff1c0" stroke="#4e3940" stroke-width="5"/>
+<rect x="735" y="323" width="23" height="19" rx="2" fill="#102d3d"/>
+<path d="M738 343L738 330L742 333L745 328L749 333L755 329L755 343Z" fill="#1b2630"/>
+<path d="M738 332L740 324L745 329L750 324L754 332" fill="#1b2630"/>
+<circle cx="743" cy="334" r="1.1" fill="#f4d877"/><circle cx="750" cy="334" r="1.1" fill="#f4d877"/>
+<path d="M754 340Q763 337 761 330" fill="none" stroke="#1b2630" stroke-width="2"/>
+</g>
+<g fill="#e9dd9e"><circle cx="646" cy="398" r="7"/><circle cx="654" cy="401" r="6"/></g>
+<path d="M631 398q-15-22-28-1" stroke="#dfcd7b" stroke-width="3" fill="none"/>
+<g transform="translate(178 414)"><path d="M0 71L25 12 67 71Z" fill="#ea7b57" stroke="#5c5351" stroke-width="4"/><path d="M26 12L27 71" stroke="#fff4cc" stroke-width="3" opacity=".7"/><path d="M20 71L30 39 41 71Z" fill="#354750"/><path d="M84 44q18-23 32 0" stroke="#684b3e" stroke-width="4" fill="none"/><path d="M85 51l30 1M99 39v20" stroke="#a4a9a6" stroke-width="3"/></g>
+<g transform="translate(408 454)"><rect x="6" y="10" width="80" height="32" rx="7" fill="#b07f50" stroke="#735940" stroke-width="4"/><path d="M14 19H79M16 32H79" stroke="#dfaf68" stroke-width="3"/><path d="M15 40L6 70M75 40l14 30" stroke="#78533c" stroke-width="6"/></g>
+<g transform="translate(894 480)"><path d="M10 70V13" stroke="#5a4e48" stroke-width="6"/><path d="M10 16h74l-9 23H10Z" fill="#e1b26e" stroke="#80543d" stroke-width="3"/><text x="18" y="32" fill="#55483d" font-family="sans-serif" font-size="11" font-weight="700">BERGHÜTTE</text></g>
+<g transform="translate(340 330)" stroke="#213c45" stroke-width="3" fill="none"><path d="M0 0q10-10 21 1M34-13q12-9 22 1M65 12q13-11 25 0"/></g>
+<g><circle cx="570" cy="486" r="5" fill="#ffd266"/><circle cx="580" cy="483" r="4" fill="#f4a1b7"/><circle cx="605" cy="521" r="4" fill="#f4a1b7"/><circle cx="613" cy="519" r="4" fill="#ffd266"/><circle cx="941" cy="532" r="4" fill="#eee28a"/><circle cx="936" cy="542" r="3" fill="#eea8b7"/></g>
+<g transform="translate(310 494)"><ellipse cx="0" cy="0" rx="22" ry="8" fill="#e1d8a4"/><path d="M-25 -6q5-18 18-9q13 10 10 24" fill="#78604a"/><circle cx="7" cy="-14" r="12" fill="#8e7151"/><circle cx="12" cy="-17" r="2" fill="#24353b"/></g>
+<g opacity=".45" fill="#edfff8"><circle cx="61" cy="545" r="2"/><circle cx="174" cy="557" r="3"/><circle cx="290" cy="532" r="2"/></g>
+<text x="39" y="592" fill="#d9f1e2" font-family="sans-serif" font-size="12" font-weight="700" letter-spacing="2" opacity=".7">TOUCH LIVE · KAPITEL 4 · WIMMELBILD</text>
+</svg>
