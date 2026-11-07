@@ -63,13 +63,13 @@ function publicState(id){
  const rank=[...users.entries()].map(([uid,x])=>({id:uid,name:x.name,role:x.role,score:x.score,answered:Object.keys(x.answers).length})).sort((x,y)=>y.score-x.score||x.name.localeCompare(y.name,'de')).map((x,i)=>({name:x.name,role:x.role,score:x.score,rank:i+1,answered:x.answered}));
  const normal=Q.filter(x=>x.type!=='zoom');
  let player=null;
- if(u){const jk=u.jokers||{};player={id,role:u.role,name:u.name,score:final?u.score:null,choice:q?u.answers[q.id]??null:null,jokers:{fifty:!!jk.fifty,hint:!!jk.hint}};
+ if(u){const jk=u.jokers||{};player={id,role:u.role,name:u.name,score:final?u.score:null,choice:q?u.answers[q.id]??null:null,zoomFound:!!(ZOOM()&&Object.hasOwn(u.answers,ZOOM().id)),zoomPoints:u.zoomPoints||0,jokers:{fifty:!!jk.fifty,hint:!!jk.hint}};
   if(q&&jk.fifty===q.id)player.hide=[0,1,2,3].filter(i=>i!==q.correct&&i!==q.fifty);
   if(q&&jk.hint===q.id)player.hint=q.hint||'';}
  const z=ZOOM();let zoomResult=null;
  if(final&&z){const found=[...users.values()].filter(x=>x.answers[z.id]===z.correct).map(x=>x.name);zoomResult={q:z.q,answer:z.a[z.correct],found:found.length,names:found.slice(0,12),total:[...users.values()].filter(x=>Object.hasOwn(x.answers,z.id)).length};}
  return {phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,video:s.video,subtitles:s.subtitles,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',
-  quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,a:q.a,remaining:a.remaining,accepting:a.accepting,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
+  quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,a:q.a,remaining:a.remaining,accepting:a.accepting,foundCount:q.type==='zoom'?[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length:0,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
   player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)};
 }
 function startZoom(){const z=ZOOM();if(!z)return false;s.phase='zoom';s.playing=false;s.time=z.open;s.zoomStart=Date.now();s.zoomDone=true;s.revision++;persist();return true;}
@@ -93,6 +93,9 @@ async function handler(req,res){
  if(m==='GET'&&(p==='/'||p==='/index.html'))return serve(res,path.join(ROOT,'index.html'),mime['.html']);
  if(m==='GET'&&(p==='/app.js'||p==='/style.css'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
  if(m==='GET'&&p==='/touchscreen-motiv.svg')return serve(res,path.join(ROOT,'touchscreen-motiv.svg'),'image/svg+xml');
+ if(m==='GET'&&p==='/easter-scene.svg')return serve(res,path.join(ROOT,'easter-scene.svg'),'image/svg+xml');
+ if(m==='GET'&&(p==='/easter-game.js'||p==='/easter-game.css'))return serve(res,path.join(ROOT,p.slice(1)),p.endsWith('.js')?'application/javascript; charset=utf-8':'text/css; charset=utf-8');
+ if(m==='GET'&&p==='/easter-demo')return serve(res,path.join(ROOT,'easter-demo.html'),'text/html; charset=utf-8');
  if(m==='GET'&&p==='/touch-icon.svg')return serve(res,path.join(ROOT,'touch-icon.svg'),'image/svg+xml');
  if(m==='GET'&&p==='/site.webmanifest')return serve(res,path.join(ROOT,'site.webmanifest'),'application/manifest+json; charset=utf-8');
  if(m==='GET'&&(p==='/watch'||p==='/host'))return serve(res,path.join(ROOT,'party.html'),'text/html; charset=utf-8');
@@ -150,11 +153,24 @@ async function handler(req,res){
  saveUsers();
  return send(res,200,{ok:true,id});
  }
+ if(m==='POST'&&p==='/api/easter/find'){
+ const b=await read(req,1000),x=users.get(String(b.id||'')),a=active(),z=ZOOM();
+ if(!x)return send(res,403,{error:'Bitte zuerst mit deinem Namen teilnehmen.'});
+ if(!z||s.phase!=='zoom'||a.index<0||!a.accepting)return send(res,409,{error:'Die Easter-Egg-Suche läuft gerade nicht mehr.'});
+ if(Object.hasOwn(x.answers,z.id))return send(res,409,{error:'Easter Egg wurde bereits gefunden.'});
+ const px=Number(b.x),py=Number(b.y),zoom=Number(b.zoom);
+ if(!Number.isFinite(px)||!Number.isFinite(py)||!Number.isFinite(zoom)||px<0||px>1000||py<0||py>620||zoom<2.25||zoom>7.05)return send(res,400,{error:'Zoome ins Bild und tippe das versteckte Objekt an.'});
+ if(Math.abs(px-746)>20||Math.abs(py-332)>19)return send(res,400,{error:'Dort ist es nicht! Suche weiter.'});
+ const bonus=Math.min(150,Math.max(0,Math.round(a.remaining/(z.duration||75)*150/10)*10)),points=150+bonus;
+ x.answers[z.id]=z.correct;x.zoomPoints=points;x.score+=points;saveUsers();
+ return send(res,200,{ok:true,points,bonus,foundCount:[...users.values()].filter(u=>Object.hasOwn(u.answers,z.id)).length});
+ }
  if(m==='POST'&&p==='/api/answer'){
  const b=await read(req,1000),x=users.get(String(b.id||'')),a=active();
  if(!x)return send(res,400,{error:'Bitte erneut anmelden.'});
  if(a.index<0||!a.accepting)return send(res,409,{error:'Die Quizzeit ist vorbei.'});
  const q=Q[a.index],choice=Number(b.choice);
+ if(q.type==='zoom')return send(res,409,{error:'Hier musst du das Easter Egg im Bild finden – eine Antwort anzuklicken reicht nicht.'});
  if(!Number.isInteger(choice)||choice<0||choice>3)return send(res,400,{error:'Antwort ungueltig'});
  if(Object.hasOwn(x.answers,q.id))return send(res,409,{error:'Schon beantwortet.'});
  x.answers[q.id]=choice;if(choice===q.correct)x.score+=100;saveUsers();
