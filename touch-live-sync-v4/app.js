@@ -63,12 +63,12 @@ function userPage(){
  if(isTeacher){el('teacherNotes').oninput=e=>localStorage.setItem('touch_teacher_notes',e.target.value);el('saveNotes').onclick=()=>saveText('TOUCH-LIVE-Lehrernotizen.txt',el('teacherNotes').value);}
  if(state.phase==='gesture')initGesture();
 }
-function zoomCard(q,p,answered){return '<section class="easter-live"><div class="between" style="margin-bottom:10px"><span class="chip">🎮 KAPITEL 4 · MULTITOUCH-CHALLENGE</span><span class="small">Bereits gefunden: '+(q.foundCount||0)+' von '+state.participants+'</span></div><div id="easterMount"></div><p class="small" style="margin-top:12px">'+(p.zoomFound?'🏆 Fund geschafft! Du hast die Touchscreen-Gesten angewendet. Dafür bekommst du '+(p.zoomPoints||0)+' Punkte.':!q.accepting?'Die Suche ist beendet. Wichtig: Pinch-to-Zoom, Pan und Tap sind echte Touchscreen-Gesten.':'Teste, was du in Kapitel 4 gelernt hast: mit zwei Fingern vergrößern, Bild verschieben und das versteckte Detail direkt antippen.')+'</p></section>';}
+function zoomCard(q,p,answered){return '<section class="easter-live"><div class="between" style="margin-bottom:10px"><span class="chip">🎮 KAPITEL 4 · MULTITOUCH-CHALLENGE</span><span class="small">Bereits gefunden: '+(q.foundCount||0)+' von '+state.participants+'</span></div><div id="easterMount"></div><p class="small" style="margin-top:12px">'+(p.zoomFound?'✅ RICHTIG! Du hast die Katze gefunden. Deine Punkte werden erst in der Ergebnisshow angezeigt.':!q.accepting?'Die Suche ist beendet. Wichtig: Pinch-to-Zoom, Pan und Tap sind echte Touchscreen-Gesten.':'Teste, was du in Kapitel 4 gelernt hast: mit zwei Fingern vergrößern, Bild verschieben und das versteckte Detail direkt antippen.')+'</p></section>';}
 function initEaster(){
  const host=el('easterMount'),q=state?.quiz,p=state?.player;
  if(!host||!q||!window.EasterGame)return;
  easterInstance=window.EasterGame.mount(host,{
-  remaining:q.remaining,found:!!p?.zoomFound,points:p?.zoomPoints,
+  remaining:q.remaining,found:!!p?.zoomFound,
   disabled:!q.accepting,
   onFind:async ({x,y,zoom})=>{
    if(!userId)throw Error('Bitte erst einen Namen eingeben.');
@@ -291,7 +291,7 @@ async function poll(force=false){
  const rp=role==='join'?'student':role==='teacher'?'teacher':role;
  const id=(rp==='student'||rp==='teacher')?(localStorage.getItem('touch_'+rp+'_id')||''):'';
  const next=await api('/api/state'+(id?'?id='+encodeURIComponent(id):''));const old=state;state=next;
- if(role==='join'||role==='teacher'){const player=state.player||{};const q=state.quiz;const sig=[role,state.phase,q?.id||'',q?.accepting||false,player.choice,player.score,state.revision,state.participants,JSON.stringify(player.jokers||{}),(player.hide||[]).join(),player.hint||'',JSON.stringify(state.zoomResult||'')].join('|');if(force||renderSignature!==sig){renderSignature=sig;userPage();participantMode();}else if(q){if(el('liveTimer'))el('liveTimer').textContent=q.remaining+' s';if(state.phase==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!state.player?.zoomFound,points:state.player?.zoomPoints});}}
+ if(role==='join'||role==='teacher'){const player=state.player||{};const q=state.quiz;const sig=[role,state.phase,q?.id||'',q?.accepting||false,player.choice,player.score,state.revision,state.participants,JSON.stringify(player.jokers||{}),(player.hide||[]).join(),player.hint||'',JSON.stringify(state.zoomResult||'')].join('|');if(force||renderSignature!==sig){renderSignature=sig;userPage();participantMode();}else if(q){if(el('liveTimer'))el('liveTimer').textContent=q.remaining+' s';if(state.phase==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!state.player?.zoomFound});}}
  if(role==='tv'){tvDisplay();}
  if(role==='remote'){const status=el('remoteStatus');if(status)status.textContent='Live: '+next.phase.toUpperCase()+' · '+secText(next.time)+' · '+next.participants+' Teilnehmende · '+(next.playing?'Video läuft':'Video pausiert');}
  if(role==='admin'){if(el('adminStatus'))el('adminStatus').textContent='Status: '+state.phase.toUpperCase()+' · Filmzeit: '+secText(state.time)+' · '+state.participants+' Teilnehmende · '+(state.video.type==='none'?'kein Film':state.video.type);if(el('adminParticipants'))el('adminParticipants').textContent=state.participants+' Teilnehmende';if(el('adminTime'))el('adminTime').textContent=secText(state.time);if(el('adminRanking')&&adminInfo){el('adminRanking').textContent='Live-Regie aktiv. Für vollständige Teilnehmerantworten nutze den Ergebnis-Modus.';}if(el('adminFeedback'))el('adminFeedback').textContent=String(state.feedbackCount);}
