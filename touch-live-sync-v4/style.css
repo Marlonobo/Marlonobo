@@ -540,3 +540,36 @@ body:has(.phoneRemote){background:#071724}
 #tvApp.tvPlayingFilm #tvSpotifyPlay{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}
 #tvApp.tvPlayingFilm .videoLayer{z-index:3;inset:0;background:#000}
 #tvApp #tvWelcomeAudio{display:none!important}
+
+/* Student-only points HUD: stays visible during quiz and mobile Zoom game. */
+body.studentEntry.touchStudent .participantFullBar{
+ position:sticky;top:0;z-index:45;
+ padding:8px 11px;border-radius:13px;
+ background:rgba(7,22,34,.96);
+ border:1px solid rgba(105,225,211,.42);
+ box-shadow:0 8px 30px rgba(0,0,0,.3);
+ -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)
+}
+body.studentEntry.touchStudent .participantBarActions{
+ display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap
+}
+body.studentEntry.touchStudent .studentLiveScore{
+ display:flex;gap:9px;align-items:center;justify-content:center;
+ border:1px solid rgba(107,233,191,.65);
+ background:linear-gradient(135deg,#103f3b,#102d43);
+ border-radius:11px;padding:6px 12px;min-height:43px;
+ color:#e8fff5;font-weight:700
+}
+body.studentEntry.touchStudent .studentLiveScoreLabel{font-size:clamp(12px,2.7vw,15px);white-space:nowrap}
+body.studentEntry.touchStudent .studentLiveScore strong{
+ font-size:clamp(21px,4vw,30px);line-height:1;color:#8dfad6;
+ font-variant-numeric:tabular-nums;font-feature-settings:"tnum";
+ min-width:1.4em;text-align:right
+}
+@media(max-width:560px){
+ body.studentEntry.touchStudent .participantFullBar>.small{display:none}
+ body.studentEntry.touchStudent .participantBarActions{width:100%;justify-content:space-between;flex-wrap:nowrap;gap:8px}
+ body.studentEntry.touchStudent .studentLiveScore{flex:1;justify-content:space-between;min-width:0;padding:7px 10px}
+ body.studentEntry.touchStudent .participantFullBtn{white-space:nowrap;font-size:11px;padding:6px 7px}
+}
+@media print{body.studentEntry.touchStudent .participantFullBar{display:none!important}}
