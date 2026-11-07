@@ -3,7 +3,7 @@
 'use strict';
 const el=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;',"'":'&#39;'}[c]));
 const ORIGIN=location.origin+location.pathname, app=el('app');
-let role='home',state=null,renderSignature='',userId='',userName='',adminKey=sessionStorage.getItem('touch_admin_key')||'',remoteKey=sessionStorage.getItem('touch_cohost_key')||'',tvKey=sessionStorage.getItem('touch_tv_key')||'';
+let role='home',state=null,renderSignature='',userId='',userName='',adminKey=sessionStorage.getItem('touch_admin_key')||'',remoteKey=sessionStorage.getItem('touch_cohost_key')||'',tvKey=sessionStorage.getItem('touch_tv_key')||localStorage.getItem('touch_tv_key')||'';
 let easterInstance=null,cloudUploadReady=false;
 let adminInfo=null,videoEl=null,ytPlayer=null,mediaType='',youtubeReady=false,playerReady=false,subtitles=[],lastFilmPhase='',lastRevision=-1,lastCaptionRevision=-1,gesturePointers=new Map(),gestureTransform={x:0,y:0,scale:1,rotate:0},gestureSnapshot=null;
 const CH=['Geschichte der Touchscreens','Wie Touchscreens funktionieren','Fünf Touchscreen-Arten','Multitouch und Display','Touchscreens im Alltag','Probleme und Zukunft','Fazit und Abschlussquiz'];
@@ -345,7 +345,7 @@ function tvRemoteKeydown(e){
 }
 window.addEventListener('keydown',tvRemoteKeydown);
 function tvView(){
- if(!tvKey){app.innerHTML='<div class="wrap page"><h1>Beamer verbinden</h1><p>Bitte den Beamerlink aus der Admin-Ansicht öffnen.</p><label>Beamer-Zugangsschlüssel</label><input type="password" id="tvInput"><p></p><button class="primary" id="tvSubmit">Verbinden</button></div>';el('tvSubmit').onclick=()=>{tvKey=el('tvInput').value;sessionStorage.setItem('touch_tv_key',tvKey);tvView();};return;}
+ if(!tvKey){app.innerHTML='<div class="wrap page"><h1>Beamer verbinden</h1><p>Bitte den Beamerlink aus der Admin-Ansicht öffnen.</p><label>Beamer-Zugangsschlüssel</label><input type="password" id="tvInput"><p></p><button class="primary" id="tvSubmit">Verbinden</button></div>';el('tvSubmit').onclick=()=>{tvKey=el('tvInput').value;sessionStorage.setItem('touch_tv_key',tvKey);localStorage.setItem('touch_tv_key',tvKey);tvView();};return;}
  app.innerHTML='<div id="tvApp"><div id="tvScene" class="tvScene"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvFullscreen" type="button" tabindex="0">⛶ Vollbild</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><div class="tvBroadcastHud" id="tvBroadcastHud" style="display:none"><div class="tvBroadcastTop"><strong>TOUCH <span>LIVE</span></strong><span id="tvChapterLabel">Kapitel 1 · Geschichte</span><span id="tvClockLabel">00:00 / 51:47</span></div><div class="tvBroadcastTrack"><div id="tvProgressBar"></div></div></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
  videoEl=el('tvVideo');
  // Never intentionally start the TV movie muted.
@@ -469,7 +469,7 @@ function router(){
  role=(studentPath||h[0]==='join')?'join':h[0]||'home';
  if(role==='remote'&&query.get('key')){remoteKey=query.get('key');sessionStorage.setItem('touch_cohost_key',remoteKey);history.replaceState({},'',location.pathname+'#remote');}
  if(role==='admin'&&query.get('key')){adminKey=query.get('key');sessionStorage.setItem('touch_admin_key',adminKey);history.replaceState({},'',location.pathname+'#admin');}
- if(role==='tv'&&query.get('key')){tvKey=query.get('key');sessionStorage.setItem('touch_tv_key',tvKey);history.replaceState({},'',location.pathname+'#tv');}
+ if(role==='tv'&&query.get('key')){tvKey=query.get('key');sessionStorage.setItem('touch_tv_key',tvKey);localStorage.setItem('touch_tv_key',tvKey);history.replaceState({},'',location.pathname+'#tv');}
  if(role==='remote'){location.replace('/host'+(remoteKey?'?key='+encodeURIComponent(remoteKey):''));return;}
  document.body.classList.toggle('studentEntry',role==='join');
  if(role!=='join'&&role!=='teacher')document.body.classList.remove('touchStudent');
@@ -487,7 +487,33 @@ async function poll(force=false){
  if(role==='admin'){refreshAdminVideoControls();if(el('adminStatus'))el('adminStatus').textContent='Status: '+state.phase.toUpperCase()+' · Filmzeit: '+secText(state.time)+' · '+state.participants+' Teilnehmende · '+(state.video.type==='none'?'kein Film':state.video.type);if(el('adminParticipants'))el('adminParticipants').textContent=state.participants+' Teilnehmende';if(el('adminTime'))el('adminTime').textContent=secText(state.time);if(el('adminRanking')&&adminInfo){el('adminRanking').textContent='Live-Regie aktiv. Für vollständige Teilnehmerantworten nutze den Ergebnis-Modus.';}if(el('adminFeedback'))el('adminFeedback').textContent=String(state.feedbackCount);}
  }catch(e){const x=el('adminStatus');if(x)x.textContent='Verbindung unterbrochen: '+e.message;}
 }
+// Automatically use the newest published design on the TV without changing its link.
+// Do not reload during the documentary, quiz, game or awards ceremony.
+let tvBuildKnown='',tvPendingUpdate='',tvUpdateBusy=false;
+async function refreshTvAppVersion(){
+ if(role!=='tv'||tvUpdateBusy)return;
+ tvUpdateBusy=true;
+ try{
+  const r=await fetch('/api/version',{cache:'no-store'});
+  if(!r.ok)throw Error('Version nicht abrufbar');
+  const {version}=await r.json();
+  if(!version)return;
+  if(!tvBuildKnown){tvBuildKnown=version;return;}
+  if(tvBuildKnown!==version)tvPendingUpdate=version;
+  const safe=!state||['welcome','end','handout'].includes(state.phase);
+  if(tvPendingUpdate&&safe){
+   // Save the TV key so refreshing does not require retyping it.
+   if(tvKey)localStorage.setItem('touch_tv_key',tvKey);
+   location.reload();
+  }
+ }catch{
+  // If Render is restarting, retry automatically on the next cycle.
+ }finally{tvUpdateBusy=false;}
+}
+
 window.addEventListener('hashchange',router);
 router();setInterval(()=>{poll();},900);
+setTimeout(refreshTvAppVersion,2000);
+setInterval(refreshTvAppVersion,20000);
 setInterval(()=>{if(role==='tv'&&state?.phase==='film'&&state.video.type!=='none')sendTick(state.playing);},1100);
 })();
