@@ -142,7 +142,16 @@ function deviceQuery(){const id=$('spotifyDevice')?.value||'';return id?'?device
 async function startPlaylist(uri){
  if(!/^spotify:(playlist|album|track):[A-Za-z0-9]{22}$/.test(uri))throw Error('Ungültiger Spotify-Inhalt.');
  const body=uri.startsWith('spotify:track:')?{uris:[uri]}:{context_uri:uri};
- return spotify('/me/player/play'+deviceQuery(),'PUT',body);
+ await spotify('/me/player/play'+deviceQuery(),'PUT',body);
+ // User requested to keep the SAME song; otherwise Spotify advances through playlist tracks.
+ // Repeat is a distinct Spotify Web API request and may be blocked for non-Premium accounts.
+ const selected=$('spotifyRepeat')?.value||'track';
+ try{
+  await spotify('/me/player/repeat?state='+encodeURIComponent(selected)+(deviceQuery()?'&'+deviceQuery().slice(1):''),'PUT');
+  return {repeat: selected,configured:true};
+ }catch(e){
+  return {repeat:selected,configured:false,reason:e.message};
+ }
 }
 async function pause(){return spotify('/me/player/pause'+deviceQuery(),'PUT');}
 async function resume(){return spotify('/me/player/play'+deviceQuery(),'PUT');}
@@ -152,7 +161,8 @@ async function transfer(){
  return spotify('/me/player','PUT',{device_ids:[id],play:true});
 }
 async function setRepeat(){
- const value=$('spotifyRepeat')?.value||'context';
+ const value=$('spotifyRepeat')?.value||'track';
+ try{localStorage.setItem('touch_spotify_repeat_mode',value);}catch{}
  return spotify('/me/player/repeat?state='+encodeURIComponent(value)+(deviceQuery()?'&'+deviceQuery().slice(1):''),'PUT');
 }
 async function currentPlayback(){
@@ -177,14 +187,25 @@ function accountButtons(){
  const searchButton=$('spotifySearchButton');if(searchButton)searchButton.onclick=searchMusic;
  const searchInput=$('spotifySearchInput');if(searchInput)searchInput.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();searchMusic();}};
  const transferButton=$('spotifyTransfer');if(transferButton)transferButton.onclick=async()=>{try{await transfer();status('✓ Spotify auf das gewählte Gerät übertragen.');await currentPlayback();}catch(e){status(e.message,true);}};
- const repeatButton=$('spotifyRepeatApply');if(repeatButton)repeatButton.onclick=async()=>{try{await setRepeat();status('✓ Wiederholung eingestellt. Die Playlist läuft weiter, bis du sie pausierst.');}catch(e){status(e.message,true);}};
+ const repeatSelect=$('spotifyRepeat');
+ if(repeatSelect){
+  try{const saved=localStorage.getItem('touch_spotify_repeat_mode');repeatSelect.value=['track','context','off'].includes(saved)?saved:'track';}
+  catch{repeatSelect.value='track';}
+  repeatSelect.onchange=()=>{try{localStorage.setItem('touch_spotify_repeat_mode',repeatSelect.value);}catch{}};
+ }
+ const repeatButton=$('spotifyRepeatApply');if(repeatButton)repeatButton.onclick=async()=>{try{await setRepeat();status('✓ Wiederholung gespeichert: '+($('spotifyRepeat')?.value==='track'?'derselbe Titel wird wiederholt; kein automatischer Sprung zum nächsten.':$('spotifyRepeat')?.value==='context'?'Playlist wird fortlaufend wiederholt.':'Wiederholung ausgeschaltet.'));}catch(e){status(e.message,true);}};
  const resumeButton=$('spotifyAccountResume');if(resumeButton)resumeButton.onclick=async()=>{try{await resume();status('▶ Spotify-Wiedergabe fortgesetzt.');await currentPlayback();}catch(e){status(e.message,true);}};
  const refreshButton=$('spotifyNowRefresh');if(refreshButton)refreshButton.onclick=currentPlayback;
  const devicesButton=$('spotifyDevicesLoad');if(devicesButton)devicesButton.onclick=devicesFetch;
  const play=$('spotifyAccountPlay');if(play)play.onclick=async()=>{
   const music=String($('spotifyInput')?.value||'').trim(),m=music.match(/open\.spotify\.com\/(playlist|album|track)\/([A-Za-z0-9]{22})/);
-  if(!m){status('Wähle eine Playlist aus oder füge zuerst einen Spotify-Link ein.',true);return;}
-  try{await startPlaylist('spotify:'+m[1]+':'+m[2]);status('♫ Spielt auf Spotify. Die TV-Playlist-Einblendung bleibt optional.')}catch(e){status(e.message,true);}
+  if(!m){status('Wähle zuerst einen Song oder eine Playlist aus.',true);return;}
+  try{
+   const r=await startPlaylist('spotify:'+m[1]+':'+m[2]);
+   status(r.configured
+    ?'♫ Spotify läuft. Wiederholung: '+(r.repeat==='track'?'IMMER DERSELBE TITEL – kein Weitergehen zum nächsten Song.':r.repeat==='context'?'ganze Playlist':'AUS')+'.'
+    :'Spotify läuft, aber die Wiederholung konnte nicht aktiviert werden: '+r.reason,true);
+  }catch(e){status(e.message,true);}
  };
  const pauseButton=$('spotifyAccountPause');if(pauseButton)pauseButton.onclick=async()=>{try{await pause();status('♫ Spotify pausiert.')}catch(e){status(e.message,true)}};
  const next=$('spotifyAccountNext');if(next)next.onclick=async()=>{try{await skip('next');status('♫ Nächster Titel.')}catch(e){status(e.message,true)}};
@@ -196,7 +217,7 @@ function renderAccount(){
  root.innerHTML='<div class="spotifyAccountHeader"><div><strong>Deine Spotify-Playlists</strong><p class="small">Dein Spotify-Konto wird nur über Spotify selbst angemeldet. Kein Spotify-Passwort in TOUCH LIVE.</p></div><span class="spotifyAccountChip">'+(active?'✓ Verbunden':'Nicht verbunden')+'</span></div>'+
  (active?
   '<div class="spotifyAccountTools"><button type="button" id="spotifyPlaylistsLoad" class="primary">♫ Meine Playlists laden</button><button type="button" id="spotifyDevicesLoad">Geräte suchen</button><button type="button" id="spotifyAccountLogout">Trennen</button></div>'+
-  '<div class="spotifyConnectControl"><label for="spotifyDevice">Spotify Connect – Ausgabegerät (z. B. LG-TV oder PC)</label><select id="spotifyDevice"><option value="">Aktives Spotify-Gerät</option></select><button type="button" id="spotifyTransfer">↗ Wiedergabe auf dieses Gerät übertragen</button><div class="spotifyConnectButtons"><button id="spotifyAccountPrev" title="Vorheriger Titel">⏮</button><button id="spotifyAccountPlay" class="primary">▶ Playlist starten</button><button id="spotifyAccountResume">▶ Weiter</button><button id="spotifyAccountPause">Ⅱ Pause</button><button id="spotifyAccountNext" title="Nächster Titel">⏭</button></div><div class="spotifyRepeatControls"><label for="spotifyRepeat">Playlist dauerhaft wiederholen</label><select id="spotifyRepeat"><option value="context">Playlist wiederholen</option><option value="off">Wiederholung aus</option><option value="track">Aktuellen Titel wiederholen</option></select><button type="button" id="spotifyRepeatApply">Wiederholung speichern</button></div><div class="spotifyNowPlaying"><span id="spotifyNowPlaying">Wiedergabestatus noch nicht geladen.</span><button id="spotifyNowRefresh" type="button">↻ Aktualisieren</button></div></div>'+
+  '<div class="spotifyConnectControl"><label for="spotifyDevice">Spotify Connect – Ausgabegerät (z. B. LG-TV oder PC)</label><select id="spotifyDevice"><option value="">Aktives Spotify-Gerät</option></select><button type="button" id="spotifyTransfer">↗ Wiedergabe auf dieses Gerät übertragen</button><div class="spotifyConnectButtons"><button id="spotifyAccountPrev" title="Vorheriger Titel">⏮</button><button id="spotifyAccountPlay" class="primary">▶ Playlist starten</button><button id="spotifyAccountResume">▶ Weiter</button><button id="spotifyAccountPause">Ⅱ Pause</button><button id="spotifyAccountNext" title="Nächster Titel">⏭</button></div><div class="spotifyRepeatControls"><label for="spotifyRepeat">Was soll wiederholt werden?</label><select id="spotifyRepeat"><option value="track">🔂 Denselben Titel dauerhaft wiederholen (empfohlen)</option><option value="context">🔁 Ganze Playlist wiederholen</option><option value="off">Wiederholung aus</option></select><button type="button" id="spotifyRepeatApply">Wiederholung aktivieren</button><p class="small">Spotify Connect wiederholt standardmäßig denselben vollständigen Song. Bei einer Spotify-Vorschau im Browser können dagegen nur etwa 30 Sekunden verfügbar sein.</p></div><div class="spotifyNowPlaying"><span id="spotifyNowPlaying">Wiedergabestatus noch nicht geladen.</span><button id="spotifyNowRefresh" type="button">↻ Aktualisieren</button></div></div>'+
   '<div class="spotifySearchPanel"><label for="spotifySearchInput">Spotify durchsuchen – Songs und Playlists</label><div class="spotifySearchRow"><input type="search" id="spotifySearchInput" placeholder="z. B. 80er Hits, House, Instrumental"><button id="spotifySearchButton" type="button">Suchen</button></div><div id="spotifySearchResults" class="spotifyMyPlaylists" aria-live="polite"></div></div>'+
   '<div id="spotifyMyPlaylists" class="spotifyMyPlaylists"><p class="small">Tippe auf „Meine Playlists laden“.</p></div>'
  :
