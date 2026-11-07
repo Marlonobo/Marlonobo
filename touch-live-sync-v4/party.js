@@ -88,6 +88,29 @@ async function api(path,body,authenticated=false){
  if(!r.ok)throw Error(o.error||'Server antwortet mit '+r.status);
  return o;
 }
+let rosterBusy=false,rosterLastAt=0;
+async function refreshHostRoster(force=false){
+ if(!host||!key||rosterBusy||(!force&&Date.now()-rosterLastAt<3500))return;
+ rosterBusy=true;rosterLastAt=Date.now();
+ try{
+  const data=await api('/api/host/participants',undefined,true);
+  const box=$('partyRoster'),status=$('partyRosterStatus');
+  if(!box||!data?.ok)return;
+  const people=data.players||[],questions=data.questions||[];
+  if(status)status.textContent=people.length?
+   people.filter(p=>p.online).length+' gerade verbunden · '+people.length+' insgesamt angemeldet · privat nur in deiner Regie':
+   'Noch niemand angemeldet. Schicke deiner Freundin den Quiz-Link /join.';
+  if(!people.length){box.innerHTML='<p class="small">Noch niemand angemeldet. Namen erscheinen hier automatisch.</p>';return;}
+  box.innerHTML='<div class="partyRosterScroll"><table class="partyRosterTable"><thead><tr><th>Teilnehmer</th><th>Richtig</th><th>Falsch</th><th>Antworten</th><th>Punkte</th></tr></thead><tbody>'+
+   people.map(p=>'<tr><td><span class="partyOnlineDot '+(p.online?'isOnline':'isOffline')+'" aria-hidden="true"></span><strong>'+safe(p.name)+'</strong><small>'+(p.online?' online':' offline')+'</small></td><td>'+p.correct+'</td><td>'+p.wrong+'</td><td>'+p.answered+' / '+questions.length+'</td><td><b>'+p.score+'</b></td></tr>').join('')+
+   '</tbody></table></div><div class="partyRosterDetails">'+people.map(p=>
+    '<details><summary>'+safe(p.name)+' · Einzelantworten ('+p.correct+' richtig / '+p.wrong+' falsch)</summary><div class="partyAnswerChips">'+
+    questions.map(q=>{const a=(p.answers||[]).find(z=>z.id===q.id),v=a?.status||'unanswered';
+     return '<div class="partyAnswerStatus '+v+'" title="'+safe(q.text)+'"><strong>'+safe(q.id)+'</strong><span>'+(v==='correct'?'✓ Richtig':v==='wrong'?'✗ Falsch':'– Noch offen')+(a?.choice!==null&&a?.choice!==undefined?' · '+String.fromCharCode(65+Number(a.choice)):'')+'</span></div>';
+    }).join('')+'</div></details>').join('')+'</div>';
+ }catch(e){const status=$('partyRosterStatus');if(status)status.textContent='Teilnehmerliste konnte nicht geladen werden: '+e.message;}
+ finally{rosterBusy=false;}
+}
 function sec(n){n=Math.max(0,Math.floor(Number(n)||0));return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');}
 function renderScene(html){
  if(screenSignature===html)return;
@@ -286,6 +309,7 @@ function connectButtons(){
    await hostCommand(remote?(yt?'remoteVideoYoutube':'remoteVideoLink'):(yt?'videoYoutube':'videoLink'),{url:link});
   };
  }
+ const refreshRoster=$('partyRosterRefresh');if(refreshRoster)refreshRoster.onclick=()=>refreshHostRoster(true);
  const quizOnly=$('partyHostCopyQuiz');
  if(quizOnly)quizOnly.onclick=()=>{
   const link=location.origin+'/join';
@@ -353,7 +377,7 @@ function connectedUI(){
  $('partyTitle').innerHTML=host?'Du steuerst <em>die Doku.</em>':'Ihr schaut <em>zusammen.</em>';
  $('partySub').textContent=host?'Du startest den Film, pausierst und öffnest Quiz oder Gesten-Spiel. Deine Freundin sieht die gleiche Filmstelle. Du kannst selbst beim Quiz mitmachen.':'Der Film läuft synchron zum Gerät deines Freundes. Du kannst Fragen beantworten und das Gesten-Spiel nutzen, aber die Sendung nicht steuern.';
  if(participantName&&participantId){$('partyJoinForm').hidden=true;$('participantTitle').textContent='Hallo, '+participantName+'!';$('joinStatus').textContent='Du bist beim gemeinsamen Quiz angemeldet.';}else $('partyJoinForm').hidden=false;
- connectButtons();setupPartyViewMode();poll();
+ connectButtons();setupPartyViewMode();poll();if(host)refreshHostRoster(true);
 }
 async function poll(){
  if(pollInFlight||$('partyMain').hidden)return;
@@ -388,5 +412,6 @@ function init(){
 }
 init();
 setInterval(poll,1100);
+setInterval(()=>{if(host&&key&&$('partyMain')&&!$('partyMain').hidden)refreshHostRoster();},4000);
 setInterval(()=>{if(host&&state?.phase==='film'&&state?.video?.type!=='none'&&state?.video?.type!=='local')sendHostTick();},1300);
 })();
