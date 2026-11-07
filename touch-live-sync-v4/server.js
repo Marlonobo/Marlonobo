@@ -325,7 +325,8 @@ async function handler(req,res){
  else if(cmd==='spotifyClear'){s.welcomeMusic={url:'',id:'',type:'',on:false};}
  else if(cmd==='musicOn'){
    if(s.phase!=='welcome')return send(res,409,{error:'Willkommensmusik kann nur auf der Willkommensfolie eingeschaltet werden.'});
-   if(!s.welcomeMusic?.id)return send(res,400,{error:'Bitte zuerst im Adminbereich einen Spotify-Link speichern.'});
+   // Original welcome music plays on the TV itself: no Spotify account or iframe required.
+   if(!s.welcomeMusic||typeof s.welcomeMusic!=='object')s.welcomeMusic={url:'',type:'',id:'',on:false};
    s.welcomeMusic.on=true;
  }
  else if(cmd==='musicOff'){if(s.welcomeMusic)s.welcomeMusic.on=false;}
