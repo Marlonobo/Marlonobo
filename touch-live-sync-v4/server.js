@@ -231,7 +231,10 @@ async function handler(req,res){
  else if(cmd==='zoomStart'){if(!startZoom())return send(res,400,{error:'Keine Zoom-Aufgabe vorhanden'});}
  else if(cmd==='zoomEnd'){endZoom();}
  else if(cmd==='end'){s.phase='end';s.playing=false;}
- else if(cmd==='reset'){s=def();users=new Map();feedback=[];saveUsers();}
+ else if(cmd==='reset'){
+  const keep={video:s.video,videoTitle:s.videoTitle,subtitles:s.subtitles,captionSize:s.captionSize,captionPosition:s.captionPosition,captionRevision:s.captionsRevision,captionsRevision:s.captionsRevision,cloudCaptions:s.cloudCaptions,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset};
+  s=Object.assign(def(),keep);users=new Map();feedback=[];saveUsers();
+ }
  else if(cmd==='videoYoutube'){const id=youtubeId(b.url);if(!id)return send(res,400,{error:'Kein gueltiger YouTube-Link'});s.video={type:'youtube',id,url:'https://www.youtube.com/watch?v='+id};}
  else if(cmd==='videoLink'){try{const link=new URL(b.url);if(link.protocol!=='https:')throw Error();s.video={type:'url',url:link.toString(),id:null};}catch{return send(res,400,{error:'Bitte HTTPS-MP4-Link eingeben.'});}}
  else if(cmd==='videoUpload'){if(!fs.existsSync(VIDEO_FILE))return send(res,404,{error:'Noch kein Video hochgeladen'});s.video={type:'upload',url:'/media/video',id:null};}
