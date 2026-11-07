@@ -22,14 +22,46 @@ let usersTimer=null;function saveUsers(){clearTimeout(usersTimer);usersTimer=set
 const ZOOM=()=>Q.find(q=>q.type==='zoom');
 async function hydrateCloudMedia(){
  if(!S3.enabled)return;
- try{const manifest=await S3.manifest();
- if(!manifest)return;
- cloudManifest=manifest;
- if(manifest.video&&(s.video.type==='none'||s.video.storage==='s3'))s.video={type:'url',url:'/api/storage/video',id:null,storage:'s3'};
- if(manifest.captions)s.cloudCaptions=true;
- if(typeof manifest.videoTitle==='string'&&manifest.videoTitle.trim())s.videoTitle=manifest.videoTitle.slice(0,110);
- await persist();
+ try{
+  const manifest=await S3.manifest();
+  if(!manifest)return;
+  cloudManifest=manifest;
+  const settings=manifest.settings||{};
+  const v=settings.video;
+  // Only restore media types whose bytes or external URLs survive a server restart.
+  if(v&&typeof v==='object'&&['youtube','url','drive','icloud'].includes(v.type)&&typeof v.url==='string'){
+   if(v.type==='url'&&v.storage==='s3')s.video={type:'url',url:'/api/storage/video',id:null,storage:'s3'};
+   else if(v.type==='youtube'||v.type==='drive'||v.type==='icloud'||(v.type==='url'&&v.url.startsWith('https://')))s.video=v;
+  }else if(manifest.video){
+   s.video={type:'url',url:'/api/storage/video',id:null,storage:'s3'};
+  }
+  if(manifest.captions)s.cloudCaptions=true;
+  const title=settings.videoTitle||manifest.videoTitle;
+  if(typeof title==='string'&&title.trim())s.videoTitle=title.slice(0,110);
+  for(const [field,min,max] of [['captionSize',70,160],['captionPosition',5,25],['subtitleOffset',-3600,3600]]){
+   const value=Number(settings[field]);if(settings[field]!==undefined&&Number.isFinite(value)&&value>=min&&value<=max)s[field]=value;
+  }
+  if(typeof settings.subtitles==='boolean')s.subtitles=settings.subtitles;
+  if(Number.isSafeInteger(settings.captionsRevision)&&settings.captionsRevision>=0)s.captionsRevision=settings.captionsRevision;
+  s.revision++;
+  await persist();
  }catch(e){console.error('S3 Wiederherstellung fehlgeschlagen:',e.message);}
+}
+// Save selected film link and subtitle settings together, in addition to storing MP4/VTT bytes.
+// When R2/S3 is not connected, the admin browser provides a secondary recovery copy.
+async function saveDurableMediaSettings(){
+ if(!S3.enabled)return false;
+ const manifest=await S3.manifest()||{};
+ const video=s.video&&typeof s.video==='object'?s.video:{type:'none',url:null,id:null};
+ manifest.settings={
+  video,videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',
+  subtitles:!!s.subtitles,subtitleOffset:s.subtitleOffset||0,
+  captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,
+  captionsRevision:s.captionsRevision||0,savedAt:new Date().toISOString()
+ };
+ await S3.putManifest(manifest);
+ cloudManifest=manifest;
+ return true;
 }
 function convertSubtitles(raw){
  let v=String(raw||'').replace(/^\uFEFF/,'').replace(/\r\n?/g,'\n').trim();
@@ -106,7 +138,7 @@ async function handler(req,res){
  if(m==='GET'&&p==='/api/state')return send(res,200,publicState(u.searchParams.get('id')));
  if(m==='GET'&&p==='/api/version')return send(res,200,{version:BUILD_VERSION});
  if(m==='GET'&&p==='/api/health')return send(res,200,{ok:true,questionCount:Q.length,now:Date.now(),cloudStorageConfigured:S3.enabled});
- if(m==='GET'&&p==='/api/storage/status')return send(res,200,{configured:S3.enabled,durable:S3.enabled,videoReady:!!cloudManifest?.video,subtitlesReady:!!cloudManifest?.captions,maximumBytes:10*1024**3,partSize:16*1024**2});
+ if(m==='GET'&&p==='/api/storage/status')return send(res,200,{configured:S3.enabled,durable:S3.enabled,settingsReady:!!cloudManifest?.settings,videoReady:!!cloudManifest?.video,subtitlesReady:!!cloudManifest?.captions,maximumBytes:10*1024**3,partSize:16*1024**2});
  if((m==='GET'||m==='HEAD')&&p==='/api/storage/video'){
   if(!S3.enabled)return send(res,503,{error:'Cloud-Speicher nicht eingerichtet.'});
   res.writeHead(302,{'Location':S3.videoUrl(),'Cache-Control':'private, no-store','Referrer-Policy':'no-referrer'});return res.end();
@@ -138,7 +170,7 @@ async function handler(req,res){
   let config={};try{config=await S3.manifest()||{};}catch(e){console.error(e.message);}
   config.video={name:String(b.name||'touchscreen.mp4').slice(0,120),size,uploadedAt:new Date().toISOString()};
   await S3.putManifest(config);cloudManifest=config;
-  s.video={type:'url',url:'/api/storage/video',id:null,storage:'s3'};s.revision++;await persist();
+  s.video={type:'url',url:'/api/storage/video',id:null,storage:'s3'};await saveDurableMediaSettings();s.revision++;await persist();
   return send(res,200,{ok:true,videoReady:true,durable:true});
  }
 
@@ -268,12 +300,12 @@ async function handler(req,res){
  else if(cmd==='videoTitle'){
   const title=String(b.value||'').replace(/[\u0000-\u001F\u007F]/g,' ').trim();
   if(title.length<3||title.length>110)return send(res,400,{error:'Der Videotitel muss zwischen 3 und 110 Zeichen lang sein.'});
-  if(S3.enabled){const manifest=await S3.manifest()||{};manifest.videoTitle=title;await S3.putManifest(manifest);cloudManifest=manifest;}
   s.videoTitle=title;
  }
  else if(cmd==='captionSize'){const n=Number(b.value);if(!Number.isFinite(n)||n<70||n>160)return send(res,400,{error:'Untertitelgröße von 70 bis 160 Prozent'});s.captionSize=n;}
  else if(cmd==='captionPosition'){const n=Number(b.value);if(!Number.isFinite(n)||n<5||n>25)return send(res,400,{error:'Untertitelposition von 5 bis 25 Prozent'});s.captionPosition=n;}
  else return send(res,400,{error:'Unbekannter Befehl'});
+ if(['videoYoutube','videoCloud','videoLink','videoUpload','videoStored','videoTitle','subtitles','captionSize','captionPosition','captionOffset'].includes(cmd))await saveDurableMediaSettings();
  s.revision++;await persist();return send(res,200,{ok:true,state:publicState()});
  }
  if(m==='POST'&&p==='/api/questions'){
@@ -297,7 +329,7 @@ async function handler(req,res){
  if(Buffer.byteLength(v)>1200000)return send(res,413,{error:'Untertitel sind zu groß.'});
  await fsp.writeFile(SUB_FILE,v,'utf8');
  if(S3.enabled){await S3.put(S3.CAPTIONS,v,'text/vtt');let manifest={};try{manifest=await S3.manifest()||{};}catch{}manifest.captions={name:String(b.name||'untertitel.vtt').slice(0,120),uploadedAt:new Date().toISOString()};await S3.putManifest(manifest);cloudManifest=manifest;s.cloudCaptions=true;}
- s.captionsRevision=(s.captionsRevision||0)+1;s.revision++;await persist();return send(res,200,{ok:true,durable:S3.enabled});
+ s.captionsRevision=(s.captionsRevision||0)+1;await saveDurableMediaSettings();s.revision++;await persist();return send(res,200,{ok:true,durable:S3.enabled});
 
  }
  if(m==='POST'&&p==='/api/upload/start'){
