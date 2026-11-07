@@ -8,7 +8,7 @@ const fromUrl=new URL(location.href).searchParams.get('key');
 let key=fromUrl||sessionStorage.getItem(keyStore)||'';
 if(fromUrl){sessionStorage.setItem(keyStore,key);history.replaceState({},'',location.pathname);}
 let state=null,participantId=localStorage.getItem(idStore)||'',participantName=localStorage.getItem(nameStore)||'';
-let screenSignature='',quizSignature='',sourceRef='',activated=false,ytPlayer=null,ytReady=false,ytVideoId='',ytApiLoading=false,localRevision=-1,lastCaptionRevision=-1;
+let screenSignature='',quizSignature='',sourceRef='',activated=false,ytPlayer=null,ytReady=false,ytVideoId='',ytApiLoading=false,localRevision=-1,lastCaptionRevision=-1,initialMediaSyncPending=false,lastAppliedSeekSerial=null,seekCommandBusy=false;
 let easterInstance=null,cloudFallback=false;
 const partyModeKey='touch_party_view_mode_'+(host?'host':'viewer');
 let partyViewMode=localStorage.getItem(partyModeKey)==='auto'?'auto':localStorage.getItem(partyModeKey)==='side'?'side':(host?'side':'auto');
@@ -198,7 +198,9 @@ function updateScene(){
  if(driveFrame)driveFrame.hidden=!(film&&source.type==='drive'&&cloudFallback);
  if(iCloudBox)iCloudBox.hidden=!(film&&source.type==='icloud');
  if(iCloudBox&&film&&source.type==='icloud')$('partyCloudLink').href=source.shareUrl||source.url;
- playBtn.hidden=!(film&&source.type!=='icloud'&&!(source.type==='drive'&&cloudFallback)&&(!activated||(state.playing&&((source.type==='youtube'&&ytPlayer&&ytReady&&ytPlayer.getPlayerState()!==1)||(source.type!=='youtube'&&video.paused)))));
+ // Buffering is not an autoplay failure; do not cover the screen on BUFFERING=3.
+ playBtn.hidden=!(film&&source.type!=='icloud'&&!(source.type==='drive'&&cloudFallback)&&!activated);
+ const resyncButton=$('partyResync');if(resyncButton)resyncButton.hidden=!(film&&!host&&['youtube','url','upload'].includes(source.type));
  if(film){screenSignature='';return;}
  let html='';
  if(phase==='welcome')html=slide('Willkommen bei TOUCH LIVE','Die Dokumentation startet, sobald die Moderatorin bereit ist.','<small>Gemeinsam schauen und mitspielen – egal von welchem Ort.</small>');
@@ -254,7 +256,7 @@ function syncMovie(force=false){
  const v=onlineVideo(),ref=v.type+':'+(v.url||v.id);
  if(state.captionsAvailable&&lastCaptionRevision!==state.captionsRevision){lastCaptionRevision=state.captionsRevision;loadCaptions();}
  if(ref!==sourceRef){
- sourceRef=ref;localRevision=-1;cloudFallback=false;
+ sourceRef=ref;localRevision=-1;cloudFallback=false;initialMediaSyncPending=true;lastAppliedSeekSerial=null;
   const iframe=$('partyDrivePreview');if(iframe){iframe.hidden=true;iframe.removeAttribute('src');}
  if(ytPlayer){try{ytPlayer.destroy();}catch{}ytPlayer=null;ytReady=false;}
  video.pause();video.removeAttribute('src');video.load();
@@ -262,12 +264,16 @@ function syncMovie(force=false){
  else if(v.type==='icloud'){ytVideoId='';container.replaceChildren();updateScene();showError('iCloud-Link öffnen: Freigabelinks bieten keine direkte automatische Video-/Quiz-Synchronisierung.');}
  else{ytVideoId='';container.replaceChildren();video.src=v.url;video.load();loadCaptions();}
  }
- const serverPos=Number(state.time)||0,change=force||localRevision!==state.revision;
+ const serverPos=Number(state.time)||0,seekSerial=Number(state.seekSerial)||0;
+ // A quiz, game, subtitle or status revision must NEVER seek the video.
+ // Only initial joining and intentional presenter seeks/starts are applied.
+ const alignTime=initialMediaSyncPending||(lastAppliedSeekSerial!==null&&seekSerial!==lastAppliedSeekSerial);
  if(v.type==='youtube'){
   if(!ytPlayer||!ytReady)return;
-  try{const local=Number(ytPlayer.getCurrentTime())||0,drift=Math.abs(local-serverPos);
-   // Do not seek on every quiz/state revision if the position is already close.
-   if((change&&drift>2.8)||drift>(host?8:3.5))ytPlayer.seekTo(serverPos,true);
+  try{
+   const local=Number(ytPlayer.getCurrentTime())||0;
+   if(alignTime&&Math.abs(local-serverPos)>1.25)ytPlayer.seekTo(serverPos,true);
+   initialMediaSyncPending=false;lastAppliedSeekSerial=seekSerial;
    const ytState=Number(ytPlayer.getPlayerState());
    if(state.playing){
     if(!activated)ytPlayer.mute();else ytPlayer.unMute();
@@ -279,9 +285,12 @@ function syncMovie(force=false){
   // No readable video clock in the provider viewer; never send fake timestamps.
  }else{
   if(video.readyState>0){
-   try{if(change||Math.abs((video.currentTime||0)-serverPos)>(host?8:3.5))video.currentTime=serverPos;}catch{}
+   if(alignTime&&Math.abs((video.currentTime||0)-serverPos)>1.25){
+    try{video.currentTime=serverPos;}catch{}
+   }
+   initialMediaSyncPending=false;lastAppliedSeekSerial=seekSerial;
   }
-  if(state.playing&&video.paused){if(!activated)video.muted=true;video.play().catch(()=>{activated=false;$('partyEnable').hidden=false;});}
+  if(state.playing&&video.paused&&video.readyState>0){if(!activated)video.muted=true;video.play().catch(()=>{activated=false;$('partyEnable').hidden=false;});}
   if(!state.playing&&!video.paused)video.pause();
  }
  localRevision=state.revision;
@@ -348,7 +357,14 @@ function interaction(){
  part.innerHTML='<div class="centerstage partyWait"><div><span class="eyebrow">TOUCH LIVE</span><h2>'+(phase==='welcome'?'Die Sendung beginnt gleich.':'Schau auf den Film.')+'</h2><p>Quizfragen und Spiele erscheinen hier automatisch und werden auf dem Server ausgewertet.</p></div></div>';
 }
 async function sendHostTick(ended=false){
- if(!host||!key||!state||state.phase!=='film'||state.video?.type==='local'||tickInFlight)return;
+ if(!host||!key||!state||state.phase!=='film'||state.video?.type==='local'||tickInFlight||tapBusy||seekCommandBusy||!state.playing)return;
+ const source=onlineVideo();
+ if(source.type==='youtube'){
+  if(!ytPlayer||!ytReady)return;
+  const playerState=Number(ytPlayer.getPlayerState());
+  // Only true playback advances the clock; buffering never reports old frames.
+  if(ended?playerState!==0:playerState!==1)return;
+ }else if(['url','upload'].includes(source.type)&&!ended&&(video.paused||video.readyState<2))return;
  const t=playerTime();if(t===null)return;
  tickInFlight=true;
  try{
@@ -365,6 +381,13 @@ function connectButtons(){
   if(host&&state?.phase==='film'&&!state.playing&&state.video?.type!=='local'){await hostCommand('play');}
  };
  const filmTap=$('partyTapToggle');if(filmTap)filmTap.onclick=toggleHostFilmByClick;
+ const resyncButton=$('partyResync');
+ if(resyncButton)resyncButton.onclick=()=>{
+  if(host||!state||state.phase!=='film')return;
+  initialMediaSyncPending=true;syncMovie(true);
+  resyncButton.textContent='✓ Angeglichen';
+  setTimeout(()=>{resyncButton.textContent='↻ Manuell angleichen';},1800);
+ };
  const captionsBtn=$('partyCaptionToggle');
  if(captionsBtn)captionsBtn.onclick=()=>{
   watchCaptionsEnabled=!watchCaptionsEnabled;
@@ -406,11 +429,14 @@ function connectButtons(){
 }
 async function hostCommand(cmd,body={}){
  if(!key)return showError('Du brauchst einen Mitsteuer-Code.');
+ const seeking=['start','seek','restartVideo'].includes(cmd);
+ if(seeking)seekCommandBusy=true;
  try{
   await api('/api/remote',{cmd:cmd==='start'?'startOnline':cmd,...body},true);
   await poll();if(cmd==='start'||cmd==='play'){$('partyEnable').hidden=!(!activated);}
   return true;
  }catch(e){showError('Steuerung fehlgeschlagen: '+e.message);return false;}
+ finally{if(seeking)seekCommandBusy=false;}
 }
 
 async function startOnHostDevice(){
