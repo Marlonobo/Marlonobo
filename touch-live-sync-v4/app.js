@@ -659,9 +659,28 @@ function tvView(){
   tvRemoteFullscreen(false);
 };
  el('tvSoundtrackUnlock').onclick=async()=>{
-  const enabled=await window.TouchSoundtrack?.activate?.();
+  if(!state||state.phase!=='welcome')return;
+  const current=state.welcomeMusic?.on===true;
+  const unlocked=!!window.TouchSoundtrack?.unlocked?.();
+  const on=!(current&&unlocked);
   const button=el('tvSoundtrackUnlock');
-  if(button)button.textContent=enabled?'✓ Musik-Ton freigegeben':'♫ Musik nicht verfügbar';
+  if(button)button.disabled=true;
+  // Begin audio activation SYNCHRONOUSLY on remote OK before awaiting the network.
+  const activation=window.TouchSoundtrack?.activate?.();
+  if(on){
+   window.TouchSoundtrack?.sync?.({...state,welcomeMusic:{...(state.welcomeMusic||{}),on:true}});
+  }else window.TouchSoundtrack?.silence?.();
+  try{
+   await api('/api/tv/welcome-music','POST',{on},tvKey);
+   const allowed=await activation;
+   if(on&&!allowed)tvFullscreenHint('LG-Audio wurde blockiert oder nicht unterstützt. Probiere „⛶ Vollbild – OK“ und danach „LG-Musik starten“.');
+   await poll(true);
+  }catch(err){
+   tvFullscreenHint('Musik konnte nicht geändert werden: '+err.message);
+   await poll(true);
+  }finally{
+   if(button)button.disabled=false;
+  }
   tvControlsVisible(true);
  };
  el('tvSpotifyPlay').onclick=()=>{
@@ -723,7 +742,7 @@ function syncWelcomeMusic(){
   chip.classList.toggle('is-playing',active&&unlocked);
  }
  const button=el('tvSoundtrackUnlock');
- if(button)button.textContent=unlocked?'✓ Musik-Ton aktiviert':'♫ Musik-Ton aktivieren';
+ if(button)button.textContent=active?(unlocked?'⏹ LG-Musik stoppen':'▶ Musik-Ton freigeben'):'♫ LG-Musik starten';
 }
 function tvDisplay(){
  if(!state||role!=='tv'||!el('tvScene'))return;
