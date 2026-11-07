@@ -32,8 +32,11 @@ if(!fs.existsSync(FILM_CUES_MARKER)){
  }catch(e){console.error('Film-Zeitmarken nicht dauerhaft gesichert:',e.message);}
 }
 
-const def=()=>({phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,videoTitle:'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{url:'',type:'',id:'',on:false},soundtrack:{pause:true,results:true,volume:.25},captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,resultsAt:0,clockSource:'tv',lastHostTick:0,revision:0});
+const def=()=>({phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,videoVolume:1,videoTitle:'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{url:'',type:'',id:'',on:false},soundtrack:{pause:true,results:true,volume:.25},captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,resultsAt:0,clockSource:'tv',lastHostTick:0,revision:0});
 let s=def(), users=new Map(), upload=null,feedback=[],cloudManifest=null;
+// This is intentionally volatile: choosing a file on a Windows PC never uploads its bytes.
+// Readiness expires when the HDMI browser disconnects; it is not persisted in storage.
+let localMedia={name:'',size:0,duration:0,lastSeen:0};
 try{s=Object.assign(def(),JSON.parse(fs.readFileSync(STATE_FILE,'utf8')));}catch{}
 if(migratedFilmCues){s.quizOffset=0;try{fs.writeFileSync(STATE_FILE,JSON.stringify(s),'utf8');}catch(e){console.error('Quiz-Offset nicht gesichert:',e.message);}}
 
@@ -49,8 +52,9 @@ async function hydrateCloudMedia(){
   const settings=manifest.settings||{};
   const v=settings.video;
   // Only restore media types whose bytes or external URLs survive a server restart.
-  if(v&&typeof v==='object'&&['youtube','url','drive','icloud'].includes(v.type)&&typeof v.url==='string'){
-   if(v.type==='url'&&v.storage==='s3')s.video={type:'url',url:'/api/storage/video',id:null,storage:'s3'};
+  if(v&&typeof v==='object'&&(v.type==='local'||(['youtube','url','drive','icloud'].includes(v.type)&&typeof v.url==='string'))){
+   if(v.type==='local')s.video={type:'local',url:null,id:null};
+   else if(v.type==='url'&&v.storage==='s3')s.video={type:'url',url:'/api/storage/video',id:null,storage:'s3'};
    else if(v.type==='youtube'||v.type==='drive'||v.type==='icloud'||(v.type==='url'&&v.url.startsWith('https://')))s.video=v;
   }else if(manifest.video){
    s.video={type:'url',url:'/api/storage/video',id:null,storage:'s3'};
@@ -62,6 +66,7 @@ async function hydrateCloudMedia(){
    const value=Number(settings[field]);if(settings[field]!==undefined&&Number.isFinite(value)&&value>=min&&value<=max)s[field]=value;
   }
   if(typeof settings.subtitles==='boolean')s.subtitles=settings.subtitles;
+  if(Number.isFinite(Number(settings.videoVolume))&&Number(settings.videoVolume)>=0&&Number(settings.videoVolume)<=1)s.videoVolume=Number(settings.videoVolume);
   if(settings.soundtrack&&typeof settings.soundtrack==='object'){
    const x=settings.soundtrack;
    s.soundtrack={pause:x.pause!==false,results:x.results!==false,volume:Math.max(0,Math.min(.6,Number(x.volume)||0))};
@@ -83,7 +88,7 @@ async function saveDurableMediaSettings(){
  const video=s.video&&typeof s.video==='object'?s.video:{type:'none',url:null,id:null};
  manifest.settings={
   video,videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{...(s.welcomeMusic||{}),on:false},soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},
-  subtitles:!!s.subtitles,subtitleOffset:s.subtitleOffset||0,
+  subtitles:!!s.subtitles,videoVolume:s.videoVolume??1,subtitleOffset:s.subtitleOffset||0,
   captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,
   captionsRevision:s.captionsRevision||0,savedAt:new Date().toISOString()
  };
@@ -131,7 +136,7 @@ function publicState(id){
   if(q&&jk.hint===q.id)player.hint=q.hint||'';}
  const z=ZOOM();let zoomResult=null;
  if(final&&z){const found=[...users.values()].filter(x=>x.answers[z.id]===z.correct).map(x=>x.name);zoomResult={q:z.q,answer:z.a[z.correct],found:found.length,names:found.slice(0,12),total:[...users.values()].filter(x=>Object.hasOwn(x.answers,z.id)).length};}
- return {phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,video:s.video,videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
+ return {phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,video:s.video,videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
   quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,a:q.a,remaining:a.remaining,accepting:a.accepting,foundCount:q.type==='zoom'?[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length:0,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
   player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)};
 }
@@ -299,13 +304,22 @@ async function handler(req,res){
  if(!isTv(req))return unauthorized(res);
  const b=await read(req,1000);if(s.phase!=='film')return send(res,200,{ok:false});
  if(s.clockSource==='host'&&Date.now()-(s.lastHostTick||0)<20000)return send(res,200,{ok:true,ignored:'host_is_primary'});
- s.clockSource='tv';const t=Number(b.time);
+ s.clockSource='tv';if(s.video?.type==='local'&&localMedia.lastSeen)localMedia.lastSeen=Date.now();const t=Number(b.time);
  if(Number.isFinite(t)&&t>=0&&t<=20000)s.time=Math.round(t*100)/100;
  const z=ZOOM();if(z&&!s.zoomDone&&s.time>=z.open&&s.time<z.open+20){startZoom();return send(res,200,{ok:true,zoom:true});}
  s.playing=!!b.playing;if(b.ended===true){s.phase='results';s.resultsAt=Date.now();s.playing=false;s.revision++;await persist();}return send(res,200,{ok:true});
  }
  // LG remote can start/stop the ORIGINAL welcome loop directly, even without Spotify.
- if(m==='POST'&&p==='/api/tv/welcome-music'){
+ if(m==='POST'&&p==='/api/tv/local-ready'){
+   if(!isTv(req))return unauthorized(res);
+   if(s.video?.type!=='local')return send(res,409,{error:'Lokaler HDMI-Modus ist im Admin noch nicht ausgewählt.'});
+   const b=await read(req,1200);const name=String(b.name||'').trim().slice(0,120);
+   const size=Number(b.size),duration=Number(b.duration);
+   if(!/\.mp4$/i.test(name)||!Number.isSafeInteger(size)||size<1||size>12*1024**3)return send(res,400,{error:'Bitte eine lokale MP4-Datei auswählen.'});
+   localMedia={name,size,duration:Number.isFinite(duration)&&duration>0?duration:0,lastSeen:Date.now()};
+   return send(res,200,{ok:true,ready:true});
+  }
+  if(m==='POST'&&p==='/api/tv/welcome-music'){
   if(!isTv(req))return unauthorized(res);
   const body=await read(req,2000);
   if(s.phase!=='welcome')return send(res,409,{error:'Willkommensmusik ist nur auf der Willkommensfolie verfügbar.'});
@@ -323,7 +337,8 @@ async function handler(req,res){
  if(p==='/api/admin'&&new Set(['welcome','start','pause','play','seek','restartVideo']).has(cmd)){s.clockSource='tv';s.lastHostTick=0;}
  if(p==='/api/remote'&&!new Set(['welcome','start','pause','play','seek','restartVideo','demo','demoNext','results','handout','end','gestureStart','gestureEnd','zoomStart','zoomEnd','videoYoutube','videoLink','musicOn','musicOff']).has(cmd))return unauthorized(res);
  if(cmd==='reloadPresentation'){if(!['welcome','end','handout'].includes(s.phase))return send(res,409,{error:'Fernseher nur vor oder nach der Vorführung neu laden.'});s.tvReloadRequest=(s.tvReloadRequest||0)+1;}
-  else if(cmd==='welcome'){s.phase='welcome';s.time=0;s.playing=false;if(s.welcomeMusic)s.welcomeMusic.on=false;}
+  else if(cmd==='start'&&s.video?.type==='local'&&(!localMedia.lastSeen||Date.now()-localMedia.lastSeen>25000))return send(res,409,{error:'Lokale MP4 am HDMI-PC noch nicht bereit. Öffne den Beamerlink auf dem Windows-PC und wähle dort die MP4-Datei.'});
+  if(cmd==='welcome'){s.phase='welcome';s.time=0;s.playing=false;if(s.welcomeMusic)s.welcomeMusic.on=false;}
  else if(cmd==='start'){s.phase='film';s.time=0;s.playing=true;s.zoomDone=false;s.resultsAt=0;if(s.welcomeMusic)s.welcomeMusic.on=false;}
  else if(cmd==='restartVideo'){s.phase='film';s.time=0;s.playing=false;s.zoomDone=false;s.resultsAt=0;s.zoomStart=0;if(s.welcomeMusic)s.welcomeMusic.on=false;}
  else if(cmd==='pause')s.playing=false;
@@ -339,10 +354,14 @@ async function handler(req,res){
  else if(cmd==='zoomEnd'){endZoom();}
  else if(cmd==='end'){s.phase='end';s.playing=false;}
  else if(cmd==='reset'){
-  const keep={video:s.video,videoTitle:s.videoTitle,welcomeMusic:{...(s.welcomeMusic||{url:'',id:'',type:''}),on:false},soundtrack:s.soundtrack,subtitles:s.subtitles,captionSize:s.captionSize,captionPosition:s.captionPosition,captionRevision:s.captionsRevision,captionsRevision:s.captionsRevision,cloudCaptions:s.cloudCaptions,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset};
+  const keep={video:s.video,videoVolume:s.videoVolume??1,videoTitle:s.videoTitle,welcomeMusic:{...(s.welcomeMusic||{url:'',id:'',type:''}),on:false},soundtrack:s.soundtrack,subtitles:s.subtitles,captionSize:s.captionSize,captionPosition:s.captionPosition,captionRevision:s.captionsRevision,captionsRevision:s.captionsRevision,cloudCaptions:s.cloudCaptions,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset};
   s=Object.assign(def(),keep);users=new Map();feedback=[];saveUsers();
  }
- else if(cmd==='videoYoutube'){const id=youtubeId(b.url);if(!id)return send(res,400,{error:'Kein gueltiger YouTube-Link'});s.video={type:'youtube',id,url:'https://www.youtube.com/watch?v='+id};}
+ else if(cmd==='videoLocal'){s.video={type:'local',url:null,id:null};localMedia={name:'',size:0,duration:0,lastSeen:0};s.clockSource='tv';s.lastHostTick=0;}
+  else if(cmd==='filmVolume'){
+   const n=Number(b.value);if(!Number.isFinite(n)||n<0||n>1)return send(res,400,{error:'Filmlautstärke von 0 bis 100 Prozent einstellen.'});s.videoVolume=n;
+  }
+  else if(cmd==='videoYoutube'){const id=youtubeId(b.url);if(!id)return send(res,400,{error:'Kein gueltiger YouTube-Link'});s.video={type:'youtube',id,url:'https://www.youtube.com/watch?v='+id};}
  else if(cmd==='videoCloud'){
   const provider=String(b.provider||'').toLowerCase();
   let parsed;try{parsed=new URL(String(b.url||'').trim());}catch{return send(res,400,{error:'Bitte einen vollständigen HTTPS-Freigabelink einfügen.'});}
@@ -402,7 +421,7 @@ async function handler(req,res){
  else if(cmd==='captionSize'){const n=Number(b.value);if(!Number.isFinite(n)||n<70||n>160)return send(res,400,{error:'Untertitelgröße von 70 bis 160 Prozent'});s.captionSize=n;}
  else if(cmd==='captionPosition'){const n=Number(b.value);if(!Number.isFinite(n)||n<5||n>25)return send(res,400,{error:'Untertitelposition von 5 bis 25 Prozent'});s.captionPosition=n;}
  else return send(res,400,{error:'Unbekannter Befehl'});
- if(['videoYoutube','videoCloud','videoLink','videoUpload','videoStored','videoTitle','subtitles','captionSize','captionPosition','captionOffset','spotifySet','spotifyClear','soundtrackSet'].includes(cmd))await saveDurableMediaSettings();
+ if(['videoLocal','filmVolume','videoYoutube','videoCloud','videoLink','videoUpload','videoStored','videoTitle','subtitles','captionSize','captionPosition','captionOffset','spotifySet','spotifyClear','soundtrackSet'].includes(cmd))await saveDurableMediaSettings();
  s.revision++;await persist();return send(res,200,{ok:true,state:publicState()});
  }
  if(m==='POST'&&p==='/api/questions'){
