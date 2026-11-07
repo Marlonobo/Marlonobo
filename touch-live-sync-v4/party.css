@@ -6,3 +6,32 @@
 .partyControls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.partyControls button{font-size:13px;white-space:normal}.partySeek{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-top:12px}.partySeek label{flex-basis:100%;margin:0}.partySeek input{max-width:160px}.partySeek button{flex:1}.partyWait{min-height:250px}.partyWait h2{font-size:28px}.partyQuestion h3{font-size:clamp(19px,2vw,26px);line-height:1.3;margin:10px 0 19px}.partyAnswerGrid{display:grid;grid-template-columns:1fr;gap:9px}.partyAnswer{display:flex;align-items:center;gap:14px;text-align:left;min-height:61px;padding:11px 13px;font-size:15px}.partyAnswer b{color:#8ee7db;font-size:21px;min-width:20px}.partyAnswer.selected{border:2px solid #5ce2d7;background:#164a4a}.partyAnswer:disabled{cursor:default}.partyQuestion .timer{font-size:27px}.partyQuestion .between{gap:8px}.partyResult{font-size:31px;font-weight:900;color:var(--aqua)}.partyRanking{width:100%;border-collapse:collapse}.partyRanking th,.partyRanking td{border-bottom:1px solid var(--stroke);padding:9px;text-align:left}.partyRanking th{color:#b5cada;font-size:12px;text-transform:uppercase}.partyRanking td:first-child{color:var(--aqua);font-weight:900}.partyGesture{background:#0e2738;border:1px solid #325e78;border-radius:10px;aspect-ratio:1.4;overflow:hidden;touch-action:none;position:relative;user-select:none}.partyGesturePic{position:absolute;width:73%;height:75%;top:12.5%;left:13.5%;pointer-events:none;transform-origin:center;will-change:transform}.partyGesturePic svg{width:100%;height:100%}.partyGestureHelp{color:#ade1e9}.partyFinal{padding:12px 6px}.partyScore{font-size:36px;color:#71e5d7;font-weight:900}.partyPodium{display:flex;justify-content:space-around;align-items:end;gap:8px;margin-top:16px}.partyPodi{flex:1;text-align:center;max-width:130px}.partyPodi strong{display:block;overflow-wrap:anywhere}.partyPodi .rise{font-size:26px;font-weight:900;padding:15px;background:#1c5269;border:1px solid #4bafc7;border-radius:10px 10px 0 0}.partyPodi:nth-child(2) .rise{height:108px;background:#af8130;color:#fff}.partyPodi:nth-child(1) .rise{height:77px;background:#5d829d}.partyPodi:nth-child(3) .rise{height:62px;background:#996144}.partyHint{padding:12px;background:#102e3a;border:1px solid #37657c;border-radius:9px;font-size:14px;color:#c5e0ea}.partyFilmMissing{font-size:13px;color:#ffd8a1}.partySceneInner{width:100%}
 @media(max-width:850px){.partyLayout{grid-template-columns:1fr}.partyRight{order:2}.partyHero{align-items:center}.partySceneInner img{max-height:145px}.partyScreenControls button{font-size:11px}.partyControls{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:420px){.partyScreenControls{gap:5px;left:6px;right:6px;bottom:7px}.partyScreenControls button{padding:6px 8px;font-size:10px;min-height:33px}.partyHero{flex-wrap:wrap}}
+
+
+/* Watch together: visible Top-3 reveal, 3–2–1 countdown and simpler share panel */
+.partyWinners{position:relative;overflow:hidden;max-width:750px;padding:3px 0 0}
+.partyWinners h2{font-size:clamp(26px,4vw,56px)!important;letter-spacing:-.04em;margin:7px 0}
+.partyWinners::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+ background-image:radial-gradient(circle,#daba4c 0 1.5px,transparent 2.5px),radial-gradient(circle,#79dff4 0 1.5px,transparent 2.5px),radial-gradient(circle,#c995ff 0 1.5px,transparent 2.5px);
+ background-size:74px 95px,113px 107px,137px 121px;opacity:.4;animation:partyConfetti 9s linear infinite}
+.partyWinners>*{position:relative;z-index:1}
+.partyWinners .partyPodi{opacity:0;transform:translateY(70px);animation:partyAppear .6s cubic-bezier(.15,.9,.35,1.1) forwards}
+.partyWinners .partyPodi:nth-child(3){animation-delay:3.15s} /* Platz 3 */
+.partyWinners .partyPodi:nth-child(1){animation-delay:4.3s} /* Platz 2 */
+.partyWinners .partyPodi:nth-child(2){animation-delay:5.45s} /* Platz 1 */
+.partyWinners .partyPodi:nth-child(2) .rise{background:linear-gradient(145deg,#ffdd78,#a26d19);border-color:#ffedac;box-shadow:0 0 19px #dfbf565e}
+.partyWinners .partyPodi:nth-child(1) .rise{background:linear-gradient(145deg,#99b3ce,#415e7c);border-color:#d8e5f7}
+.partyWinners .partyPodi:nth-child(3) .rise{background:linear-gradient(145deg,#d59b80,#69412f);border-color:#e7b0a1}
+.partyWinners .partyPodium{align-items:end;min-height:180px;z-index:1;position:relative}
+.partyWinners .partyPodi .rise{min-height:70px;display:flex;align-items:center;justify-content:center}
+.partyCountdown{position:absolute;left:50%;top:29%;font:900 clamp(58px,11vw,145px)/1 Consolas,monospace;color:#e8fcff;
+ filter:drop-shadow(0 0 25px #42ddef);z-index:5;pointer-events:none}
+.partyCountdown span{position:absolute;left:50%;opacity:0;transform:translateX(-50%) scale(1.7);animation:partyCountdown 1s ease-in-out both}
+.partyCountdown span:nth-child(2){animation-delay:1s}.partyCountdown span:nth-child(3){animation-delay:2s}
+.partyWinnersFoot{font-weight:800;color:#fff;margin:10px 0 0}
+.partyShare{margin:15px 0;border:1px solid #375c71;background:#0b2435;border-radius:12px;padding:14px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.partyShare p{font-size:12px;color:#b9d0dc;margin:5px 0}.partyShare code{display:block;font:12px/1.5 Consolas,monospace;color:#a9e9e7;overflow-wrap:anywhere;margin-top:7px}.partyShare button{white-space:nowrap}
+@keyframes partyCountdown{0%{opacity:0;transform:translateX(-50%) scale(1.7)}22%{opacity:1;transform:translateX(-50%) scale(1)}78%{opacity:1}100%{opacity:0;transform:translateX(-50%) scale(.75)}}
+@keyframes partyAppear{to{opacity:1;transform:translateY(0)}}
+@keyframes partyConfetti{from{background-position:0 0,50px 0,100px 0}to{background-position:0 400px,50px 650px,100px 560px}}
+@media (prefers-reduced-motion:reduce){.partyWinners .partyPodi{opacity:1;transform:none;animation:none}.partyWinners::before,.partyCountdown{animation:none;display:none}}
