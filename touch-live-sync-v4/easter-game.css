@@ -1,0 +1,47 @@
+
+/* TOUCH LIVE Easter Egg – optimized for iPad touch, PC mouse, phones and projector */
+.egg-game{color:#edf9ff;background:linear-gradient(160deg,#0a2234,#102e47);border:1px solid #4f899b85;border-radius:23px;padding:clamp(11px,2vw,21px);box-shadow:0 23px 60px #0006;position:relative;isolation:isolate}
+.egg-topline{display:flex;justify-content:space-between;gap:14px;align-items:start;margin-bottom:14px}
+.egg-kicker{font:850 11px/1.5 Consolas,monospace;letter-spacing:.11em;color:#82e8e7;display:block}
+.egg-topline h3{font-size:clamp(23px,3.2vw,38px);line-height:1.12;letter-spacing:-.04em;margin:5px 0 7px;color:#f7fdff}
+.egg-topline p{font-size:clamp(12px,1.5vw,16px);color:#c5dbe6;line-height:1.5;margin:0}
+.egg-game-clock{background:#092134;border:1px solid #438499;border-radius:13px;text-align:center;min-width:91px;padding:7px 12px;box-shadow:0 0 20px #61d6e614}
+.egg-game-clock span{display:block;color:#a7c7d3;font:700 10px Consolas,monospace;letter-spacing:.12em}
+.egg-game-clock strong{display:block;font:900 clamp(24px,3vw,34px) Arial,sans-serif;color:#86f3ed;white-space:nowrap}
+.egg-clock-low .egg-game-clock strong{color:#ffb5a4;animation:eggUrgent 1s ease-in-out infinite}
+.egg-stage{position:relative;overflow:hidden;aspect-ratio:1000/620;width:100%;max-width:100%;background:#18465b;border:2px solid #58bfd3;border-radius:18px;box-shadow:inset 0 0 60px #0003,0 10px 30px #01081277;touch-action:none}
+.egg-svg{width:100%;height:100%;display:block;touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab;outline-offset:4px}
+.egg-svg:active{cursor:grabbing}
+.egg-location,.egg-zoom-indicator{position:absolute;pointer-events:none;background:#031726bb;color:#fff;border:1px solid #94eafa63;border-radius:10px;padding:6px 10px;backdrop-filter:blur(9px);font:800 clamp(9px,1.4vw,13px)/1.4 Consolas,monospace;text-shadow:0 2px 5px #000}
+.egg-location{top:12px;left:12px;letter-spacing:.08em}
+.egg-zoom-indicator{top:12px;right:12px;font-size:clamp(11px,1.5vw,16px)}
+.egg-tap{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);text-align:center;max-width:calc(100% - 24px);width:max-content;padding:8px 14px;background:#031728ca;border:1px solid #8bddde60;color:#fff;border-radius:100px;font:750 clamp(11px,1.3vw,15px)/1.3 Arial,sans-serif;text-shadow:0 1px 3px #000;pointer-events:none}
+.egg-tap.egg-miss{border-color:#f7a9a3;color:#ffddd5}
+.egg-tools{margin-top:14px;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.egg-btn{background:#12364d;border:1px solid #57879f;border-radius:12px;min-width:48px;min-height:45px;padding:8px 13px;font-size:17px;color:#effdff;box-shadow:0 5px 12px #0002}
+.egg-btn:hover{background:#1d4b5e;border-color:#99ebeb}
+.egg-btn[data-egg=hint]{font-size:14px;background:#274455;border-color:#d6c47d}
+.egg-tools-help{margin-left:auto;max-width:420px;color:#b4d3df;font-size:clamp(10px,1.3vw,13px);line-height:1.4}
+.egg-hint{padding:10px 13px;margin-top:13px;border-radius:11px;background:#08263c;border-left:3px solid #7ee9dc;color:#d7e9ee;font-size:clamp(12px,1.45vw,15px)}
+.egg-celebration[hidden]{display:none!important}
+.egg-celebration{position:absolute;inset:0;z-index:12;background:linear-gradient(145deg,#082232df,#041422f2);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:5px;isolation:isolate;overflow:hidden;animation:eggWin .45s ease-out both}
+.egg-star{font-size:clamp(45px,8vw,104px);filter:drop-shadow(0 5px 25px #ffe27b99);animation:eggBounce 1.1s cubic-bezier(.1,.9,.2,1.2) both}
+.egg-celebration h4{font-size:clamp(25px,5vw,60px);font-weight:950;line-height:1.06;letter-spacing:-.04em;color:#fef6ca;margin:0;text-shadow:0 4px 24px #000b}
+.egg-celebration p{font-size:clamp(12px,1.8vw,20px);color:#e0f5fa;margin:8px 12px}
+.egg-celebration strong{color:#94f9ee;font-size:clamp(20px,3.4vw,35px)}
+.egg-confetti{position:absolute;inset:0;pointer-events:none;z-index:-1;background-image:radial-gradient(circle,#f8d359 0 3px,transparent 4px),radial-gradient(circle,#62e2ed 0 3px,transparent 4px),radial-gradient(circle,#f59cd0 0 3px,transparent 4px);background-size:76px 119px,121px 87px,157px 147px;animation:eggConfetti 8s linear infinite}
+.egg-game.egg-shake .egg-tap{animation:eggShake .4s ease-in-out}
+@keyframes eggConfetti{from{background-position:0 0,29px -39px,74px -30px}to{background-position:0 760px,29px 870px,74px 930px}}
+@keyframes eggWin{from{opacity:0;transform:scale(1.1)}to{opacity:1;transform:scale(1)}}
+@keyframes eggBounce{0%{transform:scale(.4) rotate(-16deg)}65%{transform:scale(1.2) rotate(7deg)}100%{transform:scale(1) rotate(0)}}
+@keyframes eggShake{0%,100%{transform:translateX(-50%)}25%{transform:translateX(calc(-50% + 9px))}50%{transform:translateX(calc(-50% - 8px))}75%{transform:translateX(calc(-50% + 4px))}}
+@keyframes eggUrgent{50%{transform:scale(1.08)}}
+.egg-projector{width:min(1380px,96vw);margin:0 auto;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:clamp(18px,3vw,52px);text-align:left}
+.egg-projector h1{font-size:clamp(42px,5.5vw,92px);line-height:1.02;letter-spacing:-.055em;margin:12px 0}
+.egg-projector .egg-tv-art{max-height:80vh;width:100%;border-radius:20px;border:2px solid #69cbda;box-shadow:0 10px 70px #5fdde63e;object-fit:contain}
+.egg-projector .egg-tv-counter{display:flex;align-items:center;gap:15px;margin-top:32px}
+.egg-projector .egg-tv-counter strong{color:#91faed;font:900 clamp(36px,5.3vw,84px)/1 Arial,sans-serif}
+.egg-projector .egg-tv-counter span{color:#d2e6f1;font-size:clamp(13px,1.4vw,21px)}
+@media(max-width:850px){.egg-projector{grid-template-columns:1fr;text-align:center}.egg-projector .egg-tv-art{max-height:32vh}.egg-projector .egg-tv-counter{justify-content:center}}
+@media(max-width:620px){.egg-game{padding:9px;border-radius:14px}.egg-topline{gap:7px}.egg-game-clock{min-width:75px;padding:4px 7px}.egg-topline h3{font-size:22px}.egg-topline p{font-size:12px}.egg-location{font-size:8px;top:7px;left:7px}.egg-zoom-indicator{top:7px;right:7px}.egg-stage{border-radius:10px}.egg-btn{flex:1;min-width:0;font-size:16px;padding:7px}.egg-tools-help{max-width:100%;width:100%;margin:2px 0 0;text-align:center}.egg-tap{bottom:5px;padding:5px 8px;font-size:9px}.egg-hint{margin-top:8px;padding:7px 9px;font-size:12px}}
+@media(prefers-reduced-motion:reduce){.egg-celebration,.egg-confetti,.egg-star,.egg-clock-low .egg-game-clock strong,.egg-game.egg-shake .egg-tap{animation:none}}
