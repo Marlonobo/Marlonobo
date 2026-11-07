@@ -548,8 +548,8 @@ function tvView(){
  el('tvPlay').onclick=tvEnablePlayback;
  el('tvFullscreen').onclick=()=>tvRemoteFullscreen(false);
  el('tvSpotifyPlay').onclick=()=>{
-  if(spotifyController){try{spotifyController.play();tvControlsVisible(false);}catch{tvControlsVisible(true);}}
-  else{const frame=el('tvSpotifyDock')?.querySelector('iframe');if(frame){frame.focus();tvControlsVisible(false);}else tvControlsVisible(true);}
+  if(spotifyController){try{spotifyController.play();tvControlsVisible(true);}catch{tvControlsVisible(true);}}
+  else{const frame=el('tvSpotifyDock')?.querySelector('iframe');if(frame){frame.focus();tvControlsVisible(true);}else tvControlsVisible(true);}
  };
  el('tvHideControls').onclick=()=>tvControlsVisible(false);
  el('tvCloudOpen').onclick=()=>{if(state?.video?.type==='icloud'){const url=state.video.shareUrl||state.video.url;if(url)window.open(url,'_blank','noopener');}};
@@ -558,7 +558,7 @@ function tvView(){
    fallbackCaptionsBase=Number(state.time)||0;
    fallbackCaptionsAt=Date.now();
    updateCaption();
-   tvControlsVisible(false);
+   tvControlsVisible(true);
   }
  };
  tvControlsVisible(true);
@@ -576,7 +576,7 @@ function tvView(){
   if(iframe){iframe.src=state.video.previewUrl||state.video.shareUrl;iframe.style.display='block';}
   const sync=el('tvCaptionSync');if(sync)sync.hidden=false;
   if(state?.playing){fallbackCaptionsAt=Date.now();fallbackCaptionsBase=Number(state.time)||0;}
-  tvControlsVisible(false);
+  tvControlsVisible(true);
  });
  videoEl.addEventListener('canplay',()=>{if(state?.video?.type==='drive'){const sync=el('tvCaptionSync');if(sync)sync.hidden=true;fallbackCaptionsAt=0;}});
 
@@ -693,7 +693,7 @@ function ensureMedia(){
   if(state.playing&&videoEl.paused&&!tvSoundBlocked){
    try{
     const attempt=videoEl.play();
-    if(attempt?.then)attempt.then(()=>{tvSoundBlocked=false;if(!tvAutoplayMuted)tvControlsVisible(false);}).catch(()=>{
+    if(attempt?.then)attempt.then(()=>{tvSoundBlocked=false;}).catch(()=>{
      tvAutoplayMuted=true;videoEl.muted=true;
      const second=videoEl.play();
      if(second?.then)second.then(()=>{
@@ -725,7 +725,7 @@ function makeYouTube(id){
     if(!tvAutoplayMuted){tvAutoplayMuted=true;try{ytPlayer.mute();ytPlayer.playVideo();}catch{tvShowSoundPrompt();}const b=el('tvPlay');if(b)b.textContent='🔊 Ton mit OK einschalten';tvControlsVisible(true);}
     else tvShowSoundPrompt();
    },
-   onStateChange:e=>{if(e.data===1){tvSoundBlocked=false;tvControlsVisible(false);}}
+   onStateChange:e=>{if(e.data===1){tvSoundBlocked=false;}}
   }
  });
 }
