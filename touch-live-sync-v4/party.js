@@ -78,7 +78,7 @@ video.addEventListener('error',()=>{
  cloudFallback=true;const frame=$('partyDrivePreview');if(frame){frame.src=state.video.previewUrl||state.video.shareUrl;frame.hidden=false;}
  updateScene();showError('Google Drive öffnet die Vorschau. Sie kann nicht automatisch zur Quiz-Zeit synchronisiert werden; dafür einen direkten MP4-Link oder YouTube nutzen.');
 });
-let errorTimer=null,pollInFlight=false,tickInFlight=false,rejoinBusy=false,lastRejoinAt=0,ytWarnedShortId='';
+let errorTimer=null,pollInFlight=false,tickInFlight=false,rejoinBusy=false,lastRejoinAt=0,ytWarnedShortId='',tapBusy=false,tapNoticeTimer=null;
 function showError(msg){const e=$('partyError');e.hidden=false;e.textContent=msg;clearTimeout(errorTimer);errorTimer=setTimeout(()=>e.hidden=true,10500);}
 async function api(path,body,authenticated=false){
  const headers={'Content-Type':'application/json'};
@@ -127,9 +127,69 @@ function podium(){
  };
  return '<div class="partySceneInner partyWinners"><span class="eyebrow">ABSCHLUSSQUIZ · SIEGEREHRUNG</span><h2>Unsere Top 3!</h2><div class="partyCountdown" aria-hidden="true"><span>3</span><span>2</span><span>1</span></div><div class="partyPodium">'+podiumCard(2)+podiumCard(1)+podiumCard(3)+'</div><p class="partyWinnersFoot">Herzlichen Glückwunsch! 🏆</p></div>';
 }
+function updateTapToggle(){
+ const button=$('partyTapToggle');
+ if(!button)return;
+ const source=onlineVideo();
+ const visible=host&&!!key&&state?.phase==='film'&&['youtube','url','upload'].includes(source.type);
+ button.hidden=!visible;button.disabled=tapBusy;
+ if(!visible)return;
+ const playing=state.playing===true;
+ button.setAttribute('aria-label',playing?'Film pausieren':'Film an derselben Stelle fortsetzen');
+ button.setAttribute('aria-pressed',String(!playing));
+ button.title=playing?'Auf den Film klicken: pausieren':'Auf den Film klicken: an derselben Stelle fortsetzen';
+ const hint=button.querySelector('.partyTapHint');
+ if(hint)hint.textContent=playing?'Ⅱ Zum Pausieren tippen':'▶ Zum Fortsetzen tippen';
+}
+function showTapFeedback(message){
+ const node=$('partyTapFeedback');if(!node)return;
+ node.textContent=message;node.hidden=false;
+ clearTimeout(tapNoticeTimer);
+ tapNoticeTimer=setTimeout(()=>{node.hidden=true;},1000);
+}
+async function toggleHostFilmByClick(){
+ if(!host||!key||tapBusy||!state||state.phase!=='film')return;
+ const source=onlineVideo();
+ if(!['youtube','url','upload'].includes(source.type))return;
+ const pos=playerTime();
+ const time=Number.isFinite(pos)&&pos>=0?Math.round(pos*100)/100:Math.round((Number(state.time)||0)*100)/100;
+ const pauseNow=state.playing===true;
+ tapBusy=true;updateTapToggle();
+ try{
+  if(pauseNow){
+   // Immediately stop the host player; relay the exact paused frame to all devices.
+   if(source.type==='youtube'){if(ytPlayer&&ytReady)ytPlayer.pauseVideo();}
+   else if(!video.paused)video.pause();
+   showTapFeedback('Ⅱ Pause · '+sec(time));
+   const ok=await hostCommand('pause',{time});
+   if(!ok)await poll();
+  }else{
+   // Initiate playback from the actual button gesture (mobile autoplay rule).
+   activated=true;
+   if(source.type==='youtube'){
+    if(ytPlayer&&ytReady){try{ytPlayer.unMute();ytPlayer.playVideo();}catch{}}
+   }else{
+    video.muted=false;
+    try{
+     const p=video.play();
+     if(p?.catch)p.catch(()=>{activated=false;playBtn.hidden=false;showError('Bitte „Film mit Ton aktivieren“ antippen.');});
+    }catch{activated=false;playBtn.hidden=false;}
+   }
+   showTapFeedback('▶ Weiter · '+sec(time));
+   const ok=await hostCommand('play',{time});
+   if(!ok){
+    if(source.type==='youtube'){try{ytPlayer?.pauseVideo();}catch{}}
+    else{try{video.pause();}catch{}}
+    await poll();
+   }
+  }
+ }catch(e){showError('Videosteuerung fehlgeschlagen: '+e.message);}
+ finally{tapBusy=false;updateTapToggle();}
+}
 function updateScene(){
  if(!state)return;
  const phase=state.phase,source=onlineVideo(),haveVideo=source.type!=='none';
+ updateTapToggle();
  const film=phase==='film'&&haveVideo&&source.type!=='local';
  screen.hidden=film;
  video.hidden=!film||source.type==='youtube'||source.type==='icloud'||(source.type==='drive'&&cloudFallback);
@@ -304,6 +364,7 @@ function connectButtons(){
   catch(e){playBtn.hidden=false;showError('Ton oder Autoplay wurde vom Browser blockiert. Tippe erneut auf „Film mit Ton aktivieren“.');}
   if(host&&state?.phase==='film'&&!state.playing&&state.video?.type!=='local'){await hostCommand('play');}
  };
+ const filmTap=$('partyTapToggle');if(filmTap)filmTap.onclick=toggleHostFilmByClick;
  const captionsBtn=$('partyCaptionToggle');
  if(captionsBtn)captionsBtn.onclick=()=>{
   watchCaptionsEnabled=!watchCaptionsEnabled;
