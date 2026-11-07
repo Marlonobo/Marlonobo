@@ -160,6 +160,14 @@ async function startPlaylist(uri){
  }
 }
 async function pause(){return spotify('/me/player/pause'+deviceQuery(),'PUT');}
+async function setVolume(value){
+ const number=Math.round(Number(value));
+ if(!Number.isFinite(number)||number<0||number>100)throw Error('Lautstärke zwischen 0 und 100 Prozent wählen.');
+ const chosen=$('spotifyDevice')?.value||'';
+ const device=devices.find(d=>d.id===chosen);
+ if(device&&device.supports_volume===false)throw Error('Dieses Spotify-Gerät unterstützt keine Lautstärkesteuerung über Spotify Connect. Verwende die LG-Fernbedienung.');
+ return spotify('/me/player/volume?volume_percent='+number+(chosen?'&device_id='+encodeURIComponent(chosen):''),'PUT');
+}
 async function resume(){return spotify('/me/player/play'+deviceQuery(),'PUT');}
 async function transfer(){
  const id=$('spotifyDevice')?.value;
@@ -174,6 +182,10 @@ async function setRepeat(){
 async function currentPlayback(){
  try{
   const out=await spotify('/me/player');
+  const range=$('spotifyVolume'),value=$('spotifyVolumeLabel');
+  if(range&&document.activeElement!==range&&Number.isFinite(out?.device?.volume_percent)){
+   range.value=String(out.device.volume_percent);if(value)value.textContent=out.device.volume_percent+' %';
+  }
   const label=$('spotifyNowPlaying');
   if(label)label.textContent=out?.item?(out.is_playing?'♫ Läuft: ':'Ⅱ Pausiert: ')+out.item.name+' – '+(out.item.artists||[]).map(x=>x.name).join(', ')+(out.device?.name?' · '+out.device.name:''):'Derzeit keine aktive Spotify-Wiedergabe. Öffne Spotify auf dem LG-TV oder PC.';
  }catch(e){status('Wiedergabestatus nicht verfügbar: '+e.message,true);}
@@ -213,7 +225,20 @@ function accountButtons(){
     :'Spotify läuft, aber die Wiederholung konnte nicht aktiviert werden: '+r.reason,true);
   }catch(e){status(e.message,true);}
  };
- const pauseButton=$('spotifyAccountPause');if(pauseButton)pauseButton.onclick=async()=>{try{await pause();status('♫ Spotify pausiert.')}catch(e){status(e.message,true)}};
+ const pauseButton=$('spotifyAccountPause');if(pauseButton)pauseButton.onclick=async()=>{try{await pause();status('♫ Spotify pausiert.');await currentPlayback();}catch(e){status(e.message,true)}};
+ const spotifyVolume=$('spotifyVolume'),volumeReadout=$('spotifyVolumeLabel');
+ if(spotifyVolume){
+  spotifyVolume.oninput=()=>{if(volumeReadout)volumeReadout.textContent=spotifyVolume.value+' %';};
+  spotifyVolume.onchange=async()=>{
+   try{await setVolume(spotifyVolume.value);status('♫ Lautstärke auf '+spotifyVolume.value+' % eingestellt.');}
+   catch(e){status('Lautstärke nicht geändert: '+e.message,true);}
+  };
+ }
+ const muteSpotify=$('spotifyVolumeMute');
+ if(muteSpotify)muteSpotify.onclick=async()=>{
+  try{await setVolume(0);spotifyVolume.value='0';if(volumeReadout)volumeReadout.textContent='0 %';status('Spotify-Lautstärke auf 0 %.');}
+  catch(e){status(e.message,true);}
+ };
  const next=$('spotifyAccountNext');if(next)next.onclick=async()=>{try{await skip('next');status('♫ Nächster Titel.')}catch(e){status(e.message,true)}};
  const prev=$('spotifyAccountPrev');if(prev)prev.onclick=async()=>{try{await skip('previous');status('♫ Vorheriger Titel.')}catch(e){status(e.message,true)}};
 }
@@ -223,7 +248,7 @@ function renderAccount(){
  root.innerHTML='<div class="spotifyAccountHeader"><div><strong>Deine Spotify-Playlists</strong><p class="small">Dein Spotify-Konto wird nur über Spotify selbst angemeldet. Kein Spotify-Passwort in TOUCH LIVE.</p></div><span class="spotifyAccountChip">'+(active?'✓ Verbunden':'Nicht verbunden')+'</span></div>'+
  (active?
   '<div class="spotifyAccountTools"><button type="button" id="spotifyPlaylistsLoad" class="primary">♫ Meine Playlists laden</button><button type="button" id="spotifyDevicesLoad">Geräte suchen</button><button type="button" id="spotifyAccountLogout">Trennen</button></div>'+
-  '<div class="spotifyConnectControl"><label for="spotifyDevice">Spotify Connect – Ausgabegerät (z. B. LG-TV oder PC)</label><select id="spotifyDevice"><option value="">Aktives Spotify-Gerät</option></select><button type="button" id="spotifyTransfer">↗ Wiedergabe auf dieses Gerät übertragen</button><div class="spotifyConnectButtons"><button id="spotifyAccountPrev" title="Vorheriger Titel">⏮</button><button id="spotifyAccountPlay" class="primary">▶ Playlist starten</button><button id="spotifyAccountResume">▶ Weiter</button><button id="spotifyAccountPause">Ⅱ Pause</button><button id="spotifyAccountNext" title="Nächster Titel">⏭</button></div><div class="spotifyRepeatControls"><label for="spotifyRepeat">Was soll wiederholt werden?</label><select id="spotifyRepeat"><option value="track">🔂 Denselben Titel dauerhaft wiederholen (empfohlen)</option><option value="context">🔁 Ganze Playlist wiederholen</option><option value="off">Wiederholung aus</option></select><button type="button" id="spotifyRepeatApply">Wiederholung aktivieren</button><p class="small">Spotify Connect wiederholt standardmäßig denselben vollständigen Song. Bei einer Spotify-Vorschau im Browser können dagegen nur etwa 30 Sekunden verfügbar sein.</p></div><div class="spotifyNowPlaying"><span id="spotifyNowPlaying">Wiedergabestatus noch nicht geladen.</span><button id="spotifyNowRefresh" type="button">↻ Aktualisieren</button></div></div>'+
+  '<div class="spotifyConnectControl"><label for="spotifyDevice">Spotify Connect – Ausgabegerät (z. B. LG-TV oder PC)</label><select id="spotifyDevice"><option value="">Aktives Spotify-Gerät</option></select><button type="button" id="spotifyTransfer">↗ Wiedergabe auf dieses Gerät übertragen</button><div class="spotifyConnectButtons"><button id="spotifyAccountPrev" title="Vorheriger Titel">⏮</button><button id="spotifyAccountPlay" class="primary">▶ Playlist starten</button><button id="spotifyAccountResume">▶ Weiter</button><button id="spotifyAccountPause">Ⅱ Pause</button><button id="spotifyAccountNext" title="Nächster Titel">⏭</button></div><div class="spotifyVolumeControls"><label for="spotifyVolume">Spotify-Lautstärke: <strong id="spotifyVolumeLabel">50 %</strong></label><div><button type="button" id="spotifyVolumeMute" title="Spotify stummschalten">🔇</button><input type="range" id="spotifyVolume" min="0" max="100" step="5" value="50" aria-label="Spotify-Lautstärke"></div><p class="small">Steuert das ausgewählte Spotify-Connect-Gerät, sofern es Lautstärke über Spotify erlaubt.</p></div><div class="spotifyRepeatControls"><label for="spotifyRepeat">Was soll wiederholt werden?</label><select id="spotifyRepeat"><option value="track">🔂 Denselben Titel dauerhaft wiederholen (empfohlen)</option><option value="context">🔁 Ganze Playlist wiederholen</option><option value="off">Wiederholung aus</option></select><button type="button" id="spotifyRepeatApply">Wiederholung aktivieren</button><p class="small">Spotify Connect wiederholt standardmäßig denselben vollständigen Song. Bei einer Spotify-Vorschau im Browser können dagegen nur etwa 30 Sekunden verfügbar sein.</p></div><div class="spotifyNowPlaying"><span id="spotifyNowPlaying">Wiedergabestatus noch nicht geladen.</span><button id="spotifyNowRefresh" type="button">↻ Aktualisieren</button></div></div>'+
   '<div class="spotifySearchPanel"><label for="spotifySearchInput">Spotify durchsuchen – Songs und Playlists</label><div class="spotifySearchRow"><input type="search" id="spotifySearchInput" placeholder="z. B. 80er Hits, House, Instrumental"><button id="spotifySearchButton" type="button">Suchen</button></div><div id="spotifySearchResults" class="spotifyMyPlaylists" aria-live="polite"></div></div>'+
   '<div id="spotifyMyPlaylists" class="spotifyMyPlaylists"><p class="small">Tippe auf „Meine Playlists laden“.</p></div>'
  :
@@ -239,7 +264,7 @@ function mount(container,options={}){
  if(!root)return;
  renderAccount();
 }
-w.SpotifyConnect={mount,login,connected:userAuthorized,pauseForFilm,refresh:renderAccount,getSelectedClientId:registeredClient};
+w.SpotifyConnect={mount,login,connected:userAuthorized,pauseForFilm,refresh:renderAccount,getSelectedClientId:registeredClient,setVolume};
 if(location.pathname===CALLBACK){
  document.addEventListener('DOMContentLoaded',()=>{document.body.innerHTML='<main style="max-width:540px;margin:12vh auto;padding:24px;font-family:system-ui;background:#0b2233;color:white;border-radius:15px"><h1>Spotify wird verbunden …</h1><p>Du wirst danach zur TOUCH-LIVE-Regie zurückgeleitet.</p></main>';});
  callback().catch(err=>{document.body.textContent='Spotify-Anmeldung fehlgeschlagen: '+err.message;});
