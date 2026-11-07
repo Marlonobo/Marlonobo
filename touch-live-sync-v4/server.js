@@ -250,10 +250,11 @@ async function handler(req,res){
  if(m==='POST'&&(p==='/api/admin'||p==='/api/remote')){
  if(p==='/api/admin'?!isAdmin(req):!isCohost(req))return unauthorized(res);
  const b=await read(req),cmd=b.cmd;
- if(p==='/api/remote'&&new Set(['welcome','start','pause','play','seek','gestureEnd','zoomEnd']).has(cmd)){s.clockSource='host';s.lastHostTick=Date.now();}
- if(p==='/api/remote'&&!new Set(['welcome','start','pause','play','seek','demo','demoNext','results','handout','end','gestureStart','gestureEnd','zoomStart','zoomEnd','videoYoutube','videoLink']).has(cmd))return unauthorized(res);
+ if(p==='/api/remote'&&new Set(['welcome','start','pause','play','seek','restartVideo','gestureEnd','zoomEnd']).has(cmd)){s.clockSource='host';s.lastHostTick=Date.now();}
+ if(p==='/api/remote'&&!new Set(['welcome','start','pause','play','seek','restartVideo','demo','demoNext','results','handout','end','gestureStart','gestureEnd','zoomStart','zoomEnd','videoYoutube','videoLink']).has(cmd))return unauthorized(res);
  if(cmd==='welcome'){s.phase='welcome';s.time=0;s.playing=false;}
  else if(cmd==='start'){s.phase='film';s.time=0;s.playing=true;s.zoomDone=false;}
+ else if(cmd==='restartVideo'){s.phase='film';s.time=0;s.playing=false;s.zoomDone=false;s.resultsAt=0;s.zoomStart=0;}
  else if(cmd==='pause')s.playing=false;
  else if(cmd==='play'){if(s.phase!=='film')s.phase='film';s.playing=true;}
  else if(cmd==='seek'){const t=Number(b.time);if(!Number.isFinite(t)||t<0||t>20000)return send(res,400,{error:'Zeit ungueltig'});s.time=t;s.phase='film';const z=ZOOM();if(z&&t<z.open)s.zoomDone=false;}
