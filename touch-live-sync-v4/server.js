@@ -91,7 +91,7 @@ async function media(req,res){
 }
 async function handler(req,res){
  const u=new URL(req.url,'http://localhost'),p=u.pathname,m=req.method;
- if(m==='GET'&&(p==='/'||p==='/index.html'))return serve(res,path.join(ROOT,'index.html'),mime['.html']);
+ if(m==='GET'&&(p==='/'||p==='/index.html'||p==='/join'))return serve(res,path.join(ROOT,'index.html'),mime['.html']);
  if(m==='GET'&&(p==='/app.js'||p==='/style.css'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
  if(m==='GET'&&p==='/touchscreen-motiv.svg')return serve(res,path.join(ROOT,'touchscreen-motiv.svg'),'image/svg+xml');
  if(m==='GET'&&p==='/easter-scene.svg')return serve(res,path.join(ROOT,'easter-scene.svg'),'image/svg+xml');
