@@ -485,3 +485,29 @@ body:has(.phoneRemote){background:#071724}
 .autoSoundtrackAdmin #soundtrackStatus{margin:10px 0 0;padding:10px 12px;background:#0e3240;border-left:3px solid #6bdcc8;border-radius:8px}
 .phoneRemoteGrid button[data-mobile-sound][data-enabled=false]{background:#142833;color:#aec4c8;border-color:#365462}
 @media(max-width:580px){.autoSoundtrackSettings{grid-template-columns:1fr;padding:11px}.autoSoundtrackSettings .soundtrackCheck{font-size:13px}}
+
+
+/* LG display: setup bar ONLY on welcome, never across film, quizzes or results. */
+#tvApp #tvRemoteBar.tvRemoteHidden,#tvApp #tvRemoteHelp[hidden]{display:none!important;visibility:hidden!important;pointer-events:none!important}
+#tvApp .tvFilmUnlock{position:absolute;bottom:clamp(12px,4vh,40px);left:50%;transform:translateX(-50%);z-index:35;min-width:220px;max-width:calc(100vw - 32px);background:#0d2a3ddd;color:#f5ffff;border:1px solid #81e0df;border-radius:13px;min-height:52px;padding:10px 20px;box-shadow:0 8px 25px #0008;backdrop-filter:blur(9px);font:800 clamp(13px,1.6vw,18px)/1.2 system-ui;text-align:center}
+#tvApp .tvFilmUnlock[hidden]{display:none!important}
+#tvApp .tvFilmUnlock:focus,#tvApp .tvFilmUnlock:focus-visible{outline:3px solid #b0ffec;outline-offset:3px}
+#tvApp .tvFilmUnlock:hover{background:#1b4b58}
+#tvApp .tvRemoteBar button[hidden]{display:none!important}
+/* Small handset music drawer; the full Spotify account UI is opt-in. */
+.phoneSpotifyPanel{padding:8px 0 0}
+.phoneSpotifyPanel>button{width:100%;padding:12px;text-align:center;border-radius:11px;border:1px solid #4e8889;background:#12394b;color:#ddfbfa;font-weight:750;font-size:13px;min-height:50px}
+.phoneSpotifyPanel>div[hidden]{display:none!important}
+.phoneSpotifyPanel>div:not([hidden]){margin:11px 0 4px;min-width:0}
+.phoneSpotifyPanel .spotifyAccountPanel{margin:0}
+.phoneSpotifyPanel .spotifyAccountHeader{flex-wrap:wrap}
+.phoneSpotifyPanel .spotifyConnectControl{padding:9px}
+.phoneSpotifyPanel .spotifyConnectButtons{flex-wrap:wrap}
+.phoneSpotifyPanel .spotifyVolumeControls{padding:11px;border-radius:10px;background:#0e2939;border:1px solid #356f79;margin:12px 0}
+.spotifyVolumeControls{padding:12px;background:#0c2831;border:1px solid #366a69;border-radius:11px;margin:11px 0}
+.spotifyVolumeControls>label{display:flex;justify-content:space-between;font-size:13px;font-weight:800;margin-bottom:7px;color:#c4f8ee;gap:9px}
+.spotifyVolumeControls>div{display:flex;align-items:center;gap:10px}
+.spotifyVolumeControls>div button{height:42px;min-width:50px;border-radius:9px}
+.spotifyVolumeControls input[type=range]{width:100%;flex:1;accent-color:#7fe8d8;min-width:0}
+.spotifyVolumeControls p.small{font-size:11px;line-height:1.45;color:#a9d0d0;margin:7px 0 0}
+@media(max-width:650px){#tvApp .tvFilmUnlock{bottom:12px;min-height:44px;padding:9px 11px}.phoneSpotifyPanel .spotifyAccountPanel{padding:9px}}
