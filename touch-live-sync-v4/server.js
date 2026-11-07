@@ -252,7 +252,8 @@ async function handler(req,res){
    const resourceKey=parsed.searchParams.get('resourcekey');
    let preview='https://drive.google.com/file/d/'+id+'/preview';
    if(resourceKey&&/^[a-zA-Z0-9_-]{1,128}$/.test(resourceKey))preview+='?resourcekey='+encodeURIComponent(resourceKey);
-   s.video={type:'drive',id,url:preview,shareUrl:parsed.toString()};
+   const direct='https://drive.google.com/uc?export=download&id='+encodeURIComponent(id)+(resourceKey?'&resourcekey='+encodeURIComponent(resourceKey):'');
+   s.video={type:'drive',id,url:direct,previewUrl:preview,shareUrl:parsed.toString()};
   }else if(provider==='icloud'){
    if(!['icloud.com','www.icloud.com','share.icloud.com'].includes(host))return send(res,400,{error:'Bitte einen echten öffentlichen iCloud-Freigabelink einfügen.'});
    s.video={type:'icloud',id:null,url:parsed.toString(),shareUrl:parsed.toString()};
