@@ -405,24 +405,70 @@ async function uploadFilm(){
 }
 function secText(n){n=Math.max(0,Math.floor(Number(n)||0));return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');}
 let tvRemoteAutoHide=null,tvSoundBlocked=false,tvSoundActivated=false,tvAutoCinemaTried=false;
+const lgFullscreenActive=()=>!!(document.fullscreenElement||document.webkitFullscreenElement||document.msFullscreenElement);
+function tvRemoteButtons(){
+ const bar=el('tvRemoteBar');
+ return bar?[...bar.querySelectorAll('button:not(:disabled):not([hidden])')]:[];
+}
+function tvFocusControl(id='tvFullscreen'){
+ const node=el(id);
+ if(!node||node.hidden||node.disabled)return;
+ try{node.focus({preventScroll:true});}catch{node.focus();}
+}
 function tvControlsVisible(show=true){
  const bar=el('tvRemoteBar'),help=el('tvRemoteHelp');if(!bar)return;
  if(tvRemoteAutoHide){clearTimeout(tvRemoteAutoHide);tvRemoteAutoHide=null;}
  bar.classList.toggle('tvRemoteHidden',!show);if(help)help.hidden=!show;
- if(show){tvRemoteAutoHide=setTimeout(()=>{if(role==='tv'&&document.activeElement?.id!=='tvPlay'&&document.activeElement?.id!=='tvFullscreen')tvControlsVisible(false);},13000);}
+ if(show){
+  // 90 seconds rather than 6–13 seconds. Keep the menu visible while setting up.
+  // It can always be closed manually with "Menü ausblenden".
+  tvRemoteAutoHide=setTimeout(()=>{
+   if(role==='tv'&&state?.phase==='film'&&state?.playing)tvControlsVisible(false);
+  },90000);
+ }
+}
+function tvFullscreenHint(message){
+ const note=el('tvRemoteHelp');
+ if(note&&message){note.textContent=message;note.hidden=false;}
 }
 function tvRemoteFullscreen(auto=false){
  const root=el('tvApp');if(!root)return;
- // CSS cinema mode always fills the TV's available browser viewport.
- // Native browser fullscreen may require a real remote OK/button click.
  root.classList.add('tvCinema');
- const btn=el('tvFullscreen');if(btn)btn.textContent='⛶ Vollbild aktiv';
+ const btn=el('tvFullscreen');
  const enter=root.requestFullscreen||root.webkitRequestFullscreen||root.msRequestFullscreen;
- if(enter&&!document.fullscreenElement){
-  try{const out=enter.call(root);if(out?.catch)out.catch(()=>{root.classList.add('tvCinema');});}
-  catch{root.classList.add('tvCinema');}
+ if(lgFullscreenActive()){
+  if(btn)btn.textContent='✓ Vollbild aktiv';
+  if(!auto)tvControlsVisible(true);
+  return;
  }
- if(!auto)tvControlsVisible(false);
+ if(!enter){
+  if(btn)btn.textContent='⛶ Vollbild – OK';
+  if(!auto){
+   tvControlsVisible(true);
+   tvFullscreenHint('Der LG-Browser bietet hier kein echtes Webseiten-Vollbild. Die Doku füllt bereits die Browserfläche. Prüfe im LG-Browser die Vollbildoption.');
+  }
+  return;
+ }
+ try{
+  const out=enter.call(root);
+  if(out?.then)out.then(()=>{
+   if(btn)btn.textContent='✓ Vollbild aktiv';
+   if(!auto)tvControlsVisible(true);
+  }).catch(()=>{
+   if(btn)btn.textContent='⛶ Vollbild – OK';
+   if(!auto){
+    tvControlsVisible(true);
+    tvFullscreenHint('Vollbild ist durch den LG-Browser gesperrt. Drücke OK auf „⛶ Vollbild“ oder benutze die Vollbildfunktion des LG-Browsers.');
+   }
+  });
+  else if(btn)btn.textContent='⛶ Vollbild – OK';
+ }catch{
+  if(btn)btn.textContent='⛶ Vollbild – OK';
+  if(!auto){
+   tvControlsVisible(true);
+   tvFullscreenHint('LG erlaubt hier kein Webseiten-Vollbild. Nutze die Vollbildfunktion des LG-Browsers.');
+  }
+ }
 }
 function tvShowSoundPrompt(){
  if(role!=='tv'||!el('tvPlay'))return;
@@ -447,11 +493,17 @@ function tvEnablePlayback(){
  }catch{tvShowSoundPrompt();}
 }
 function tvRemoteBack(){
- if(document.fullscreenElement){document.exitFullscreen?.().catch?.(()=>{});}
- const root=el('tvApp');if(root)root.classList.remove('tvCinema');
- const b=el('tvFullscreen');if(b)b.textContent='⛶ Vollbild';
- tvControlsVisible(true);
- el('tvFullscreen')?.focus();
+ const bar=el('tvRemoteBar');
+ if(bar?.classList.contains('tvRemoteHidden')){
+  tvControlsVisible(true);tvFocusControl('tvFullscreen');return;
+ }
+ // Back with menu already visible may exit native fullscreen, but never
+ // abandons the presentation or opens a different website.
+ if(lgFullscreenActive()){
+  const leave=document.exitFullscreen||document.webkitExitFullscreen||document.msExitFullscreen;
+  try{const r=leave?.call(document);r?.catch?.(()=>{});}catch{}
+ }
+ tvControlsVisible(true);tvFocusControl('tvFullscreen');
 }
 function tvRemoteKeydown(e){
  if(role!=='tv'||!el('tvApp'))return;
@@ -460,17 +512,21 @@ function tvRemoteKeydown(e){
  const keys=['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
  if(keys.includes(e.key)||[37,38,39,40].includes(code)){
   e.preventDefault();if(bar.classList.contains('tvRemoteHidden'))tvControlsVisible(true);
-  const targets=[...bar.querySelectorAll('button:not(:disabled):not([hidden])')];let n=targets.indexOf(document.activeElement);
-  n=n<0?0:(n+((e.key==='ArrowLeft'||e.key==='ArrowUp'||code===37||code===38)?-1:1)+targets.length)%targets.length;
-  targets[n]?.focus();tvControlsVisible(true);return;
+  const targets=tvRemoteButtons();if(!targets.length)return;
+  let n=targets.indexOf(document.activeElement);
+  // Direct D-pad navigation; never activate LG's simulated pointer.
+  const delta=(e.key==='ArrowLeft'||e.key==='ArrowUp'||code===37||code===38)?-1:1;
+  n=n<0?0:(n+delta+targets.length)%targets.length;
+  tvControlsVisible(true);
+  tvFocusControl(targets[n].id);
+  return;
  }
  if(e.key==='Enter'||code===13){
   // On LG webOS, OK is a real user gesture: retry native fullscreen immediately.
   if(!document.fullscreenElement)tvRemoteFullscreen(true);
   if(bar.classList.contains('tvRemoteHidden')){
    e.preventDefault();
-   if(tvSoundBlocked){el('tvPlay')?.click();return;}
-   tvControlsVisible(true);el('tvPlay')?.focus();return;
+   tvControlsVisible(true);tvFocusControl('tvFullscreen');return;
   }
   const active=document.activeElement;if(active?.tagName==='BUTTON'){e.preventDefault();active.click();}else{e.preventDefault();el('tvPlay')?.click();}
   return;
@@ -482,10 +538,10 @@ function tvRemoteKeydown(e){
  // Remote Play button enables local playback; global playback is controlled by the admin.
  if(e.key==='MediaPlay'||e.key==='MediaPlayPause'||[415].includes(code)){e.preventDefault();el('tvPlay')?.click();}
 }
-window.addEventListener('keydown',tvRemoteKeydown);
+window.addEventListener('keydown',tvRemoteKeydown,true);
 function tvView(){
  if(!tvKey){app.innerHTML='<div class="wrap page"><h1>Beamer verbinden</h1><p>Bitte den Beamerlink aus der Admin-Ansicht öffnen.</p><label>Beamer-Zugangsschlüssel</label><input type="password" id="tvInput"><p></p><button class="primary" id="tvSubmit">Verbinden</button></div>';el('tvSubmit').onclick=()=>{tvKey=el('tvInput').value;sessionStorage.setItem('touch_tv_key',tvKey);localStorage.setItem('touch_tv_key',tvKey);tvView();};return;}
- app.innerHTML='<div id="tvApp"><div id="tvScene" class="tvScene"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><iframe id="cloudFrame" title="Google Drive Filmvorschau" allow="autoplay; fullscreen; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvFullscreen" type="button" tabindex="0">⛶ Vollbild</button><button id="tvSpotifyPlay" type="button" tabindex="0" hidden>♫ Willkommensmusik ▶</button><button id="tvCloudOpen" type="button" tabindex="0" hidden>☁ iCloud-Datei öffnen</button><button id="tvCaptionSync" type="button" tabindex="0" hidden>⏱ Untertitel synchronisieren</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><div id="tvSpotifyDock" class="tvSpotifyDock" hidden aria-label="Optionale Spotify-Willkommensmusik"></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
+ app.innerHTML='<div id="tvApp"><div id="tvScene" class="tvScene"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><iframe id="cloudFrame" title="Google Drive Filmvorschau" allow="autoplay; fullscreen; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvFullscreen" type="button" tabindex="0" autofocus>⛶ Vollbild – OK</button><button id="tvSpotifyPlay" type="button" tabindex="0" hidden>♫ Willkommensmusik ▶</button><button id="tvCloudOpen" type="button" tabindex="0" hidden>☁ iCloud-Datei öffnen</button><button id="tvCaptionSync" type="button" tabindex="0" hidden>⏱ Untertitel synchronisieren</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><div id="tvSpotifyDock" class="tvSpotifyDock" hidden aria-label="Optionale Spotify-Willkommensmusik"></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
  videoEl=el('tvVideo');
  // Never intentionally start the TV movie muted.
  videoEl.muted=false;videoEl.defaultMuted=false;videoEl.volume=1;
@@ -506,10 +562,12 @@ function tvView(){
   }
  };
  tvControlsVisible(true);
+ // On LG, focus the actual button on page load so OK/arrow keys work without Magic Remote pointer.
+ tvFocusControl('tvFullscreen');
  // Start the browser-sized cinematic layout immediately; attempt native fullscreen.
  // TV firmware may reject native fullscreen without OK.
  if(!tvAutoCinemaTried){tvAutoCinemaTried=true;tvRemoteFullscreen(true);}
- setTimeout(()=>{if(role==='tv'&&!tvSoundBlocked)tvControlsVisible(false);},6500);
+ // No 6-second disappearing controls. The menu stays accessible for 90 seconds, or until manually closed.
  videoEl.addEventListener('loadedmetadata',()=>{videoEl.muted=tvAutoplayMuted;videoEl.volume=1;});
  videoEl.addEventListener('error',()=>{
   if(role!=='tv'||state?.video?.type!=='drive'||state.phase!=='film'||videoEl.getAttribute('src')!==state.video.url)return;
