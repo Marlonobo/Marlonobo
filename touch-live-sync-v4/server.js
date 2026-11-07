@@ -32,7 +32,7 @@ if(!fs.existsSync(FILM_CUES_MARKER)){
  }catch(e){console.error('Film-Zeitmarken nicht dauerhaft gesichert:',e.message);}
 }
 
-const def=()=>({phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,videoVolume:1,videoTitle:'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{url:'',type:'',id:'',on:false},soundtrack:{pause:true,results:true,volume:.25},captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},remoteVideo:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,continuousWatch:false,zoomDismissed:false,demoOverlay:false,gestureOverlay:false,resultsAt:0,clockSource:'tv',lastHostTick:0,revision:0});
+const def=()=>({phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,videoVolume:1,videoTitle:'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{url:'',type:'',id:'',on:false},soundtrack:{pause:true,results:true,volume:.25},captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},remoteVideo:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,continuousWatch:false,zoomDismissed:false,demoOverlay:false,gestureOverlay:false,resultsAt:0,clockSource:'tv',lastHostTick:0,seekSerial:0,revision:0});
 let s=def(), users=new Map(), upload=null,feedback=[],cloudManifest=null;
 // This is intentionally volatile: choosing a file on a Windows PC never uploads its bytes.
 // Readiness expires when the HDMI browser disconnects; it is not persisted in storage.
@@ -154,7 +154,7 @@ function publicState(id){
   if(q&&jk.hint===q.id)player.hint=q.hint||'';}
  const z=ZOOM();let zoomResult=null;
  if(final&&z){const found=[...users.values()].filter(x=>x.answers[z.id]===z.correct).map(x=>x.name);zoomResult={q:z.q,answer:z.a[z.correct],found:found.length,names:found.slice(0,12),total:[...users.values()].filter(x=>Object.hasOwn(x.answers,z.id)).length};}
- return {phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,continuousWatch:!!s.continuousWatch,sideGame:s.gestureOverlay?'gesture':null,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
+ return {phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:s.gestureOverlay?'gesture':null,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
   quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,a:q.a,remaining:a.remaining,accepting:a.accepting,foundCount:q.type==='zoom'?[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length:0,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
   player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)};
 }
@@ -335,6 +335,12 @@ async function handler(req,res){
  if(s.video?.type==='local')return send(res,200,{ok:false,ignored:'local_hdmi_tv_controls_clock'});
  const t=Number(b.time);
  if(!Number.isFinite(t)||t<0||t>20000)return send(res,400,{error:'Ungueltige Filmzeit'});
+ // The real host player provides authoritative film time. Delayed network
+ // responses must not rewind the quiz or push the viewer's player backwards.
+ if(s.continuousWatch){
+  if(!s.playing)return send(res,200,{ok:true,ignored:'presenter_paused',time:s.time,playing:false});
+  if(t+.65<s.time)return send(res,200,{ok:true,ignored:'stale_backward_tick',time:s.time,playing:s.playing});
+ }
  s.clockSource='host';s.lastHostTick=Date.now();s.time=Math.round(t*100)/100;
  const z=ZOOM();if(z&&!s.zoomDone&&s.time>=z.open&&s.time<z.open+20){startZoom();return send(res,200,{ok:true,zoom:true});}
  // Buffering is not a pause command: only presenter actions can pause a shared screening.
@@ -395,12 +401,12 @@ async function handler(req,res){
    const promoted=!canStream(current);
    if(promoted)s.video=chosen;
    s.clockSource='host';s.lastHostTick=Date.now();
-   s.phase='film';s.time=0;s.playing=true;s.zoomDone=false;s.zoomDismissed=false;s.demoOverlay=false;s.gestureOverlay=false;s.continuousWatch=true;s.zoomStart=0;s.resultsAt=0;
+   s.phase='film';s.time=0;s.playing=true;s.zoomDone=false;s.zoomDismissed=false;s.demoOverlay=false;s.gestureOverlay=false;s.continuousWatch=true;s.zoomStart=0;s.resultsAt=0;s.seekSerial=(s.seekSerial||0)+1;
    if(s.welcomeMusic)s.welcomeMusic.on=false;
    if(promoted&&S3.enabled)await saveDurableMediaSettings();
   }
-  else if(cmd==='start'){s.phase='film';s.time=0;s.playing=true;s.zoomDone=false;s.continuousWatch=false;s.zoomDismissed=false;s.demoOverlay=false;s.gestureOverlay=false;s.resultsAt=0;if(s.welcomeMusic)s.welcomeMusic.on=false;}
- else if(cmd==='restartVideo'){s.phase='film';s.time=0;s.playing=false;s.zoomDone=false;s.zoomDismissed=false;s.resultsAt=0;s.zoomStart=0;if(s.welcomeMusic)s.welcomeMusic.on=false;}
+  else if(cmd==='start'){s.phase='film';s.time=0;s.playing=true;s.zoomDone=false;s.continuousWatch=false;s.zoomDismissed=false;s.demoOverlay=false;s.gestureOverlay=false;s.resultsAt=0;s.seekSerial=(s.seekSerial||0)+1;if(s.welcomeMusic)s.welcomeMusic.on=false;}
+ else if(cmd==='restartVideo'){s.phase='film';s.time=0;s.playing=false;s.zoomDone=false;s.zoomDismissed=false;s.resultsAt=0;s.zoomStart=0;s.seekSerial=(s.seekSerial||0)+1;if(s.welcomeMusic)s.welcomeMusic.on=false;}
  else if(cmd==='pause'){
   // A click on /host supplies the actual player position, not the previous
   // 1.3-second heartbeat. This freezes the quiz and all viewers on that frame.
@@ -416,7 +422,7 @@ async function handler(req,res){
    s.time=Math.round(t*100)/100;
   s.playing=true;
  }
- else if(cmd==='seek'){const t=Number(b.time);if(!Number.isFinite(t)||t<0||t>20000)return send(res,400,{error:'Zeit ungueltig'});s.time=t;s.phase='film';const z=ZOOM();if(z&&t<z.open){s.zoomDone=false;s.zoomDismissed=false;}}
+ else if(cmd==='seek'){const t=Number(b.time);if(!Number.isFinite(t)||t<0||t>20000)return send(res,400,{error:'Zeit ungueltig'});s.time=t;s.phase='film';s.seekSerial=(s.seekSerial||0)+1;const z=ZOOM();if(z&&t<z.open){s.zoomDone=false;s.zoomDismissed=false;}}
  else if(cmd==='demo'){
    if(s.continuousWatch&&s.phase==='film'){s.demoOverlay=true;s.demoIndex=Math.max(0,Math.min(Q.length-1,Number(b.index)||0));s.demoStart=Date.now();}
    else{s.phase='demo';s.demoIndex=Math.max(0,Math.min(Q.length-1,Number(b.index)||0));s.demoStart=Date.now();s.playing=false;}
@@ -432,7 +438,7 @@ async function handler(req,res){
  else if(cmd==='zoomStart'){
   if(s.continuousWatch&&s.phase==='film'){
    const z=ZOOM();if(!z)return send(res,400,{error:'Keine Zoom-Aufgabe vorhanden'});
-   s.time=z.open;s.zoomDone=true;s.zoomDismissed=false;
+   s.time=z.open;s.seekSerial=(s.seekSerial||0)+1;s.zoomDone=true;s.zoomDismissed=false;
   }else if(!startZoom())return send(res,400,{error:'Keine Zoom-Aufgabe vorhanden'});
  }
  else if(cmd==='zoomEnd'){endZoom();}
