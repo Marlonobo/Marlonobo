@@ -441,7 +441,7 @@ async function handler(req,res){
  else if(cmd==='zoomStart'){
   if(s.continuousWatch&&s.phase==='film'){
    const z=ZOOM();if(!z)return send(res,400,{error:'Keine Zoom-Aufgabe vorhanden'});
-   s.zoomOverlay=true;s.zoomOverlayStartTime=s.time;s.zoomDone=true;s.zoomDismissed=false;
+   s.zoomOverlay=true;s.zoomOverlayStartTime=s.time;s.zoomDismissed=false; // Keep automatic Chapter 4 Zoom cue eligible later
   }else if(!startZoom())return send(res,400,{error:'Keine Zoom-Aufgabe vorhanden'});
  }
  else if(cmd==='zoomEnd'){endZoom();}
