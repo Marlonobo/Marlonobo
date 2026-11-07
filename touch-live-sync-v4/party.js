@@ -49,7 +49,7 @@ function updateScene(){
  if(phase==='welcome')html=slide('Willkommen bei TOUCH LIVE','Die Dokumentation startet, sobald die Moderatorin bereit ist.','<small>Gemeinsam schauen und mitspielen – egal von welchem Ort.</small>');
  else if(phase==='film')html=slide('Noch keine Filmquelle','Die Moderatorin kann ihren YouTube-Link oder eine öffentliche MP4 eintragen.','<small>Für einen Film muss dieser online erreichbar sein.</small>');
  else if(phase==='gesture')html=slide('Multitouch trainieren!','Verschieben, Vergrößern und Drehen – das Spiel läuft rechts.');
- else if(phase==='zoom')html='<div class="partySceneInner egg-broadcast"><span class="eyebrow">KAPITEL 4 · DAS EASTER EGG</span><h2>Finde die Katze!</h2><img src="/easter-scene.svg" alt="Berglandschaft mit versteckter Katze"><p>Zoome im Spiel rechts hinein und tippe auf den Fundort.</p><strong>'+(state.quiz?.remaining||0)+' Sekunden · '+(state.quiz?.foundCount||0)+' gefunden</strong></div>';
+ else if(phase==='zoom')html='<div class="partySceneInner egg-broadcast"><span class="eyebrow">KAPITEL 4 · MULTITOUCH-PRAXIS</span><h2>Multitouch-Challenge!</h2><img src="/easter-scene.svg" alt="Berglandschaft mit versteckter Katze"><p>Genauso wie in der Doku: Vergrößern mit zwei Fingern, Bild verschieben und das versteckte Detail antippen.</p><strong>'+(state.quiz?.remaining||0)+' Sekunden · '+(state.quiz?.foundCount||0)+' gefunden</strong></div>';
  else if(phase==='demo')html=slide('Quiz-Probelauf','Die Frage erscheint auf beiden Geräten.','<small>Testet jetzt gleichzeitig eure Antworten.</small>');
  else if(phase==='results')html=podium();
  else if(phase==='handout')html=slide('Handout · Lernfeld 14','Jetzt das Handout ausfüllen und die Bewertung berechnen.');
@@ -147,7 +147,7 @@ function interaction(){
   part.innerHTML=gestureHtml();bindGesture();return;
  }
  if(phase==='zoom'&&q){
-  part.innerHTML='<div class="partyQuestion"><div class="between"><span class="chip">🔎 EASTER EGG · SUCHSPIEL</span><span class="small">'+(q.foundCount||0)+' gefunden</span></div><div id="partyEaster"></div><p class="small">'+(participantId?'Finde das Easter Egg durch Zoomen und direktes Antippen. Du bekommst für einen schnellen Fund Bonuspunkte.':'Bitte oben mit deinem Namen teilnehmen, damit dein Fund zählt.')+'</p></div>';
+  part.innerHTML='<div class="partyQuestion"><div class="between"><span class="chip">🔎 MULTITOUCH · EASTER-EGG-SUCHE</span><span class="small">'+(q.foundCount||0)+' gefunden</span></div><div id="partyEaster"></div><p class="small">'+(participantId?'Wende die Touchscreen-Gesten aus Kapitel 4 an: zwei Finger zum Zoomen, ein Finger zum Verschieben und dann gezielt tippen. Schnelle Funde bringen Bonuspunkte.':'Bitte oben mit deinem Namen teilnehmen, damit dein Fund zählt.')+'</p></div>';
   easterInstance=window.EasterGame?.mount($('partyEaster'),{remaining:q.remaining,found:!!p?.zoomFound,points:p?.zoomPoints,disabled:!q.accepting,onFind:async({x,y,zoom})=>{if(!participantId)throw Error('Bitte oben zuerst deinen Namen eingeben.');const r=await api('/api/easter/find',{id:participantId,x,y,zoom});setTimeout(()=>{quizSignature='';poll();},1500);return r;}});
   return;
  }
