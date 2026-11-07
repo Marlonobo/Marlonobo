@@ -511,3 +511,19 @@ body:has(.phoneRemote){background:#071724}
 .spotifyVolumeControls input[type=range]{width:100%;flex:1;accent-color:#7fe8d8;min-width:0}
 .spotifyVolumeControls p.small{font-size:11px;line-height:1.45;color:#a9d0d0;margin:7px 0 0}
 @media(max-width:650px){#tvApp .tvFilmUnlock{bottom:12px;min-height:44px;padding:9px 11px}.phoneSpotifyPanel .spotifyAccountPanel{padding:9px}}
+
+
+/* LG live welcome soundtrack: Spotify's 30-second Preview widget is not shown on TV. */
+#tvApp #tvSpotifyDock{display:none!important}
+#tvApp .tvWelcomeMusicStatus{
+ position:absolute;bottom:clamp(18px,5vh,48px);left:clamp(15px,3vw,44px);
+ z-index:12;max-width:min(580px,calc(100vw - 30px));
+ border:1px solid #518fa1;border-radius:12px;background:#092838ef;
+ color:#d5f1f3;font:700 clamp(12px,1.3vw,18px)/1.35 system-ui;
+ padding:11px 17px;box-shadow:0 8px 25px #0006;pointer-events:none;
+}
+#tvApp .tvWelcomeMusicStatus.is-playing{border-color:#68dac2;background:#0d3d37ed;color:#dbfff2}
+#tvApp .tvWelcomeMusicStatus[hidden]{display:none!important}
+#tvApp .tvRemoteBar #tvSoundtrackUnlock{border:1px solid #7cbdb0;background:#17463e;color:#e5fff6;font-weight:800}
+#tvApp .tvRemoteBar #tvSoundtrackUnlock:focus-visible{outline:4px solid #e4fff5;outline-offset:4px}
+@media(max-width:640px){#tvApp .tvWelcomeMusicStatus{bottom:10px;left:10px;padding:8px 11px}}
