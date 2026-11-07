@@ -5,6 +5,8 @@ const el=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g
 const ORIGIN=location.origin+location.pathname, app=el('app');
 let role='home',state=null,renderSignature='',userId='',userName='',adminKey=sessionStorage.getItem('touch_admin_key')||'',remoteKey=sessionStorage.getItem('touch_cohost_key')||'',tvKey=sessionStorage.getItem('touch_tv_key')||localStorage.getItem('touch_tv_key')||'';
 let easterInstance=null,cloudUploadReady=false,libraryRecoveryStarted=false;
+let tvAutoplayMuted=false;
+let spotifyApi=null,spotifyController=null,spotifyUri='',spotifyWanted=false,spotifyScriptLoading=false;
 let adminInfo=null,videoEl=null,ytPlayer=null,mediaType='',youtubeReady=false,playerReady=false,subtitles=[],lastFilmPhase='',lastRevision=-1,lastCaptionRevision=-1,gesturePointers=new Map(),gestureTransform={x:0,y:0,scale:1,rotate:0},gestureSnapshot=null;
 const CH=['Geschichte der Touchscreens','Wie Touchscreens funktionieren','Fünf Touchscreen-Arten','Multitouch und Display','Touchscreens im Alltag','Probleme und Zukunft','Fazit und Abschlussquiz'];
 const times=['04:28','06:29','10:28','12:40','16:12','20:18','24:39','26:42','30:33','32:42','35:32','39:01','44:22','45:37','46:46','47:56','49:06'];
@@ -431,7 +433,7 @@ function tvShowSoundPrompt(){
 function tvEnablePlayback(){
  // This is always called from a real LG OK / mouse click, so the browser can
  // grant audio and native fullscreen if permitted.
- tvSoundActivated=true;tvSoundBlocked=false;playerReady=true;
+ tvSoundActivated=true;tvSoundBlocked=false;tvAutoplayMuted=false;playerReady=true;
  tvRemoteFullscreen(false);
  const p=el('tvPlay');if(p)p.textContent='✓ Ton ist aktiviert';
  try{
@@ -483,7 +485,7 @@ function tvRemoteKeydown(e){
 window.addEventListener('keydown',tvRemoteKeydown);
 function tvView(){
  if(!tvKey){app.innerHTML='<div class="wrap page"><h1>Beamer verbinden</h1><p>Bitte den Beamerlink aus der Admin-Ansicht öffnen.</p><label>Beamer-Zugangsschlüssel</label><input type="password" id="tvInput"><p></p><button class="primary" id="tvSubmit">Verbinden</button></div>';el('tvSubmit').onclick=()=>{tvKey=el('tvInput').value;sessionStorage.setItem('touch_tv_key',tvKey);localStorage.setItem('touch_tv_key',tvKey);tvView();};return;}
- app.innerHTML='<div id="tvApp"><div id="tvScene" class="tvScene"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><iframe id="cloudFrame" title="Google Drive Filmvorschau" allow="autoplay; fullscreen; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvFullscreen" type="button" tabindex="0">⛶ Vollbild</button><button id="tvCloudOpen" type="button" tabindex="0" hidden>☁ iCloud-Datei öffnen</button><button id="tvCaptionSync" type="button" tabindex="0" hidden>⏱ Untertitel synchronisieren</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
+ app.innerHTML='<div id="tvApp"><div id="tvScene" class="tvScene"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><iframe id="cloudFrame" title="Google Drive Filmvorschau" allow="autoplay; fullscreen; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvFullscreen" type="button" tabindex="0">⛶ Vollbild</button><button id="tvCloudOpen" type="button" tabindex="0" hidden>☁ iCloud-Datei öffnen</button><button id="tvCaptionSync" type="button" tabindex="0" hidden>⏱ Untertitel synchronisieren</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><div id="tvSpotifyDock" class="tvSpotifyDock" hidden aria-label="Optionale Spotify-Willkommensmusik"></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
  videoEl=el('tvVideo');
  // Never intentionally start the TV movie muted.
  videoEl.muted=false;videoEl.defaultMuted=false;videoEl.volume=1;
@@ -504,7 +506,7 @@ function tvView(){
  // TV firmware may reject native fullscreen without OK.
  if(!tvAutoCinemaTried){tvAutoCinemaTried=true;tvRemoteFullscreen(true);}
  setTimeout(()=>{if(role==='tv'&&!tvSoundBlocked)tvControlsVisible(false);},6500);
- videoEl.addEventListener('loadedmetadata',()=>{videoEl.muted=false;videoEl.volume=1;});
+ videoEl.addEventListener('loadedmetadata',()=>{videoEl.muted=tvAutoplayMuted;videoEl.volume=1;});
  videoEl.addEventListener('error',()=>{
   if(role!=='tv'||state?.video?.type!=='drive'||state.phase!=='film'||videoEl.getAttribute('src')!==state.video.url)return;
   const iframe=el('cloudFrame');
@@ -520,11 +522,58 @@ function tvView(){
  videoEl.addEventListener('ended',()=>{if(state?.phase==='film')sendTick(false,true);});
 }
 function tvScene(html){const node=el('tvScene');if(node&&node.__h!==html){node.innerHTML=html;node.__h=html;}}
+function syncWelcomeMusic(){
+ const dock=el('tvSpotifyDock'),music=state?.welcomeMusic||{};
+ if(!dock)return;
+ const wanted=state?.phase==='welcome'&&music.on===true&&['track','album','playlist'].includes(music.type)&&/^[A-Za-z0-9]{22}$/.test(music.id||'');
+ if(!wanted){
+  if(spotifyController&&spotifyWanted){try{spotifyController.pause();}catch{}}
+  spotifyWanted=false;dock.hidden=true;return;
+ }
+ const uri='spotify:'+music.type+':'+music.id;
+ dock.hidden=false;
+ if(spotifyUri===uri){
+  if(!spotifyWanted){spotifyWanted=true;try{spotifyController?.play();}catch{}}
+  return;
+ }
+ if(spotifyController){try{spotifyController.destroy();}catch{}spotifyController=null;}
+ spotifyUri=uri;spotifyWanted=true;
+ dock.innerHTML='<div class="spotifyLabel">♫ FREIWILLIGE WILLKOMMENSMUSIK</div><div class="tvSpotifySlot" id="tvSpotifySlot"></div><p class="spotifyNote">Falls der Ton nicht automatisch beginnt: im Spotify-Player ▶ wählen.</p>';
+ const mount=()=>{
+  if(role!=='tv'||!el('tvSpotifySlot')||!state?.welcomeMusic?.on)return;
+  const slot=el('tvSpotifySlot');
+  if(slot.firstElementChild)return;
+  if(spotifyApi){
+   spotifyApi.createController(slot,{uri,width:'100%',height:152},ctrl=>{
+    spotifyController=ctrl;
+    try{if(state?.phase==='welcome'&&state?.welcomeMusic?.on)ctrl.play();}catch{}
+   });
+  }else{
+   const frame=document.createElement('iframe');
+   frame.src='https://open.spotify.com/embed/'+music.type+'/'+music.id;
+   frame.width='100%';frame.height='152';frame.loading='lazy';frame.title='Spotify-Willkommensmusik';
+   frame.setAttribute('allow','autoplay; encrypted-media; fullscreen');
+   frame.style.border='0';frame.style.borderRadius='12px';slot.appendChild(frame);
+  }
+ };
+ if(spotifyApi){mount();return;}
+ if(spotifyScriptLoading){setTimeout(mount,1800);return;}
+ spotifyScriptLoading=true;
+ const script=document.createElement('script');
+ script.src='https://open.spotify.com/embed/iframe-api/v1';script.async=true;
+ window.onSpotifyIframeApiReady=api=>{
+  spotifyApi=api;spotifyScriptLoading=false;
+  if(spotifyUri===uri)mount();
+ };
+ script.onerror=()=>{spotifyScriptLoading=false;if(spotifyUri===uri)mount();};
+ document.head.appendChild(script);
+}
 function tvDisplay(){
  if(!state||role!=='tv'||!el('tvScene'))return;
  const phase=state.phase;const videoMode=phase==='film';
  const layer=el('videoLayer');if(layer)layer.style.display=videoMode&&state.video.type!=='none'?'block':'none';
  const scene=el('tvScene');
+ syncWelcomeMusic();
  if(phase==='welcome'){scene.style.display='flex';tvScene('<div class="welcomeArtwork"><div><span class="eyebrow">LERNFELD 14 · INTERAKTIVE DOKUMENTATION</span><h1>TOUCH<em>SCREEN</em></h1><p class="welcomeProgramTitle">'+esc(state.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation')+'</p><p>Geschichte, Technik und Zukunft – gemeinsam entdecken.</p><p class="welcomePrompt">Öffnet den Schülerlink auf eurem iPad. Gleich geht es los!</p></div><img src="/touchscreen-motiv.svg" alt="Leuchtender Touchscreen mit Berührungswellen"></div>');pauseTV();}
  else if(phase==='gesture'){scene.style.display='flex';tvScene('<div><span class="eyebrow">KAPITEL 04 / MULTITOUCH</span><h1><em>Gesten üben.</em></h1><p>Auf den iPads verschieben, vergrößern und drehen!</p></div>');pauseTV();}
  else if(phase==='zoom'){scene.style.display='flex';const q=state.quiz;tvScene('<div class="egg-projector"><div><span class="eyebrow">KAPITEL 04 · MULTITOUCH LIVE-EXPERIMENT</span><h1>Die <em>Touch-Challenge!</em></h1><p>So funktioniert Multitouch in der Praxis: Vergrößert das digitale Bild mit zwei Fingern, verschiebt es und tippt auf das versteckte Easter Egg.</p><div class="egg-tv-counter"><strong>'+(q?q.remaining:0)+' s</strong><span>⏱ Zeit übrig<br>🔎 '+(q?q.foundCount:0)+' von '+state.participants+' haben das Easter Egg gefunden</span></div><p class="small" style="margin-top:22px">Pinch-to-Zoom = zwei Finger auseinanderziehen · Pan = verschieben · Tap = antippen.</p></div><img class="egg-tv-art" src="/easter-scene.svg" alt="Panorama mit Berghütte als Easter-Egg-Spiel"></div>');pauseTV();}
@@ -540,7 +589,7 @@ function ensureMedia(){
  if(!state||role!=='tv'||state.phase!=='film')return;
  const video=state.video,ref=video.type+':'+video.url;
  if(state.captionsAvailable&&lastCaptionRevision!==state.captionsRevision){lastCaptionRevision=state.captionsRevision;fetchCaptions();}
- if(ref!==mediaType){mediaType=ref;subtitles=[];lastRevision=-1;tvSoundBlocked=false;
+ if(ref!==mediaType){mediaType=ref;subtitles=[];lastRevision=-1;tvSoundBlocked=false;tvAutoplayMuted=false;
   const iframe=el('cloudFrame'),external=el('tvCloudOpen'),sync=el('tvCaptionSync');
   fallbackCaptionsAt=0;fallbackCaptionsBase=0;
   if(sync){sync.hidden=true;sync.textContent='⏱ Untertitel synchronisieren';}
@@ -562,7 +611,7 @@ function ensureMedia(){
    const cur=Number(ytPlayer.getCurrentTime())||0;
    if(Math.abs(cur-state.time)>3||lastRevision!==state.revision){try{ytPlayer.seekTo(state.time,true);}catch{}}
    try{
-    ytPlayer.unMute();
+    if(tvAutoplayMuted)ytPlayer.mute();else ytPlayer.unMute();
     if(state.playing&&!tvSoundBlocked)ytPlayer.playVideo();
     else if(!state.playing)ytPlayer.pauseVideo();
    }catch{tvShowSoundPrompt();}
@@ -571,11 +620,22 @@ function ensureMedia(){
   // Shared cloud viewers provide no reliable currentTime API; never send false video clocks.
   updateCaption();
  }else if(videoEl.src){
-  videoEl.muted=false;
+  videoEl.muted=tvAutoplayMuted;
   const cur=videoEl.currentTime||0;
   if(Math.abs(cur-state.time)>2.2||lastRevision!==state.revision){try{videoEl.currentTime=state.time;}catch{}}
   if(state.playing&&videoEl.paused&&!tvSoundBlocked){
-   videoEl.play().then(()=>{tvSoundBlocked=false;tvControlsVisible(false);}).catch(()=>tvShowSoundPrompt());
+   try{
+    const attempt=videoEl.play();
+    if(attempt?.then)attempt.then(()=>{tvSoundBlocked=false;if(!tvAutoplayMuted)tvControlsVisible(false);}).catch(()=>{
+     tvAutoplayMuted=true;videoEl.muted=true;
+     const second=videoEl.play();
+     if(second?.then)second.then(()=>{
+      tvSoundBlocked=false;
+      const button=el('tvPlay');if(button)button.textContent='🔊 Ton mit OK einschalten';
+      tvControlsVisible(true);
+     }).catch(()=>tvShowSoundPrompt());
+    });
+   }catch{tvShowSoundPrompt();}
   }
   if(!state.playing&&!videoEl.paused)videoEl.pause();
  }
@@ -593,8 +653,11 @@ function makeYouTube(id){
   videoId:id,
   playerVars:{rel:0,playsinline:1,enablejsapi:1,controls:1,origin:location.origin},
   events:{
-   onReady:()=>{try{ytPlayer.unMute();}catch{}if(state?.phase==='film')ensureMedia();},
-   onAutoplayBlocked:()=>tvShowSoundPrompt(),
+   onReady:()=>{try{if(tvAutoplayMuted)ytPlayer.mute();else ytPlayer.unMute();}catch{}if(state?.phase==='film')ensureMedia();},
+   onAutoplayBlocked:()=>{
+    if(!tvAutoplayMuted){tvAutoplayMuted=true;try{ytPlayer.mute();ytPlayer.playVideo();}catch{tvShowSoundPrompt();}const b=el('tvPlay');if(b)b.textContent='🔊 Ton mit OK einschalten';tvControlsVisible(true);}
+    else tvShowSoundPrompt();
+   },
    onStateChange:e=>{if(e.data===1){tvSoundBlocked=false;tvControlsVisible(false);}}
   }
  });
