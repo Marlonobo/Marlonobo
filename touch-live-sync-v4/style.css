@@ -471,3 +471,17 @@ body:has(.phoneRemote){background:#071724}
 .spotifyNowPlaying button{flex:0 0 auto;min-height:36px}
 #spotifyTransfer{min-height:43px;margin:4px 0 12px}
 @media(max-width:520px){.spotifySearchRow{flex-wrap:wrap}.spotifySearchRow button{flex:1 1 100%}.spotifyNowPlaying{flex-wrap:wrap}}
+
+
+/* TOUCH LIVE soundtrack control for pause and results – original non-Spotify audio */
+.autoSoundtrackAdmin{background:linear-gradient(150deg,#102938,#091e2c);border:1px solid #54899b}
+.autoSoundtrackAdmin h2{margin:7px 0 10px}
+.autoSoundtrackAdmin>p.small{line-height:1.6;color:#c7dee8}
+.autoSoundtrackSettings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;gap:13px;margin:17px 0;padding:15px;border-radius:14px;background:#0c2433;border:1px solid #39697c}
+.autoSoundtrackSettings .soundtrackCheck{display:flex;gap:9px;align-items:center;padding:10px;border-radius:10px;background:#143548;border:1px solid #466c80;font-size:14px;font-weight:750;color:#edfdfa;min-height:52px;line-height:1.4}
+.autoSoundtrackSettings .soundtrackCheck input{flex:0 0 auto;width:22px;height:22px;accent-color:#8ff9e6}
+.autoSoundtrackSettings label[for=soundVolume]{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:800;color:#d0f5f1;margin:0}
+.autoSoundtrackSettings #soundVolume{grid-column:1/-1;width:100%;accent-color:#7be5da;height:24px}
+.autoSoundtrackAdmin #soundtrackStatus{margin:10px 0 0;padding:10px 12px;background:#0e3240;border-left:3px solid #6bdcc8;border-radius:8px}
+.phoneRemoteGrid button[data-mobile-sound][data-enabled=false]{background:#142833;color:#aec4c8;border-color:#365462}
+@media(max-width:580px){.autoSoundtrackSettings{grid-template-columns:1fr;padding:11px}.autoSoundtrackSettings .soundtrackCheck{font-size:13px}}
