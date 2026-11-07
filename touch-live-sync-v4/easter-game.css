@@ -45,3 +45,20 @@
 @media(max-width:850px){.egg-projector{grid-template-columns:1fr;text-align:center}.egg-projector .egg-tv-art{max-height:32vh}.egg-projector .egg-tv-counter{justify-content:center}}
 @media(max-width:620px){.egg-game{padding:9px;border-radius:14px}.egg-topline{gap:7px}.egg-game-clock{min-width:75px;padding:4px 7px}.egg-topline h3{font-size:22px}.egg-topline p{font-size:12px}.egg-location{font-size:8px;top:7px;left:7px}.egg-zoom-indicator{top:7px;right:7px}.egg-stage{border-radius:10px}.egg-btn{flex:1;min-width:0;font-size:16px;padding:7px}.egg-tools-help{max-width:100%;width:100%;margin:2px 0 0;text-align:center}.egg-tap{bottom:5px;padding:5px 8px;font-size:9px}.egg-hint{margin-top:8px;padding:7px 9px;font-size:12px}}
 @media(prefers-reduced-motion:reduce){.egg-celebration,.egg-confetti,.egg-star,.egg-clock-low .egg-game-clock strong,.egg-game.egg-shake .egg-tap{animation:none}}
+
+
+/* Kapitel 4 – multito﻿uch learning steps and on-screen tablet housing */
+.egg-lesson{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:3px 0 14px}
+.egg-lesson span{min-width:0;display:block;padding:9px 10px;background:#0b2c40;border:1px solid #45748b;border-radius:12px;color:#d4e3ea;font-size:12px;font-weight:700;transition:background .25s,border-color .25s}
+.egg-lesson span b{letter-spacing:.08em;color:#f1fcff;font-size:11px}
+.egg-lesson small{font-size:10px;color:#9dbecb;display:block;margin-top:4px;line-height:1.35;font-weight:500}
+.egg-lesson span.egg-step-done{background:#123e3d;border-color:#5de2cb;box-shadow:inset 0 0 18px #5de2bb15}
+.egg-lesson span.egg-step-done b{color:#77fae1}
+.egg-lesson span.egg-step-done b::after{content:' ✓'}
+.egg-hardware{border-radius:23px;background:linear-gradient(145deg,#223746,#0b1a2b 55%,#34485c);padding:11px 12px 15px;border:2px solid #60869a;box-shadow:inset 0 2px 6px #ffffff24,inset 0 -5px 12px #0006,0 15px 45px #0007}
+.egg-hardware-top{display:flex;justify-content:space-between;align-items:center;padding:0 8px 9px;color:#bfd6e4;font:750 10px/1.4 Consolas,monospace;letter-spacing:.1em}
+.egg-hardware-camera{display:block;height:7px;width:7px;border-radius:50%;background:#204f69;border:2px solid #789da9}
+.egg-hardware .egg-stage{border-color:#94cede;box-shadow:0 0 25px #68e0ee11,inset 0 0 14px #03131b50;border-radius:9px}
+.egg-learned{font-size:clamp(11px,1.6vw,17px);line-height:1.45;background:#154050cc;border:1px solid #9de7dc66;border-radius:12px;padding:12px 15px;margin:14px auto 0;max-width:550px;color:#e1f6f6}
+.egg-learned b{color:#9afbea}
+@media(max-width:660px){.egg-lesson{gap:4px;margin:2px 0 7px}.egg-lesson span{padding:6px;font-size:9px;border-radius:8px}.egg-lesson span b{font-size:9px}.egg-lesson small{font-size:8px}.egg-hardware{padding:8px 8px 11px;border-radius:14px}.egg-hardware-top{font-size:8px;padding:0 3px 6px}}
