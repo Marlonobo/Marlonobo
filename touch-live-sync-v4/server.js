@@ -119,6 +119,7 @@ function secure(a,b){const x=Buffer.from(String(a||'')),y=Buffer.from(String(b||
 function isAdmin(req){return secure(req.headers['x-admin-key'],ADMIN);}
 function isTv(req){return secure(req.headers['x-tv-key'],TV);}
 function isCohost(req){return secure(req.headers['x-cohost-key'],COHOST);}
+function isStoragePublisher(req){return isAdmin(req)||isCohost(req);}
 function active(){
  let i=-1,remaining=0;
  if(s.phase==='film') i=Q.findIndex(q=>q.type!=='zoom'&&s.time>=q.open+s.quizOffset&&s.time<q.close+s.quizOffset);
@@ -211,7 +212,7 @@ async function handler(req,res){
   res.writeHead(302,{'Location':S3.videoUrl(),'Cache-Control':'private, no-store','Referrer-Policy':'no-referrer'});return res.end();
  }
  if(m==='POST'&&p==='/api/storage/start'){
-  if(!isAdmin(req))return unauthorized(res);if(!S3.enabled)return send(res,503,{error:'Dauerhafter S3/R2-Speicher ist noch nicht konfiguriert.'});
+  if(!isStoragePublisher(req))return unauthorized(res);if(!S3.enabled)return send(res,503,{error:'Dauerhafter S3/R2-Speicher ist noch nicht konfiguriert.'});
   const b=await read(req,2000),size=Number(b.size),name=String(b.name||'');
   if(!Number.isSafeInteger(size)||size<=0||size>10*1024**3||!name.toLowerCase().endsWith('.mp4'))return send(res,400,{error:'Bitte eine MP4-Datei bis 10 GB auswählen.'});
   let uploadId=b.uploadId;let parts=[];
@@ -219,17 +220,18 @@ async function handler(req,res){
   return send(res,200,{ok:true,uploadId,parts,partSize:16*1024**2,keyHint:'touch-live/master-video.mp4'});
  }
  if(m==='POST'&&p==='/api/storage/part'){
-  if(!isAdmin(req))return unauthorized(res);if(!S3.enabled)return send(res,503,{error:'S3/R2-Speicher fehlt.'});
+  if(!isStoragePublisher(req))return unauthorized(res);if(!S3.enabled)return send(res,503,{error:'S3/R2-Speicher fehlt.'});
   const b=await read(req,3000),number=Number(b.number);
   return send(res,200,{ok:true,url:S3.partUrl(b.uploadId,number),partNumber:number});
  }
  if(m==='POST'&&p==='/api/storage/parts'){
-  if(!isAdmin(req))return unauthorized(res);if(!S3.enabled)return send(res,503,{error:'S3/R2-Speicher fehlt.'});
+  if(!isStoragePublisher(req))return unauthorized(res);if(!S3.enabled)return send(res,503,{error:'S3/R2-Speicher fehlt.'});
   const b=await read(req,3000);return send(res,200,{parts:await S3.list(b.uploadId)});
  }
  if(m==='POST'&&p==='/api/storage/complete'){
-  if(!isAdmin(req))return unauthorized(res);if(!S3.enabled)return send(res,503,{error:'S3/R2-Speicher fehlt.'});
-  const b=await read(req,70000),size=Number(b.size),partSize=16*1024**2,parts=b.parts;
+  if(!isStoragePublisher(req))return unauthorized(res);if(!S3.enabled)return send(res,503,{error:'S3/R2-Speicher fehlt.'});
+  if(!['welcome','end','handout'].includes(s.phase))return send(res,409,{error:'Während der laufenden Vorführung kann die Filmquelle nicht ersetzt werden. Bitte zuerst Willkommen anzeigen.'});
+   const b=await read(req,70000),size=Number(b.size),partSize=16*1024**2,parts=b.parts;
   if(!Number.isSafeInteger(size)||size<=0||size>10*1024**3||!Array.isArray(parts)||parts.length!==Math.ceil(size/partSize))return send(res,400,{error:'Videogröße oder Blockliste unvollständig.'});
   const known=await S3.list(b.uploadId);
   if(known.length!==parts.length||known.reduce((x,y)=>x+y.size,0)!==size||parts.some(x=>!known.some(k=>k.number===x.number&&String(k.etag).replace(/"/g,'').toLowerCase()===String(x.etag).replace(/"/g,'').toLowerCase())))return send(res,409,{error:'Nicht alle Blöcke liegen vollständig im Cloud-Speicher.'});
@@ -237,7 +239,7 @@ async function handler(req,res){
   let config={};try{config=await S3.manifest()||{};}catch(e){console.error(e.message);}
   config.video={name:String(b.name||'touchscreen.mp4').slice(0,120),size,uploadedAt:new Date().toISOString()};
   await S3.putManifest(config);cloudManifest=config;
-  s.video={type:'url',url:'/api/storage/video',id:null,storage:'s3'};await saveDurableMediaSettings();s.revision++;await persist();
+  s.video={type:'url',url:'/api/storage/video',id:null,storage:'s3'};s.phase='welcome';s.time=0;s.playing=false;s.zoomDone=false;s.clockSource='host';s.lastHostTick=0;await saveDurableMediaSettings();s.revision++;await persist();
   return send(res,200,{ok:true,videoReady:true,durable:true});
  }
 
