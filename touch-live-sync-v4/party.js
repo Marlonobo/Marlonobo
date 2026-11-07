@@ -282,6 +282,39 @@ async function hostCommand(cmd,body={}){
  try{await api('/api/remote',{cmd,...body},true);await poll();if(cmd==='start'||cmd==='play'){$('partyEnable').hidden=!(!activated);}}
  catch(e){showError('Steuerung fehlgeschlagen: '+e.message);}
 }
+
+async function startOnHostDevice(){
+ if(!host||!key)return showError('Dieser Startknopf ist nur für die private Regie bestimmt.');
+ if(!state)return showError('Live-Sitzung wird noch verbunden.');
+ const v=onlineVideo();
+ if(state.video?.type==='local')return showError('Die Regie kann den HDMI-Film nicht über das Internet starten. Für zwei Städte zuerst eine MP4 in den Cloud-Speicher hochladen oder YouTube als gemeinsame Hauptquelle wählen.');
+ if(!v||!['url','upload','youtube'].includes(v.type))return showError('Zuerst eine MP4 hochladen oder einen gültigen Online-Filmlink eintragen.');
+ activated=true;
+ if(v.type==='url'||v.type==='upload'){
+  const ref=v.type+':'+(v.url||v.id);
+  if(sourceRef!==ref){
+   sourceRef=ref;localRevision=-1;cloudFallback=false;
+   video.pause();video.src=v.url;video.load();
+  }
+  // Called from a real click on the host button before any await.
+  video.muted=false;
+  try{
+   const attempt=video.play();
+   if(attempt?.catch)attempt.catch(()=>{
+    activated=false;playBtn.hidden=false;
+    showError('Der Browser blockiert die automatische Tonwiedergabe. Tippe einmal „Film mit Ton aktivieren“.');
+   });
+  }catch{
+   activated=false;playBtn.hidden=false;
+  }
+ }
+ if(v.type==='youtube'&&ytPlayer&&ytReady){
+  try{ytPlayer.unMute();ytPlayer.playVideo();}catch{}
+ }
+ await hostCommand('start');
+ if(v.type==='youtube')showError('Falls du keinen Ton hörst, tippe „Film mit Ton aktivieren“. YouTube kann den automatischen Tonstart blockieren.');
+}
+window.TouchLiveWatchHost={getState:()=>state,poll:()=>poll(),startOnDevice:startOnHostDevice};
 function connectedUI(){
  $('hostUnlock').hidden=true;$('partyMain').hidden=false;
  $('hostPanel').hidden=!host;$('partyRole').textContent=host?'Regie · Film & Quiz':'Online zuschauen & mitspielen';
