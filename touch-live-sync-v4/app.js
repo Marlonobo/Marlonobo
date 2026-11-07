@@ -57,7 +57,7 @@ function userPage(){
  const q=state.quiz,p=state.player||{},answered=q&&p.choice!==null&&p.choice!==undefined;
  let body='';
  if(state.phase==='welcome')body=waiting('Willkommen, '+esc(userName)+'!','Wir beginnen gleich. Bitte schaut auf den Beamer.','✦');
- else if(state.phase==='gesture')body='<div class="card"><div class="between"><span class="chip">KAPITEL 4 · SPIEL</span><div class="gestureNum" id="gestureValue">Zoom: 100 % · Drehung: 0°</div></div><h2>Gesten üben</h2><p>Zieh mich groß, dreh mich, schieb mich! Ein Finger verschiebt, zwei Finger zoomen und drehen.</p><div class="gestureBox" id="gestureBox"><div class="gesturePic" id="gesturePic">'+landscape()+'</div></div><div class="flex" style="margin-top:14px"><button id="gestureReset">Bild zurücksetzen</button></div></div>';
+ else if(state.phase==='gesture'||state.sideGame==='gesture')body='<div class="card"><div class="between"><span class="chip">KAPITEL 4 · SPIEL</span><div class="gestureNum" id="gestureValue">Zoom: 100 % · Drehung: 0°</div></div><h2>Gesten üben</h2><p>Zieh mich groß, dreh mich, schieb mich! Ein Finger verschiebt, zwei Finger zoomen und drehen.</p><div class="gestureBox" id="gestureBox"><div class="gesturePic" id="gesturePic">'+landscape()+'</div></div><div class="flex" style="margin-top:14px"><button id="gestureReset">Bild zurücksetzen</button></div></div>';
  else if(q&&q.type==='zoom')body=zoomCard(q,p,answered);
  else if(q&&!q.accepting)body=waiting('Schau auf den Beamer.','Die Antwortzeit ist vorbei. Die Dokumentation läuft weiter.','◉');
   else if(q){const hide=p.hide||[],jk=p.jokers||{},canJ=q.jokers&&q.accepting&&!answered;
@@ -71,7 +71,7 @@ function userPage(){
  document.querySelectorAll('[data-joker]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await api('/api/joker','POST',{id:userId,type:b.dataset.joker});}catch(e){alert(e.message);}renderSignature='';await poll();});
  if(q?.type==='zoom')initEaster();
  if(isTeacher){el('teacherNotes').oninput=e=>localStorage.setItem('touch_teacher_notes',e.target.value);el('saveNotes').onclick=()=>saveText('TOUCH-LIVE-Lehrernotizen.txt',el('teacherNotes').value);}
- if(state.phase==='gesture')initGesture();
+ if(state.phase==='gesture'||state.sideGame==='gesture')initGesture();
 }
 function zoomCard(q,p,answered){return '<section class="easter-live"><div class="between" style="margin-bottom:10px"><span class="chip">🎮 KAPITEL 4 · MULTITOUCH-CHALLENGE</span><span class="small">Bereits gefunden: '+(q.foundCount||0)+' von '+state.participants+'</span></div><div id="easterMount"></div><p class="small" style="margin-top:12px">'+(p.zoomFound?'✅ RICHTIG! Du hast die Katze gefunden. Deine Punkte werden erst in der Ergebnisshow angezeigt.':!q.accepting?'Die Suche ist beendet. Wichtig: Pinch-to-Zoom, Pan und Tap sind echte Touchscreen-Gesten.':'Teste, was du in Kapitel 4 gelernt hast: mit zwei Fingern vergrößern, Bild verschieben und das versteckte Detail direkt antippen.')+'</p></section>';}
 function initEaster(){
