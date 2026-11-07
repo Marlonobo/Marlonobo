@@ -401,8 +401,21 @@ async function handler(req,res){
   }
   else if(cmd==='start'){s.phase='film';s.time=0;s.playing=true;s.zoomDone=false;s.continuousWatch=false;s.zoomDismissed=false;s.demoOverlay=false;s.gestureOverlay=false;s.resultsAt=0;if(s.welcomeMusic)s.welcomeMusic.on=false;}
  else if(cmd==='restartVideo'){s.phase='film';s.time=0;s.playing=false;s.zoomDone=false;s.zoomDismissed=false;s.resultsAt=0;s.zoomStart=0;if(s.welcomeMusic)s.welcomeMusic.on=false;}
- else if(cmd==='pause')s.playing=false;
- else if(cmd==='play'){if(s.phase!=='film')s.phase='film';s.playing=true;}
+ else if(cmd==='pause'){
+  // A click on /host supplies the actual player position, not the previous
+  // 1.3-second heartbeat. This freezes the quiz and all viewers on that frame.
+  const t=Number(b.time);
+  if(s.phase==='film'&&s.clockSource==='host'&&s.video?.type!=='local'&&b.time!==undefined&&Number.isFinite(t)&&t>=0&&t<=20000)
+   s.time=Math.round(t*100)/100;
+  s.playing=false;
+ }
+ else if(cmd==='play'){
+  if(s.phase!=='film')s.phase='film';
+  const t=Number(b.time);
+  if(s.clockSource==='host'&&s.video?.type!=='local'&&b.time!==undefined&&Number.isFinite(t)&&t>=0&&t<=20000)
+   s.time=Math.round(t*100)/100;
+  s.playing=true;
+ }
  else if(cmd==='seek'){const t=Number(b.time);if(!Number.isFinite(t)||t<0||t>20000)return send(res,400,{error:'Zeit ungueltig'});s.time=t;s.phase='film';const z=ZOOM();if(z&&t<z.open){s.zoomDone=false;s.zoomDismissed=false;}}
  else if(cmd==='demo'){
    if(s.continuousWatch&&s.phase==='film'){s.demoOverlay=true;s.demoIndex=Math.max(0,Math.min(Q.length-1,Number(b.index)||0));s.demoStart=Date.now();}
