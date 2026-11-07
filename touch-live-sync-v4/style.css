@@ -339,3 +339,43 @@ html:has(#tvApp),body:has(#tvApp){margin:0!important;padding:0!important;backgro
 #tvApp #tvCaptionSync[hidden]{display:none!important}
 #tvApp .tvRemoteBar.tvRemoteHidden{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
 @media(prefers-reduced-motion:reduce){#tvApp .tvRemoteBar{transition:none}}
+
+
+/* TOUCH LIVE 2026 — responsive protected mobile remote and optional Spotify welcome player */
+.phoneRemote{width:min(640px,100%);min-height:100dvh;margin:auto;padding:clamp(20px,4vw,36px) clamp(14px,3vw,22px) 60px;background:radial-gradient(ellipse at 50% 5%,#133b4c,transparent 55%)}
+body:has(.phoneRemote){background:#071724}
+.phoneRemoteHead{margin-bottom:24px}
+.phoneRemoteHead h1{margin:12px 0 7px;font-size:clamp(39px,8vw,63px);line-height:1;letter-spacing:-.055em}
+.phoneRemoteHead h1 em{font-style:normal;color:#79e6d9}
+.phoneRemoteHead p{color:#bbd6de;line-height:1.5;margin:8px 0}
+.phoneRemoteStatus{background:#0c2a3c;border:1px solid #52a0a6;border-radius:13px;padding:13px 15px;line-height:1.5;font-size:clamp(12px,3vw,16px);color:#cbfcf3;margin-top:19px}
+.phoneRemotePanel{border:1px solid #386578;background:linear-gradient(140deg,#0e2b3c,#0a1f30);border-radius:19px;padding:clamp(15px,3.5vw,23px);margin:15px 0;box-shadow:0 12px 27px #0004}
+.phoneRemotePanel .label{margin:0 0 15px;display:block}
+.phoneRemotePanel>p.small{line-height:1.55;color:#afcddd}
+.phoneRemotePanel form{display:flex;flex-direction:column;gap:13px}
+.phoneRemotePanel form input{width:100%;min-height:53px;font-size:18px;border-radius:11px}
+.phoneRemotePanel form button{min-height:55px;font-size:17px;border-radius:11px}
+.phoneRemoteGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.phoneRemoteGrid button{min-height:66px;font-size:clamp(14px,3.3vw,19px);line-height:1.25;font-weight:800;border:1px solid #547e94;border-radius:13px;background:#15364b;color:#f1fcff;padding:12px 9px;white-space:normal;touch-action:manipulation}
+.phoneRemoteGrid .phoneMainPlay{grid-column:1/-1;min-height:80px;font-size:clamp(20px,5vw,28px);background:linear-gradient(115deg,#64e4d8,#93f1e8);color:#062631;border-color:#7df6e9}
+.phoneRemoteGrid button:active{transform:scale(.98)}
+.phoneRemoteSeek{display:flex;gap:9px;flex-wrap:wrap;margin-top:17px}
+.phoneRemoteSeek label{flex:1 1 100%;font-weight:700;font-size:13px;color:#c6e3e8}
+.phoneRemoteSeek input{width:120px;min-width:100px;flex:1 1 100px;border-radius:10px}
+.phoneRemoteSeek button{flex:1 1 150px;min-height:48px;border-radius:10px}
+.phoneRemoteBottom{text-align:center;padding:17px 0}
+.phoneRemoteBottom a{color:#7eebdf}
+.mobileRemoteLaunch{display:flex;align-items:center;justify-content:center;font-size:13px;min-height:42px}
+.welcomeMusicAdmin{border-color:#3b8277;background:linear-gradient(150deg,#112d3b,#0c2534)}
+.welcomeMusicAdmin .flex{display:flex;gap:9px;flex-wrap:wrap}
+.welcomeMusicAdmin input{min-width:0;flex:1 1 280px}
+.welcomeMusicAdmin .flex button{flex:0 1 auto}
+.welcomeMusicButtons{margin-top:15px}
+.welcomeMusicButtons button{min-height:45px}
+.welcomeMusicButtons .btn{display:flex;align-items:center;justify-content:center;text-align:center;padding:8px}
+.tvSpotifyDock{position:absolute;right:clamp(12px,3vw,48px);bottom:clamp(16px,4vh,50px);width:min(370px,calc(100vw - 30px));padding:13px 15px 11px;background:#071b29e9;border:1px solid #67acae;border-radius:16px;box-shadow:0 15px 50px #0009;z-index:10;backdrop-filter:blur(12px)}
+.tvSpotifyDock[hidden]{display:none!important}
+.spotifyLabel{font:800 10px/1.5 Consolas,monospace;letter-spacing:.1em;color:#93f5e8;margin:0 0 8px}
+.tvSpotifySlot{width:100%;min-height:152px}
+.tvSpotifyDock .spotifyNote{font-size:11px;line-height:1.35;color:#d3e7e9;margin:7px 1px 0}
+@media(max-width:720px){.welcomeMusicAdmin .flex button{flex:1 1 100%}.phoneRemote{padding-top:27px}.tvSpotifyDock{bottom:14px;right:10px;padding:8px;width:min(320px,calc(100vw - 20px))}}
