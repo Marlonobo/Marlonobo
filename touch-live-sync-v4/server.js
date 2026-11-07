@@ -2,6 +2,7 @@
 const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const fsp=fs.promises;
 const Q=require('./questions.json');
+const S3=require('./s3media.js');
 const PORT=Number(process.env.PORT||3000), ROOT=__dirname, DIR=process.env.DATA_DIR||path.join(ROOT,'storage');
 const ADMIN=process.env.ADMIN_KEY||crypto.randomBytes(24).toString('hex');
 const TV=process.env.TV_KEY||crypto.randomBytes(24).toString('hex');
@@ -11,12 +12,29 @@ if(!process.env.TV_KEY)console.log('TOUCH LIVE TV_KEY: '+TV);
 fs.mkdirSync(DIR,{recursive:true});
 const USERS_FILE=path.join(DIR,'users.json'),STATE_FILE=path.join(DIR,'live-state.json'), VIDEO_FILE=path.join(DIR,'touchscreen.mp4'), SUB_FILE=path.join(DIR,'untertitel.vtt'), QUESTIONS_FILE=path.join(DIR,'custom-questions.json');
 try{const saved=JSON.parse(fs.readFileSync(QUESTIONS_FILE,'utf8'));if(Array.isArray(saved)&&saved.length>=1&&saved.length<=50)Q.splice(0,Q.length,...saved);}catch{}
-const def=()=>({phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,video:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,resultsAt:0,clockSource:'tv',lastHostTick:0,revision:0});
+const def=()=>({phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,captionSize:100,captionPosition:11,cloudCaptions:false,video:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,resultsAt:0,clockSource:'tv',lastHostTick:0,revision:0});
 let s=def(), users=new Map(), upload=null,feedback=[];
 try{s=Object.assign(def(),JSON.parse(fs.readFileSync(STATE_FILE,'utf8')));}catch{}
 try{users=new Map(Object.entries(JSON.parse(fs.readFileSync(USERS_FILE,'utf8'))));}catch{}
 let usersTimer=null;function saveUsers(){clearTimeout(usersTimer);usersTimer=setTimeout(()=>fsp.writeFile(USERS_FILE,JSON.stringify(Object.fromEntries(users))).catch(console.error),400);}
 const ZOOM=()=>Q.find(q=>q.type==='zoom');
+async function hydrateCloudMedia(){
+ if(!S3.enabled)return;
+ try{const manifest=await S3.manifest();
+ if(!manifest)return;
+ if(manifest.video&&(s.video.type==='none'||s.video.storage==='s3'))s.video={type:'url',url:'/api/storage/video',id:null,storage:'s3'};
+ if(manifest.captions)s.cloudCaptions=true;
+ await persist();
+ }catch(e){console.error('S3 Wiederherstellung fehlgeschlagen:',e.message);}
+}
+function convertSubtitles(raw){
+ let v=String(raw||'').replace(/^\uFEFF/,'').replace(/\r\n?/g,'\n').trim();
+ if(v.startsWith('WEBVTT'))return v+'\n';
+ if(!/\d\d:\d\d:\d\d,\d{3}\s*-->\s*\d\d:\d\d:\d\d,\d{3}/.test(v))throw Error('Bitte eine gültige SRT- oder VTT-Datei auswählen.');
+ v=v.replace(/(\d\d:\d\d:\d\d),(\d{3})/g,'$1.$2');
+ return 'WEBVTT\n\n'+v+'\n';
+}
+
 let currentWrite=Promise.resolve();
 function persist(){currentWrite=currentWrite.then(()=>fsp.writeFile(STATE_FILE,JSON.stringify(s))).catch(console.error);return currentWrite;}
 const H={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'};
@@ -49,9 +67,9 @@ function publicState(id){
   if(q&&jk.hint===q.id)player.hint=q.hint||'';}
  const z=ZOOM();let zoomResult=null;
  if(final&&z){const found=[...users.values()].filter(x=>x.answers[z.id]===z.correct).map(x=>x.name);zoomResult={q:z.q,answer:z.a[z.correct],found:found.length,names:found.slice(0,12),total:[...users.values()].filter(x=>Object.hasOwn(x.answers,z.id)).length};}
- return {phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,video:s.video,subtitles:s.subtitles,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',
+ return {phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,video:s.video,subtitles:s.subtitles,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',
   quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,a:q.a,remaining:a.remaining,accepting:a.accepting,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
-  player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:fs.existsSync(SUB_FILE)};
+  player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)};
 }
 function startZoom(){const z=ZOOM();if(!z)return false;s.phase='zoom';s.playing=false;s.time=z.open;s.zoomStart=Date.now();s.zoomDone=true;s.revision++;persist();return true;}
 function endZoom(){if(s.phase!=='zoom')return;s.phase='film';s.playing=true;s.revision++;persist();}
@@ -77,9 +95,48 @@ async function handler(req,res){
  if(m==='GET'&&(p==='/watch'||p==='/host'))return serve(res,path.join(ROOT,'party.html'),'text/html; charset=utf-8');
  if(m==='GET'&&(p==='/party.js'||p==='/party.css'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
  if(m==='GET'&&p==='/api/state')return send(res,200,publicState(u.searchParams.get('id')));
- if(m==='GET'&&p==='/api/health')return send(res,200,{ok:true,questionCount:Q.length,now:Date.now()});
+ if(m==='GET'&&p==='/api/health')return send(res,200,{ok:true,questionCount:Q.length,now:Date.now(),cloudStorageConfigured:S3.enabled});
+ if(m==='GET'&&p==='/api/storage/status')return send(res,200,{configured:S3.enabled,durable:S3.enabled,videoReady:s.video.storage==='s3',subtitlesReady:!!s.cloudCaptions,maximumBytes:10*1024**3,partSize:16*1024**2});
+ if((m==='GET'||m==='HEAD')&&p==='/api/storage/video'){
+  if(!S3.enabled)return send(res,503,{error:'Cloud-Speicher nicht eingerichtet.'});
+  res.writeHead(302,{'Location':S3.videoUrl(),'Cache-Control':'private, no-store','Referrer-Policy':'no-referrer'});return res.end();
+ }
+ if(m==='POST'&&p==='/api/storage/start'){
+  if(!isAdmin(req))return unauthorized(res);if(!S3.enabled)return send(res,503,{error:'Dauerhafter S3/R2-Speicher ist noch nicht konfiguriert.'});
+  const b=await read(req,2000),size=Number(b.size),name=String(b.name||'');
+  if(!Number.isSafeInteger(size)||size<=0||size>10*1024**3||!name.toLowerCase().endsWith('.mp4'))return send(res,400,{error:'Bitte eine MP4-Datei bis 10 GB auswählen.'});
+  let uploadId=b.uploadId;let parts=[];
+  if(uploadId){parts=await S3.list(uploadId);}else{uploadId=await S3.initiate();}
+  return send(res,200,{ok:true,uploadId,parts,partSize:16*1024**2,keyHint:'touch-live/master-video.mp4'});
+ }
+ if(m==='POST'&&p==='/api/storage/part'){
+  if(!isAdmin(req))return unauthorized(res);if(!S3.enabled)return send(res,503,{error:'S3/R2-Speicher fehlt.'});
+  const b=await read(req,3000),number=Number(b.number);
+  return send(res,200,{ok:true,url:S3.partUrl(b.uploadId,number),partNumber:number});
+ }
+ if(m==='POST'&&p==='/api/storage/parts'){
+  if(!isAdmin(req))return unauthorized(res);if(!S3.enabled)return send(res,503,{error:'S3/R2-Speicher fehlt.'});
+  const b=await read(req,3000);return send(res,200,{parts:await S3.list(b.uploadId)});
+ }
+ if(m==='POST'&&p==='/api/storage/complete'){
+  if(!isAdmin(req))return unauthorized(res);if(!S3.enabled)return send(res,503,{error:'S3/R2-Speicher fehlt.'});
+  const b=await read(req,70000),size=Number(b.size),partSize=16*1024**2,parts=b.parts;
+  if(!Number.isSafeInteger(size)||size<=0||size>10*1024**3||!Array.isArray(parts)||parts.length!==Math.ceil(size/partSize))return send(res,400,{error:'Videogröße oder Blockliste unvollständig.'});
+  const known=await S3.list(b.uploadId);
+  if(known.length!==parts.length||known.reduce((x,y)=>x+y.size,0)!==size||parts.some(x=>!known.some(k=>k.number===x.number&&String(k.etag).replace(/"/g,'').toLowerCase()===String(x.etag).replace(/"/g,'').toLowerCase())))return send(res,409,{error:'Nicht alle Blöcke liegen vollständig im Cloud-Speicher.'});
+  await S3.complete(b.uploadId,parts);
+  let config={};try{config=await S3.manifest()||{};}catch(e){console.error(e.message);}
+  config.video={name:String(b.name||'touchscreen.mp4').slice(0,120),size,uploadedAt:new Date().toISOString()};
+  await S3.putManifest(config);
+  s.video={type:'url',url:'/api/storage/video',id:null,storage:'s3'};s.revision++;await persist();
+  return send(res,200,{ok:true,videoReady:true,durable:true});
+ }
+
  if(m==='GET'&&p==='/api/admin-info'){if(!isAdmin(req))return unauthorized(res);return send(res,200,{tvKey:TV,cohostKey:COHOST,questions:Q.map(q=>({id:q.id,type:q.type||'quiz',open:q.open,close:q.close,duration:q.duration,q:q.q,a:q.a,correct:q.correct,chapter:q.chapter,hint:q.hint,fifty:q.fifty})),ranking:[...users.values()].map(x=>({name:x.name,role:x.role,score:x.score,answers:x.answers,jokers:x.jokers||{}})).sort((a,b)=>b.score-a.score),feedback});}
- if(m==='GET'&&p==='/captions.vtt')return serve(res,SUB_FILE,mime['.vtt']);
+ if(m==='GET'&&p==='/captions.vtt'){
+ if(S3.enabled&&s.cloudCaptions){const v=await S3.captionText();if(v!==null){res.writeHead(200,{'Content-Type':'text/vtt; charset=utf-8','Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});return res.end(v);}}
+ return serve(res,SUB_FILE,mime['.vtt']);
+ }
  if((m==='GET'||m==='HEAD')&&p==='/media/video')return media(req,res);
  if(m==='POST'&&p==='/api/join'){
  const b=await read(req,2000),name=String(b.name||'').trim().slice(0,26),role=b.role==='teacher'?'teacher':'student';
@@ -161,6 +218,8 @@ async function handler(req,res){
  else if(cmd==='captionOffset'){const v=Number(b.value);if(!Number.isFinite(v)||Math.abs(v)>3600)return send(res,400,{error:'Offset ungueltig'});s.subtitleOffset=v;}
  else if(cmd==='quizOffset'){const v=Number(b.value);if(!Number.isFinite(v)||Math.abs(v)>3600)return send(res,400,{error:'Offset ungueltig'});s.quizOffset=v;}
  else if(cmd==='subtitles')s.subtitles=!!b.value;
+ else if(cmd==='captionSize'){const n=Number(b.value);if(!Number.isFinite(n)||n<70||n>160)return send(res,400,{error:'Untertitelgröße von 70 bis 160 Prozent'});s.captionSize=n;}
+ else if(cmd==='captionPosition'){const n=Number(b.value);if(!Number.isFinite(n)||n<5||n>25)return send(res,400,{error:'Untertitelposition von 5 bis 25 Prozent'});s.captionPosition=n;}
  else return send(res,400,{error:'Unbekannter Befehl'});
  s.revision++;await persist();return send(res,200,{ok:true,state:publicState()});
  }
@@ -180,9 +239,13 @@ async function handler(req,res){
  }
  if(m==='POST'&&p==='/api/vtt'){
  if(!isAdmin(req))return unauthorized(res);
- const b=await read(req,2000000),v=String(b.vtt||'');
- if(!v.startsWith('WEBVTT'))return send(res,400,{error:'Datei muss WEBVTT sein'});
- await fsp.writeFile(SUB_FILE,v,'utf8');s.revision++;return send(res,200,{ok:true});
+ const b=await read(req,2000000);
+ let v;try{v=convertSubtitles(b.vtt);}catch(e){return send(res,400,{error:e.message});}
+ if(Buffer.byteLength(v)>1200000)return send(res,413,{error:'Untertitel sind zu groß.'});
+ await fsp.writeFile(SUB_FILE,v,'utf8');
+ if(S3.enabled){await S3.put(S3.CAPTIONS,v,'text/vtt');let manifest={};try{manifest=await S3.manifest()||{};}catch{}manifest.captions={name:String(b.name||'untertitel.vtt').slice(0,120),uploadedAt:new Date().toISOString()};await S3.putManifest(manifest);s.cloudCaptions=true;}
+ s.revision++;await persist();return send(res,200,{ok:true,durable:S3.enabled});
+
  }
  if(m==='POST'&&p==='/api/upload/start'){
  if(!isAdmin(req))return unauthorized(res);
@@ -210,4 +273,5 @@ async function handler(req,res){
  }
  send(res,404,{error:'Nicht gefunden'});
 }
-http.createServer((req,res)=>{handler(req,res).catch(e=>{console.error(e);if(!res.headersSent)send(res,500,{error:'Serverfehler'});else res.destroy();});}).listen(PORT,'0.0.0.0',()=>console.log('TOUCH LIVE SYNC auf Port '+PORT));
+hydrateCloudMedia();
+http.createServer((req,res)=>{handler(req,res).catch(e=>{console.error(e);if(!res.headersSent)send(res,500,{error:'Serverfehler: '+String(e.message||e).slice(0,150)});else res.destroy();});}).listen(PORT,'0.0.0.0',()=>console.log('TOUCH LIVE SYNC auf Port '+PORT));
