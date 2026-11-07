@@ -651,7 +651,13 @@ function tvView(){
  videoEl.muted=false;videoEl.defaultMuted=false;videoEl.volume=1;
  el('tvPlay').onclick=tvEnablePlayback;
  el('tvFilmUnlock').onclick=tvEnablePlayback;
- el('tvFullscreen').onclick=()=>tvRemoteFullscreen(false);
+ el('tvFullscreen').onclick=()=>{
+  // One LG OK during welcome prepares fullscreen AND grants the browser audio activation.
+  // Later, admin's "Film starten" can launch video with sound where webOS permits it.
+  tvSoundActivated=true;tvAutoplayMuted=false;
+  try{window.TouchSoundtrack?.activate?.();}catch{}
+  tvRemoteFullscreen(false);
+};
  el('tvSoundtrackUnlock').onclick=async()=>{
   const enabled=await window.TouchSoundtrack?.activate?.();
   const button=el('tvSoundtrackUnlock');
