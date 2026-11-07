@@ -643,7 +643,7 @@ function syncWelcomeMusic(){
  }
  if(spotifyController){try{spotifyController.destroy();}catch{}spotifyController=null;}
  spotifyUri=uri;spotifyWanted=true;
- dock.innerHTML='<div class="spotifyLabel">♫ FREIWILLIGE WILLKOMMENSMUSIK</div><div class="tvSpotifySlot" id="tvSpotifySlot"></div><p class="spotifyNote">Falls der Ton nicht automatisch beginnt: im Spotify-Player ▶ wählen.</p>';
+ dock.innerHTML='<div class="tvSpotifySlot" id="tvSpotifySlot"></div>';
  const mount=()=>{
   if(role!=='tv'||!el('tvSpotifySlot')||!state?.welcomeMusic?.on)return;
   const slot=el('tvSpotifySlot');
