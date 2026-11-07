@@ -101,7 +101,48 @@ function adminContents(){const a=adminInfo,student=ORIGIN+'#join',teacher=ORIGIN
 function bindAdmin(){
  document.querySelectorAll('[data-action]').forEach(b=>b.onclick=async()=>{let cmd=b.dataset.action;if(cmd==='reset'&&!confirm('Alle Quizantworten und Punkte löschen?'))return;await adminAction(cmd);});
  el('seekButton').onclick=()=>adminAction('seek',{time:Number(el('seekTime').value)});
- el('youtubeForm').onsubmit=e=>{e.preventDefault();adminAction('videoYoutube',{url:el('youtubeInput').value});};
+ const savedSource=(()=>{try{return JSON.parse(localStorage.getItem('touch_last_video_source')||'null');}catch{return null;}})();
+ el('videoTitleInput').value=state?.videoTitle||savedSource?.title||'TOUCHSCREEN – Interaktive Dokumentation';
+ if(state?.video?.type==='youtube')el('youtubeInput').value=state.video.url;
+ else if(savedSource?.url)el('youtubeInput').value=savedSource.url;
+ if(savedSource?.url)el('restoreYoutube').hidden=false;
+ el('saveVideoTitle').onclick=async()=>{
+  const title=el('videoTitleInput').value.trim();
+  if(title.length<3||title.length>110)return el('titleSaveStatus').textContent='Titel muss 3–110 Zeichen haben.';
+  try{await api('/api/admin','POST',{cmd:'videoTitle',value:title},adminKey);
+   const old=(()=>{try{return JSON.parse(localStorage.getItem('touch_last_video_source')||'null')||{};}catch{return {};}})();
+   localStorage.setItem('touch_last_video_source',JSON.stringify({...old,title}));
+   el('titleSaveStatus').textContent='✓ Titel gespeichert.';await poll(true);
+  }catch(e){el('titleSaveStatus').textContent='Fehler: '+e.message;}
+ };
+ el('youtubeForm').onsubmit=async e=>{
+  e.preventDefault();const url=el('youtubeInput').value.trim(),title=el('videoTitleInput').value.trim();
+  if(title.length<3||title.length>110)return el('youtubeSaveStatus').textContent='Bitte zuerst einen Titel eingeben.';
+  try{
+   await api('/api/admin','POST',{cmd:'videoTitle',value:title},adminKey);
+   await api('/api/admin','POST',{cmd:'videoYoutube',url},adminKey);
+   localStorage.setItem('touch_last_video_source',JSON.stringify({url,title,type:'youtube'}));
+   el('restoreYoutube').hidden=false;
+   el('youtubeSaveStatus').textContent='✓ YouTube-Link eingebunden und auf diesem Gerät für eine Wiederherstellung gemerkt.';
+   await poll(true);
+  }catch(err){el('youtubeSaveStatus').textContent='Video nicht übernommen: '+err.message;}
+ };
+ el('restoreYoutube').onclick=async()=>{
+  const x=(()=>{try{return JSON.parse(localStorage.getItem('touch_last_video_source')||'null');}catch{return null;}})();
+  if(!x?.url)return alert('Kein gespeicherter YouTube-Link auf diesem Gerät.');
+  el('youtubeInput').value=x.url;if(x.title)el('videoTitleInput').value=x.title;
+  try{
+   await api('/api/admin','POST',{cmd:'videoYoutube',url:x.url},adminKey);
+   if(x.title)await api('/api/admin','POST',{cmd:'videoTitle',value:x.title},adminKey);
+   el('youtubeSaveStatus').textContent='✓ Der letzte YouTube-Link wurde wiederhergestellt.';await poll(true);
+  }catch(err){el('youtubeSaveStatus').textContent='Wiederherstellung fehlgeschlagen: '+err.message;}
+ };
+ el('subtitleQuickToggle').onclick=async()=>{
+  const btn=el('subtitleQuickToggle'),next=state?.subtitles===false;btn.disabled=true;
+  try{await api('/api/admin','POST',{cmd:'subtitles',value:next},adminKey);await poll(true);}
+  catch(err){alert('Untertitel konnten nicht umgeschaltet werden: '+err.message);}
+  finally{btn.disabled=false;}
+ };
  el('mp4Form').onsubmit=e=>{e.preventDefault();adminAction('videoLink',{url:el('mp4Input').value});};
  el('copyTv').onclick=()=>copy(ORIGIN+'#tv?key='+encodeURIComponent(adminInfo?.tvKey||''));
  el('copyStudent').onclick=()=>copy(ORIGIN+'#join');
