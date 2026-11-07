@@ -35,3 +35,5 @@
 @keyframes partyAppear{to{opacity:1;transform:translateY(0)}}
 @keyframes partyConfetti{from{background-position:0 0,50px 0,100px 0}to{background-position:0 400px,50px 650px,100px 560px}}
 @media (prefers-reduced-motion:reduce){.partyWinners .partyPodi{opacity:1;transform:none;animation:none}.partyWinners::before,.partyCountdown{animation:none;display:none}}
+
+.partyFilmTitle{padding:0 3px 6px;color:#c5e8ef;font-size:clamp(13px,1.45vw,17px);font-weight:700;line-height:1.4;letter-spacing:.015em;overflow-wrap:anywhere}
