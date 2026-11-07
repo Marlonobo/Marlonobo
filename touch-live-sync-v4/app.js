@@ -267,10 +267,68 @@ async function uploadFilm(){
  finally{btn.disabled=!cloudUploadReady;}
 }
 function secText(n){n=Math.max(0,Math.floor(Number(n)||0));return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');}
+let tvRemoteAutoHide=null;
+function tvControlsVisible(show=true){
+ const bar=el('tvRemoteBar'),help=el('tvRemoteHelp');if(!bar)return;
+ if(tvRemoteAutoHide){clearTimeout(tvRemoteAutoHide);tvRemoteAutoHide=null;}
+ bar.classList.toggle('tvRemoteHidden',!show);if(help)help.hidden=!show;
+ if(show){tvRemoteAutoHide=setTimeout(()=>{if(role==='tv'&&document.activeElement?.id!=='tvPlay'&&document.activeElement?.id!=='tvFullscreen')tvControlsVisible(false);},13000);}
+}
+function tvRemoteFullscreen(){
+ const root=el('tvApp');if(!root)return;
+ root.classList.add('tvCinema');
+ const btn=el('tvFullscreen');if(btn)btn.textContent='⛶ Vollbild aktiv';
+ const enter=root.requestFullscreen||root.webkitRequestFullscreen||root.msRequestFullscreen;
+ if(enter&&!document.fullscreenElement){
+  try{const out=enter.call(root);if(out?.catch)out.catch(()=>{root.classList.add('tvCinema');});}catch{root.classList.add('tvCinema');}
+ }
+ tvControlsVisible(false);
+}
+function tvRemoteBack(){
+ if(document.fullscreenElement){document.exitFullscreen?.().catch?.(()=>{});}
+ const root=el('tvApp');if(root)root.classList.remove('tvCinema');
+ const b=el('tvFullscreen');if(b)b.textContent='⛶ Vollbild';
+ tvControlsVisible(true);
+ el('tvFullscreen')?.focus();
+}
+function tvRemoteKeydown(e){
+ if(role!=='tv'||!el('tvApp'))return;
+ const code=e.keyCode||e.which;
+ const bar=el('tvRemoteBar');if(!bar)return;
+ const keys=['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
+ if(keys.includes(e.key)||[37,38,39,40].includes(code)){
+  e.preventDefault();if(bar.classList.contains('tvRemoteHidden'))tvControlsVisible(true);
+  const targets=[...bar.querySelectorAll('button:not(:disabled)')];let n=targets.indexOf(document.activeElement);
+  n=n<0?0:(n+((e.key==='ArrowLeft'||e.key==='ArrowUp'||code===37||code===38)?-1:1)+targets.length)%targets.length;
+  targets[n]?.focus();tvControlsVisible(true);return;
+ }
+ if(e.key==='Enter'||code===13){
+  if(bar.classList.contains('tvRemoteHidden')){e.preventDefault();tvControlsVisible(true);el('tvPlay')?.focus();return;}
+  const active=document.activeElement;if(active?.tagName==='BUTTON'){e.preventDefault();active.click();}else{e.preventDefault();el('tvPlay')?.focus();}
+  return;
+ }
+ // On LG WebOS, Back/Return is often keyCode 461.
+ if(['Escape','Backspace','BrowserBack'].includes(e.key)||[27,8,461].includes(code)){
+  e.preventDefault();tvRemoteBack();return;
+ }
+ // Remote Play button enables local playback; global playback is controlled by the admin.
+ if(e.key==='MediaPlay'||e.key==='MediaPlayPause'||[415].includes(code)){e.preventDefault();el('tvPlay')?.click();}
+}
+window.addEventListener('keydown',tvRemoteKeydown);
 function tvView(){
  if(!tvKey){app.innerHTML='<div class="wrap page"><h1>Beamer verbinden</h1><p>Bitte den Beamerlink aus der Admin-Ansicht öffnen.</p><label>Beamer-Zugangsschlüssel</label><input type="password" id="tvInput"><p></p><button class="primary" id="tvSubmit">Verbinden</button></div>';el('tvSubmit').onclick=()=>{tvKey=el('tvInput').value;sessionStorage.setItem('touch_tv_key',tvKey);tvView();};return;}
- app.innerHTML='<div id="tvApp"><div id="tvScene" class="tvScene"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock"><button id="tvPlay">▶ Wiedergabe freigeben</button><button id="tvFullscreen">⛶ Vollbild</button></div><div class="tvBroadcastHud" id="tvBroadcastHud" style="display:none"><div class="tvBroadcastTop"><strong>TOUCH <span>LIVE</span></strong><span id="tvChapterLabel">Kapitel 1 · Geschichte</span><span id="tvClockLabel">00:00 / 51:47</span></div><div class="tvBroadcastTrack"><div id="tvProgressBar"></div></div></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
- videoEl=el('tvVideo');el('tvPlay').onclick=()=>{playerReady=true;if(mediaType==='youtube'&&ytPlayer){try{ytPlayer.unMute();ytPlayer.playVideo();}catch{}}else if(videoEl){videoEl.muted=false;videoEl.play().catch(()=>{});}};el('tvFullscreen').onclick=()=>el('tvApp').requestFullscreen?.().catch(()=>{});
+ app.innerHTML='<div id="tvApp"><div id="tvScene" class="tvScene"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Film mit Ton aktivieren</button><button id="tvFullscreen" type="button" tabindex="0">⛶ Vollbild</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><div class="tvBroadcastHud" id="tvBroadcastHud" style="display:none"><div class="tvBroadcastTop"><strong>TOUCH <span>LIVE</span></strong><span id="tvChapterLabel">Kapitel 1 · Geschichte</span><span id="tvClockLabel">00:00 / 51:47</span></div><div class="tvBroadcastTrack"><div id="tvProgressBar"></div></div></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
+ videoEl=el('tvVideo');
+ el('tvPlay').onclick=()=>{
+  playerReady=true;
+  if(mediaType==='youtube'&&ytPlayer){try{ytPlayer.unMute();ytPlayer.playVideo();}catch{}}
+  else if(videoEl){videoEl.muted=false;videoEl.play().catch(()=>{});}
+  el('tvPlay').textContent='✓ Wiedergabe freigegeben';
+  tvControlsVisible(false);
+ };
+ el('tvFullscreen').onclick=tvRemoteFullscreen;
+ el('tvHideControls').onclick=()=>tvControlsVisible(false);
+ tvControlsVisible(true);
  videoEl.addEventListener('timeupdate',()=>{updateCaption();});videoEl.addEventListener('ended',()=>{if(state?.phase==='film')sendTick(false,true);});
 }
 function tvScene(html){const node=el('tvScene');if(node&&node.__h!==html){node.innerHTML=html;node.__h=html;}}
