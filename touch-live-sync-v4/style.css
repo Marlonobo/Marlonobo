@@ -214,3 +214,41 @@ body.touchStudent .participantFullBtn{font-size:12px;min-height:36px;padding:6px
 .homePreviewTag b{display:block;font:800 clamp(20px,2.5vw,29px)/1.2 system-ui,sans-serif;letter-spacing:-.04em;color:#fff}
 @media(max-width:910px){.hero.homeHero{grid-template-columns:1fr;gap:18px}.homeHeroPreview{min-height:310px;max-width:750px}.homeHeroCopy h1{font-size:clamp(43px,7vw,74px)}}
 @media(max-width:520px){.hero.homeHero{padding:25px 0 16px}.homeHeroCopy h1{font-size:clamp(40px,11vw,62px)}.homeHeroCopy .flex .btn{flex:1 1 100%;font-size:14px}.homeHeroPreview{min-height:220px;border-radius:16px}.homePreviewTag{bottom:13px;left:13px}}
+
+
+/* Admin video library: clear upload readiness, one-click subtitles, responsive setup */
+.adminVideoHeader{padding:16px 17px;margin:11px 0 20px;border-radius:14px;border:1px solid #2d6276;background:linear-gradient(125deg,#102c3e,#0e2438)}
+.adminVideoHeader>label{font-size:13px;color:#b7f1f2;font-weight:800;letter-spacing:.02em;display:block;margin:0 0 7px}
+.adminVideoHeader .flex{gap:8px;align-items:stretch}
+.adminVideoHeader input{flex:1 1 260px;min-width:0;max-width:100%;background:#071c2e;border:1px solid #3e6678}
+.adminVideoHeader button{white-space:nowrap}
+.adminVideoHeader .small{margin:7px 0 0}
+.videoNow{margin-top:15px;color:#eafcff;font-size:13px;line-height:1.5;border-top:1px solid #386477;padding-top:12px;overflow-wrap:anywhere}
+.directUpload{margin-top:5px;padding:16px 16px 18px;border:1px solid #355d74;background:linear-gradient(160deg,#102b3e,#0c2335);border-radius:16px}
+.directUpload h3{margin:5px 0 7px}
+.directUpload p.small{line-height:1.55}
+.directUpload input[type=file]{width:100%;max-width:100%}
+.directUpload .control,.directUpload .flex{gap:8px}
+.cloudStorageStatus{margin:13px 0;padding:12px 14px;border-radius:11px;border:1px solid #ccab6b;background:#3b2b23;color:#ffe7bb;font-size:13px;line-height:1.45}
+.cloudStorageStatus.is-ready{border-color:#67c7b6;background:#153b3d;color:#c9fff5}
+.cloudHelp{background:#0a1f2e;border-radius:12px;padding:16px;margin-top:12px;border:1px solid #3b6275}
+.cloudHelp[hidden]{display:none!important}
+.cloudHelp p{margin:7px 0 15px;color:#b8cbd7;font-size:13px;line-height:1.55}
+.cloudHelp .flex{display:flex;gap:7px;flex-wrap:wrap}
+.cloudHelp .btn{font-size:12px;min-height:38px;padding:8px 10px;border-radius:9px}
+.subtitleQuick{display:flex;align-items:center;gap:16px;padding:17px;margin:12px 0 20px;border:1px solid #37687e;background:linear-gradient(120deg,#0b263a,#153a4c);border-radius:15px}
+.subtitleQuick .small{margin:5px 0 0;font-size:13px;line-height:1.5}
+.subtitleToggle{flex:0 0 auto;min-width:158px;min-height:55px;border-radius:14px;border:2px solid #538a9d;padding:12px 16px;font-weight:900;font-size:15px;transition:background .2s,border-color .2s,color .2s;box-shadow:0 6px 17px #0003}
+.subtitleToggle.is-on{background:#66d7ce;color:#052634;border-color:#6eebdd}
+.subtitleToggle.is-off{background:#152c3e;color:#d3e5eb;border-color:#44697d}
+.subtitleToggle:disabled{opacity:.6;cursor:progress}
+button:disabled,input:disabled{cursor:not-allowed}
+.directUpload button:disabled{opacity:.45;box-shadow:none;filter:saturate(.5)}
+.welcomeProgramTitle{font-size:clamp(14px,1.6vw,25px)!important;color:#bcf6ef!important;max-width:720px;margin:12px 0!important}
+@media(max-width:650px){
+ .adminVideoHeader .flex{flex-direction:column;align-items:stretch}
+ .adminVideoHeader input,.adminVideoHeader button{width:100%;flex:auto}
+ .subtitleQuick{flex-direction:column;align-items:stretch;padding:13px;gap:10px}
+ .subtitleToggle{width:100%;min-height:49px}
+ .directUpload{padding:12px}
+}
