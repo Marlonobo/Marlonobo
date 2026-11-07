@@ -420,6 +420,8 @@ function tvRemoteKeydown(e){
   targets[n]?.focus();tvControlsVisible(true);return;
  }
  if(e.key==='Enter'||code===13){
+  // On LG webOS, OK is a real user gesture: retry native fullscreen immediately.
+  if(!document.fullscreenElement)tvRemoteFullscreen(true);
   if(bar.classList.contains('tvRemoteHidden')){
    e.preventDefault();
    if(tvSoundBlocked){el('tvPlay')?.click();return;}
