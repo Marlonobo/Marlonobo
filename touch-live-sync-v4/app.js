@@ -267,22 +267,47 @@ async function uploadFilm(){
  finally{btn.disabled=!cloudUploadReady;}
 }
 function secText(n){n=Math.max(0,Math.floor(Number(n)||0));return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');}
-let tvRemoteAutoHide=null;
+let tvRemoteAutoHide=null,tvSoundBlocked=false,tvSoundActivated=false,tvAutoCinemaTried=false;
 function tvControlsVisible(show=true){
  const bar=el('tvRemoteBar'),help=el('tvRemoteHelp');if(!bar)return;
  if(tvRemoteAutoHide){clearTimeout(tvRemoteAutoHide);tvRemoteAutoHide=null;}
  bar.classList.toggle('tvRemoteHidden',!show);if(help)help.hidden=!show;
  if(show){tvRemoteAutoHide=setTimeout(()=>{if(role==='tv'&&document.activeElement?.id!=='tvPlay'&&document.activeElement?.id!=='tvFullscreen')tvControlsVisible(false);},13000);}
 }
-function tvRemoteFullscreen(){
+function tvRemoteFullscreen(auto=false){
  const root=el('tvApp');if(!root)return;
+ // CSS cinema mode always fills the TV's available browser viewport.
+ // Native browser fullscreen may require a real remote OK/button click.
  root.classList.add('tvCinema');
  const btn=el('tvFullscreen');if(btn)btn.textContent='⛶ Vollbild aktiv';
  const enter=root.requestFullscreen||root.webkitRequestFullscreen||root.msRequestFullscreen;
  if(enter&&!document.fullscreenElement){
-  try{const out=enter.call(root);if(out?.catch)out.catch(()=>{root.classList.add('tvCinema');});}catch{root.classList.add('tvCinema');}
+  try{const out=enter.call(root);if(out?.catch)out.catch(()=>{root.classList.add('tvCinema');});}
+  catch{root.classList.add('tvCinema');}
  }
- tvControlsVisible(false);
+ if(!auto)tvControlsVisible(false);
+}
+function tvShowSoundPrompt(){
+ if(role!=='tv'||!el('tvPlay'))return;
+ tvSoundBlocked=true;
+ el('tvPlay').textContent='▶ Ton & Vollbild mit OK freigeben';
+ tvControlsVisible(true);
+}
+function tvEnablePlayback(){
+ // This is always called from a real LG OK / mouse click, so the browser can
+ // grant audio and native fullscreen if permitted.
+ tvSoundActivated=true;tvSoundBlocked=false;playerReady=true;
+ tvRemoteFullscreen(false);
+ const p=el('tvPlay');if(p)p.textContent='✓ Ton ist aktiviert';
+ try{
+  if(state?.video?.type==='youtube'&&ytPlayer){
+   ytPlayer.unMute();
+   if(state?.playing)ytPlayer.playVideo();
+  }else if(videoEl){
+   videoEl.muted=false;videoEl.volume=1;
+   if(state?.phase==='film'&&state.playing)videoEl.play().catch(()=>tvShowSoundPrompt());
+  }
+ }catch{tvShowSoundPrompt();}
 }
 function tvRemoteBack(){
  if(document.fullscreenElement){document.exitFullscreen?.().catch?.(()=>{});}
@@ -303,7 +328,11 @@ function tvRemoteKeydown(e){
   targets[n]?.focus();tvControlsVisible(true);return;
  }
  if(e.key==='Enter'||code===13){
-  if(bar.classList.contains('tvRemoteHidden')){e.preventDefault();tvControlsVisible(true);el('tvPlay')?.focus();return;}
+  if(bar.classList.contains('tvRemoteHidden')){
+   e.preventDefault();
+   if(tvSoundBlocked){el('tvPlay')?.click();return;}
+   tvControlsVisible(true);el('tvPlay')?.focus();return;
+  }
   const active=document.activeElement;if(active?.tagName==='BUTTON'){e.preventDefault();active.click();}else{e.preventDefault();el('tvPlay')?.focus();}
   return;
  }
@@ -317,19 +346,21 @@ function tvRemoteKeydown(e){
 window.addEventListener('keydown',tvRemoteKeydown);
 function tvView(){
  if(!tvKey){app.innerHTML='<div class="wrap page"><h1>Beamer verbinden</h1><p>Bitte den Beamerlink aus der Admin-Ansicht öffnen.</p><label>Beamer-Zugangsschlüssel</label><input type="password" id="tvInput"><p></p><button class="primary" id="tvSubmit">Verbinden</button></div>';el('tvSubmit').onclick=()=>{tvKey=el('tvInput').value;sessionStorage.setItem('touch_tv_key',tvKey);tvView();};return;}
- app.innerHTML='<div id="tvApp"><div id="tvScene" class="tvScene"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Film mit Ton aktivieren</button><button id="tvFullscreen" type="button" tabindex="0">⛶ Vollbild</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><div class="tvBroadcastHud" id="tvBroadcastHud" style="display:none"><div class="tvBroadcastTop"><strong>TOUCH <span>LIVE</span></strong><span id="tvChapterLabel">Kapitel 1 · Geschichte</span><span id="tvClockLabel">00:00 / 51:47</span></div><div class="tvBroadcastTrack"><div id="tvProgressBar"></div></div></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
+ app.innerHTML='<div id="tvApp"><div id="tvScene" class="tvScene"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvFullscreen" type="button" tabindex="0">⛶ Vollbild</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><div class="tvBroadcastHud" id="tvBroadcastHud" style="display:none"><div class="tvBroadcastTop"><strong>TOUCH <span>LIVE</span></strong><span id="tvChapterLabel">Kapitel 1 · Geschichte</span><span id="tvClockLabel">00:00 / 51:47</span></div><div class="tvBroadcastTrack"><div id="tvProgressBar"></div></div></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
  videoEl=el('tvVideo');
- el('tvPlay').onclick=()=>{
-  playerReady=true;
-  if(mediaType==='youtube'&&ytPlayer){try{ytPlayer.unMute();ytPlayer.playVideo();}catch{}}
-  else if(videoEl){videoEl.muted=false;videoEl.play().catch(()=>{});}
-  el('tvPlay').textContent='✓ Wiedergabe freigegeben';
-  tvControlsVisible(false);
- };
- el('tvFullscreen').onclick=tvRemoteFullscreen;
+ // Never intentionally start the TV movie muted.
+ videoEl.muted=false;videoEl.defaultMuted=false;videoEl.volume=1;
+ el('tvPlay').onclick=tvEnablePlayback;
+ el('tvFullscreen').onclick=()=>tvRemoteFullscreen(false);
  el('tvHideControls').onclick=()=>tvControlsVisible(false);
  tvControlsVisible(true);
- videoEl.addEventListener('timeupdate',()=>{updateCaption();});videoEl.addEventListener('ended',()=>{if(state?.phase==='film')sendTick(false,true);});
+ // Start the browser-sized cinematic layout immediately; attempt native fullscreen.
+ // TV firmware may reject native fullscreen without OK.
+ if(!tvAutoCinemaTried){tvAutoCinemaTried=true;tvRemoteFullscreen(true);}
+ setTimeout(()=>{if(role==='tv'&&!tvSoundBlocked)tvControlsVisible(false);},6500);
+ videoEl.addEventListener('loadedmetadata',()=>{videoEl.muted=false;videoEl.volume=1;});
+ videoEl.addEventListener('timeupdate',()=>{updateCaption();});
+ videoEl.addEventListener('ended',()=>{if(state?.phase==='film')sendTick(false,true);});
 }
 function tvScene(html){const node=el('tvScene');if(node&&node.__h!==html){node.innerHTML=html;node.__h=html;}}
 function tvDisplay(){
@@ -353,13 +384,30 @@ function ensureMedia(){
  if(!state||role!=='tv'||state.phase!=='film')return;
  const video=state.video,ref=video.type+':'+video.url;
  if(state.captionsAvailable&&lastCaptionRevision!==state.captionsRevision){lastCaptionRevision=state.captionsRevision;fetchCaptions();}
- if(ref!==mediaType){mediaType=ref;subtitles=[];lastRevision=-1;
+ if(ref!==mediaType){mediaType=ref;subtitles=[];lastRevision=-1;tvSoundBlocked=false;
  if(ytPlayer){try{ytPlayer.destroy();}catch{}ytPlayer=null;}el('youtubeTarget').style.display='none';videoEl.style.display='none';videoEl.pause();
  if(video.type==='youtube'){el('youtubeTarget').style.display='block';loadYouTube(video.id);}
- else if(video.type==='upload'||video.type==='url'){videoEl.style.display='block';videoEl.src=video.url;videoEl.load();fetchCaptions();}
+ else if(video.type==='upload'||video.type==='url'){videoEl.style.display='block';videoEl.muted=false;videoEl.volume=1;videoEl.src=video.url;videoEl.load();fetchCaptions();}
  }
- if(state.video.type==='youtube'){if(ytPlayer){const cur=Number(ytPlayer.getCurrentTime())||0;if(Math.abs(cur-state.time)>3||lastRevision!==state.revision){try{ytPlayer.seekTo(state.time,true);}catch{}}try{state.playing?ytPlayer.playVideo():ytPlayer.pauseVideo();}catch{}}}
- else if(videoEl.src){const cur=videoEl.currentTime||0;if(Math.abs(cur-state.time)>2.2||lastRevision!==state.revision){try{videoEl.currentTime=state.time;}catch{}}if(state.playing&&videoEl.paused)videoEl.play().catch(()=>{});if(!state.playing&&!videoEl.paused)videoEl.pause();}
+ if(state.video.type==='youtube'){
+  if(ytPlayer){
+   const cur=Number(ytPlayer.getCurrentTime())||0;
+   if(Math.abs(cur-state.time)>3||lastRevision!==state.revision){try{ytPlayer.seekTo(state.time,true);}catch{}}
+   try{
+    ytPlayer.unMute();
+    if(state.playing&&!tvSoundBlocked)ytPlayer.playVideo();
+    else if(!state.playing)ytPlayer.pauseVideo();
+   }catch{tvShowSoundPrompt();}
+  }
+ }else if(videoEl.src){
+  videoEl.muted=false;
+  const cur=videoEl.currentTime||0;
+  if(Math.abs(cur-state.time)>2.2||lastRevision!==state.revision){try{videoEl.currentTime=state.time;}catch{}}
+  if(state.playing&&videoEl.paused&&!tvSoundBlocked){
+   videoEl.play().then(()=>{tvSoundBlocked=false;tvControlsVisible(false);}).catch(()=>tvShowSoundPrompt());
+  }
+  if(!state.playing&&!videoEl.paused)videoEl.pause();
+ }
  lastRevision=state.revision;
  updateCaption();
 }
@@ -368,7 +416,18 @@ function loadYouTube(id){
  const s=document.createElement('script');s.src='https://www.youtube.com/iframe_api';s.async=true;document.head.appendChild(s);
  window.onYouTubeIframeAPIReady=()=>makeYouTube(id);
 }
-function makeYouTube(id){if(!el('youtubeTarget')||role!=='tv')return;ytPlayer=new YT.Player('youtubeTarget',{videoId:id,playerVars:{rel:0,playsinline:1,enablejsapi:1,controls:1,origin:location.origin},events:{onReady:()=>{if(state?.phase==='film')ensureMedia();}}});}
+function makeYouTube(id){
+ if(!el('youtubeTarget')||role!=='tv')return;
+ ytPlayer=new YT.Player('youtubeTarget',{
+  videoId:id,
+  playerVars:{rel:0,playsinline:1,enablejsapi:1,controls:1,origin:location.origin},
+  events:{
+   onReady:()=>{try{ytPlayer.unMute();}catch{}if(state?.phase==='film')ensureMedia();},
+   onAutoplayBlocked:()=>tvShowSoundPrompt(),
+   onStateChange:e=>{if(e.data===1){tvSoundBlocked=false;tvControlsVisible(false);}}
+  }
+ });
+}
 async function sendTick(playing,ended=false){if(role!=='tv'||!tvKey||state?.phase!=='film')return;try{const t=state.video.type==='youtube'&&ytPlayer?ytPlayer.getCurrentTime():videoEl?.currentTime||0;await api('/api/tick','POST',{time:t,playing,ended},tvKey);}catch{}}
 function updateCaption(){
  const node=el('captionLayer');if(!node)return;
