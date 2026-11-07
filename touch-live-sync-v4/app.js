@@ -333,7 +333,7 @@ function tvRemoteKeydown(e){
    if(tvSoundBlocked){el('tvPlay')?.click();return;}
    tvControlsVisible(true);el('tvPlay')?.focus();return;
   }
-  const active=document.activeElement;if(active?.tagName==='BUTTON'){e.preventDefault();active.click();}else{e.preventDefault();el('tvPlay')?.focus();}
+  const active=document.activeElement;if(active?.tagName==='BUTTON'){e.preventDefault();active.click();}else{e.preventDefault();el('tvPlay')?.click();}
   return;
  }
  // On LG WebOS, Back/Return is often keyCode 461.
