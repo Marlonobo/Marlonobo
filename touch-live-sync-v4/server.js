@@ -203,6 +203,7 @@ async function handler(req,res){
  if(m==='GET'&&p==='/site.webmanifest')return serve(res,path.join(ROOT,'site.webmanifest'),'application/manifest+json; charset=utf-8');
  if(m==='GET'&&(p==='/watch'||p==='/host'))return serve(res,path.join(ROOT,'party.html'),'text/html; charset=utf-8');
  if(m==='GET'&&(p==='/party.js'||p==='/party.css'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
+  if(m==='GET'&&p==='/host-upload.js')return serve(res,path.join(ROOT,'host-upload.js'),'application/javascript; charset=utf-8');
  if(m==='GET'&&p==='/api/state')return send(res,200,publicState(u.searchParams.get('id')));
  if(m==='GET'&&p==='/api/version')return send(res,200,{version:BUILD_VERSION});
  if(m==='GET'&&p==='/api/health')return send(res,200,{ok:true,questionCount:Q.length,now:Date.now(),cloudStorageConfigured:S3.enabled});
@@ -343,7 +344,7 @@ async function handler(req,res){
  const b=await read(req),cmd=b.cmd;
  if(p==='/api/remote'&&s.video?.type!=='local'&&new Set(['welcome','start','pause','play','seek','restartVideo','gestureEnd','zoomEnd']).has(cmd)){s.clockSource='host';s.lastHostTick=Date.now();}
  if(p==='/api/admin'&&new Set(['welcome','start','pause','play','seek','restartVideo']).has(cmd)){s.clockSource='tv';s.lastHostTick=0;}
- if(p==='/api/remote'&&!new Set(['welcome','start','pause','play','seek','restartVideo','demo','demoNext','results','handout','end','gestureStart','gestureEnd','zoomStart','zoomEnd','videoYoutube','videoLink','remoteVideoYoutube','remoteVideoLink','musicOn','musicOff']).has(cmd))return unauthorized(res);
+ if(p==='/api/remote'&&!new Set(['welcome','start','pause','play','seek','restartVideo','demo','demoNext','results','handout','end','gestureStart','gestureEnd','zoomStart','zoomEnd','videoYoutube','videoLink','remoteVideoYoutube','remoteVideoLink','videoStored','musicOn','musicOff']).has(cmd))return unauthorized(res);
  if(cmd==='start'&&s.video?.type==='local'&&(!localMedia.lastSeen||Date.now()-localMedia.lastSeen>25000))return send(res,409,{error:'Lokale MP4 am HDMI-PC noch nicht bereit. Öffne den Beamerlink auf dem Windows-PC und wähle dort die MP4-Datei.'});
  if(cmd==='reloadPresentation'){if(!['welcome','end','handout'].includes(s.phase))return send(res,409,{error:'Fernseher nur vor oder nach der Vorführung neu laden.'});s.tvReloadRequest=(s.tvReloadRequest||0)+1;}
  else if(cmd==='welcome'){s.phase='welcome';s.time=0;s.playing=false;if(s.welcomeMusic)s.welcomeMusic.on=false;}
