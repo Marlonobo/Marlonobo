@@ -32,6 +32,12 @@ function updatePartyViewMode(){
  lastFocusKey=focusKey;lastFocusTransition++;
  if(!questionActive&&!wasQuestion)return;
  const transition=lastFocusTransition;
+ // On one device the quiz must be accessible even if the viewer chose fullscreen.
+ // Native iOS fullscreen may still require leaving fullscreen manually.
+ if(questionActive){
+  try{if(document.fullscreenElement){document.exitFullscreen?.().catch?.(()=>{});}}catch{}
+  try{if(video?.webkitDisplayingFullscreen)video.webkitExitFullscreen?.();}catch{}
+ }
  setTimeout(()=>{
   if(partyViewMode!=='auto'||transition!==lastFocusTransition)return;
   const target=questionActive?(participantId?'partyInteraction':'participant'):'partyScreen';
