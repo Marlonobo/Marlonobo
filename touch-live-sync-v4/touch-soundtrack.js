@@ -15,7 +15,15 @@
  ];
  const brightTune=['C5','E5','G5','E5','F5','A5','G5','E5',
   'D5','F5','A5','F5','G5','E5','D5','C5'];
- const NOTE_VOLUME=0.15;
+ // Keep original music audible through LG speakers while retaining a safe master slider.
+ const welcomeChords=[
+  ['C4','E4','G4'],['A3','C4','E4'],['F4','A4','C5'],['G3','B4','D5']
+ ];
+ const welcomeTune=['E5','G5','E5','C5','D5','E5','G5','E5',
+  'C5','E5','A5','E5','G5','E5','D5','C5',
+  'F5','A5','G5','F5','E5','F5','A5','G5',
+  'D5','G5','E5','D5','C5','E5','D5','C5'];
+ const NOTE_VOLUME=0.38;
  function ensure(){
   if(!Ctx)return false;
   if(ctx)return true;
@@ -46,7 +54,18 @@
   osc.start(at);osc.stop(at+duration+.05);
  }
  function scheduleBeat(at,position){
-  if(mode==='pause'){
+  if(mode==='welcome'){
+   // Original, continuous four-chord intro (about 23 seconds per cycle).
+   const beat=60/84,chord=welcomeChords[Math.floor(position/8)%welcomeChords.length];
+   if(position%8===0){
+    chord.forEach((n,j)=>playNote(SCALE[n],at,beat*7.8,'pad',j===0?.86:.62));
+   }
+   if(position%4===0)playNote(SCALE[chord[0]]/2,at,beat*3.3,'bass',.7);
+   if(position%2===0){
+    const n=welcomeTune[position%welcomeTune.length];
+    if(SCALE[n])playNote(SCALE[n],at,beat*1.35,'bell',position%8===0?.72:.43);
+   }
+  }else if(mode==='pause'){
    const beat=60/72,chord=padSequence[Math.floor(position/8)%padSequence.length];
    if(position%8===0){chord.forEach((n,j)=>playNote(SCALE[n],at,beat*7.7,'pad',j===0?.8:1));}
    if(position%4===0){playNote(SCALE[chord[0]]/2,at,beat*2.5,'bass',.65);}
@@ -69,6 +88,7 @@
  }
  function determine(s){
   if(!s)return 'off';
+  if(s.phase==='welcome'&&s.welcomeMusic?.on===true)return 'welcome';
   if(s.phase==='results'&&settings.results)return 'results';
   if(s.phase==='film'&&!s.playing&&settings.pause)return 'pause';
   return 'off';
