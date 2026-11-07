@@ -14,7 +14,7 @@ if(!process.env.TV_KEY)console.log('TOUCH LIVE TV_KEY: '+TV);
 fs.mkdirSync(DIR,{recursive:true});
 const USERS_FILE=path.join(DIR,'users.json'),STATE_FILE=path.join(DIR,'live-state.json'), VIDEO_FILE=path.join(DIR,'touchscreen.mp4'), SUB_FILE=path.join(DIR,'untertitel.vtt'), QUESTIONS_FILE=path.join(DIR,'custom-questions.json');
 try{const saved=JSON.parse(fs.readFileSync(QUESTIONS_FILE,'utf8'));if(Array.isArray(saved)&&saved.length>=1&&saved.length<=50)Q.splice(0,Q.length,...saved);}catch{}
-const def=()=>({phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,videoTitle:'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{url:'',type:'',id:'',on:false},captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,resultsAt:0,clockSource:'tv',lastHostTick:0,revision:0});
+const def=()=>({phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,videoTitle:'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{url:'',type:'',id:'',on:false},soundtrack:{pause:true,results:true,volume:.25},captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,resultsAt:0,clockSource:'tv',lastHostTick:0,revision:0});
 let s=def(), users=new Map(), upload=null,feedback=[],cloudManifest=null;
 try{s=Object.assign(def(),JSON.parse(fs.readFileSync(STATE_FILE,'utf8')));}catch{}
 try{users=new Map(Object.entries(JSON.parse(fs.readFileSync(USERS_FILE,'utf8'))));}catch{}
@@ -42,6 +42,10 @@ async function hydrateCloudMedia(){
    const value=Number(settings[field]);if(settings[field]!==undefined&&Number.isFinite(value)&&value>=min&&value<=max)s[field]=value;
   }
   if(typeof settings.subtitles==='boolean')s.subtitles=settings.subtitles;
+  if(settings.soundtrack&&typeof settings.soundtrack==='object'){
+   const x=settings.soundtrack;
+   s.soundtrack={pause:x.pause!==false,results:x.results!==false,volume:Math.max(0,Math.min(.6,Number(x.volume)||0))};
+  }
   const wm=settings.welcomeMusic;
   if(wm&&typeof wm==='object'&&typeof wm.url==='string'&&wm.url.startsWith('https://open.spotify.com/')&&['track','playlist','album'].includes(wm.type)&&/^[A-Za-z0-9]{22}$/.test(wm.id||'')){
    s.welcomeMusic={url:wm.url,type:wm.type,id:wm.id,on:false};
@@ -58,7 +62,7 @@ async function saveDurableMediaSettings(){
  const manifest=await S3.manifest()||{};
  const video=s.video&&typeof s.video==='object'?s.video:{type:'none',url:null,id:null};
  manifest.settings={
-  video,videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{...(s.welcomeMusic||{}),on:false},
+  video,videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{...(s.welcomeMusic||{}),on:false},soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},
   subtitles:!!s.subtitles,subtitleOffset:s.subtitleOffset||0,
   captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,
   captionsRevision:s.captionsRevision||0,savedAt:new Date().toISOString()
@@ -107,7 +111,7 @@ function publicState(id){
   if(q&&jk.hint===q.id)player.hint=q.hint||'';}
  const z=ZOOM();let zoomResult=null;
  if(final&&z){const found=[...users.values()].filter(x=>x.answers[z.id]===z.correct).map(x=>x.name);zoomResult={q:z.q,answer:z.a[z.correct],found:found.length,names:found.slice(0,12),total:[...users.values()].filter(x=>Object.hasOwn(x.answers,z.id)).length};}
- return {phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,video:s.video,videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},subtitles:s.subtitles,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',
+ return {phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,video:s.video,videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',
   quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,a:q.a,remaining:a.remaining,accepting:a.accepting,foundCount:q.type==='zoom'?[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length:0,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
   player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)};
 }
@@ -140,7 +144,7 @@ async function media(req,res){
 async function handler(req,res){
  const u=new URL(req.url,'http://localhost'),p=u.pathname,m=req.method;
  if(m==='GET'&&(p==='/'||p==='/index.html'||p==='/join'||p==='/control'||p==='/spotify-callback'))return serve(res,path.join(ROOT,'index.html'),mime['.html']);
- if(m==='GET'&&(p==='/app.js'||p==='/style.css'||p==='/spotify-connect.js'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
+ if(m==='GET'&&(p==='/app.js'||p==='/style.css'||p==='/spotify-connect.js'||p==='/touch-soundtrack.js'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
  if(m==='GET'&&p==='/touchscreen-motiv.svg')return serve(res,path.join(ROOT,'touchscreen-motiv.svg'),'image/svg+xml');
  if(m==='GET'&&p==='/easter-scene.svg')return serve(res,path.join(ROOT,'easter-scene.svg'),'image/svg+xml');
  if(m==='GET'&&(p==='/easter-game.js'||p==='/easter-game.css'))return serve(res,path.join(ROOT,p.slice(1)),p.endsWith('.js')?'application/javascript; charset=utf-8':'text/css; charset=utf-8');
@@ -283,7 +287,7 @@ async function handler(req,res){
  else if(cmd==='zoomEnd'){endZoom();}
  else if(cmd==='end'){s.phase='end';s.playing=false;}
  else if(cmd==='reset'){
-  const keep={video:s.video,videoTitle:s.videoTitle,welcomeMusic:{...(s.welcomeMusic||{url:'',id:'',type:''}),on:false},subtitles:s.subtitles,captionSize:s.captionSize,captionPosition:s.captionPosition,captionRevision:s.captionsRevision,captionsRevision:s.captionsRevision,cloudCaptions:s.cloudCaptions,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset};
+  const keep={video:s.video,videoTitle:s.videoTitle,welcomeMusic:{...(s.welcomeMusic||{url:'',id:'',type:''}),on:false},soundtrack:s.soundtrack,subtitles:s.subtitles,captionSize:s.captionSize,captionPosition:s.captionPosition,captionRevision:s.captionsRevision,captionsRevision:s.captionsRevision,cloudCaptions:s.cloudCaptions,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset};
   s=Object.assign(def(),keep);users=new Map();feedback=[];saveUsers();
  }
  else if(cmd==='videoYoutube'){const id=youtubeId(b.url);if(!id)return send(res,400,{error:'Kein gueltiger YouTube-Link'});s.video={type:'youtube',id,url:'https://www.youtube.com/watch?v='+id};}
@@ -325,6 +329,18 @@ async function handler(req,res){
    s.welcomeMusic.on=true;
  }
  else if(cmd==='musicOff'){if(s.welcomeMusic)s.welcomeMusic.on=false;}
+ else if(cmd==='soundtrackSet'){
+  const current=s.soundtrack||{pause:true,results:true,volume:.25};
+  const field=String(b.field||'');
+  if(field==='pause'||field==='results'){
+   if(typeof b.value!=='boolean')return send(res,400,{error:'Bitte AN oder AUS angeben.'});
+   s.soundtrack={...current,[field]:b.value};
+  }else if(field==='volume'){
+   const value=Number(b.value);
+   if(!Number.isFinite(value)||value<0||value>.6)return send(res,400,{error:'Lautstärke zwischen 0 und 60 Prozent einstellen.'});
+   s.soundtrack={...current,volume:value};
+  }else return send(res,400,{error:'Unbekannte Musik-Einstellung.'});
+ }
  else if(cmd==='videoTitle'){
   const title=String(b.value||'').replace(/[\u0000-\u001F\u007F]/g,' ').trim();
   if(title.length<3||title.length>110)return send(res,400,{error:'Der Videotitel muss zwischen 3 und 110 Zeichen lang sein.'});
@@ -333,7 +349,7 @@ async function handler(req,res){
  else if(cmd==='captionSize'){const n=Number(b.value);if(!Number.isFinite(n)||n<70||n>160)return send(res,400,{error:'Untertitelgröße von 70 bis 160 Prozent'});s.captionSize=n;}
  else if(cmd==='captionPosition'){const n=Number(b.value);if(!Number.isFinite(n)||n<5||n>25)return send(res,400,{error:'Untertitelposition von 5 bis 25 Prozent'});s.captionPosition=n;}
  else return send(res,400,{error:'Unbekannter Befehl'});
- if(['videoYoutube','videoCloud','videoLink','videoUpload','videoStored','videoTitle','subtitles','captionSize','captionPosition','captionOffset','spotifySet','spotifyClear'].includes(cmd))await saveDurableMediaSettings();
+ if(['videoYoutube','videoCloud','videoLink','videoUpload','videoStored','videoTitle','subtitles','captionSize','captionPosition','captionOffset','spotifySet','spotifyClear','soundtrackSet'].includes(cmd))await saveDurableMediaSettings();
  s.revision++;await persist();return send(res,200,{ok:true,state:publicState()});
  }
  if(m==='POST'&&p==='/api/questions'){
