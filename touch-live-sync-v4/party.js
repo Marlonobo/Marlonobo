@@ -9,6 +9,7 @@ let key=fromUrl||sessionStorage.getItem(keyStore)||'';
 if(fromUrl){sessionStorage.setItem(keyStore,key);history.replaceState({},'',location.pathname);}
 let state=null,participantId=localStorage.getItem(idStore)||'',participantName=localStorage.getItem(nameStore)||'';
 let screenSignature='',quizSignature='',sourceRef='',activated=false,ytPlayer=null,ytReady=false,ytVideoId='',ytApiLoading=false,localRevision=-1,lastCaptionRevision=-1;
+let easterInstance=null;
 let captions=[],gesturePoints=new Map(),gestureState={x:0,y:0,scale:1,rotation:0},gestureOrigin=null;
 const video=$('partyVideo'),container=$('partyYoutube'),screen=$('partyScene'),capt=$('partyCaption'),playBtn=$('partyEnable');
 let errorTimer=null,pollInFlight=false,tickInFlight=false;
@@ -47,7 +48,8 @@ function updateScene(){
  let html='';
  if(phase==='welcome')html=slide('Willkommen bei TOUCH LIVE','Die Dokumentation startet, sobald die Moderatorin bereit ist.','<small>Gemeinsam schauen und mitspielen – egal von welchem Ort.</small>');
  else if(phase==='film')html=slide('Noch keine Filmquelle','Die Moderatorin kann ihren YouTube-Link oder eine öffentliche MP4 eintragen.','<small>Für einen Film muss dieser online erreichbar sein.</small>');
- else if(phase==='gesture'||phase==='zoom')html=slide('Mitmach-Spiel läuft!','Schau rechts auf dein Spiel und probiere die Gesten aus.');
+ else if(phase==='gesture')html=slide('Multitouch trainieren!','Verschieben, Vergrößern und Drehen – das Spiel läuft rechts.');
+ else if(phase==='zoom')html='<div class="partySceneInner egg-broadcast"><span class="eyebrow">KAPITEL 4 · DAS EASTER EGG</span><h2>Finde die Katze!</h2><img src="/easter-scene.svg" alt="Berglandschaft mit versteckter Katze"><p>Zoome im Spiel rechts hinein und tippe auf den Fundort.</p><strong>'+(state.quiz?.remaining||0)+' Sekunden · '+(state.quiz?.foundCount||0)+' gefunden</strong></div>';
  else if(phase==='demo')html=slide('Quiz-Probelauf','Die Frage erscheint auf beiden Geräten.','<small>Testet jetzt gleichzeitig eure Antworten.</small>');
  else if(phase==='results')html=podium();
  else if(phase==='handout')html=slide('Handout · Lernfeld 14','Jetzt das Handout ausfüllen und die Bewertung berechnen.');
@@ -139,12 +141,16 @@ function interaction(){
  const phase=state.phase;
  if(status&&participantId&&participantName)status.textContent=participantName+' · angemeldet und mit der Live-Sitzung verbunden.';
  const sig=[phase,q?.id||'',q?.type||'',q?.accepting||false,p?.choice??'unanswered',p?.score??'unknown',state.revision,participantId,(state.ranking||[]).length].join('|');
- if(sig===quizSignature){const timer=$('partyTimer');if(timer&&q)timer.textContent=q.remaining+' s';return;}
+ if(sig===quizSignature){const timer=$('partyTimer');if(timer&&q)timer.textContent=q.remaining+' s';if(phase==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!p?.zoomFound,points:p?.zoomPoints});return;}
  quizSignature=sig;
  if(phase==='gesture'){
   part.innerHTML=gestureHtml();bindGesture();return;
  }
- if(phase==='zoom'&&q){/* The zoom question below contains its own practice image. */}
+ if(phase==='zoom'&&q){
+  part.innerHTML='<div class="partyQuestion"><div class="between"><span class="chip">🔎 EASTER EGG · SUCHSPIEL</span><span class="small">'+(q.foundCount||0)+' gefunden</span></div><div id="partyEaster"></div><p class="small">'+(participantId?'Finde das Easter Egg durch Zoomen und direktes Antippen. Du bekommst für einen schnellen Fund Bonuspunkte.':'Bitte oben mit deinem Namen teilnehmen, damit dein Fund zählt.')+'</p></div>';
+  easterInstance=window.EasterGame?.mount($('partyEaster'),{remaining:q.remaining,found:!!p?.zoomFound,points:p?.zoomPoints,disabled:!q.accepting,onFind:async({x,y,zoom})=>{if(!participantId)throw Error('Bitte oben zuerst deinen Namen eingeben.');const r=await api('/api/easter/find',{id:participantId,x,y,zoom});setTimeout(()=>{quizSignature='';poll();},1500);return r;}});
+  return;
+ }
  if(q){
   const answered=p?.choice!==null&&p?.choice!==undefined;
   const allow=!!participantId&&q.accepting&&!answered;
