@@ -316,3 +316,13 @@ body.studentEntry.touchStudent .participantFullBar{margin:0 auto 10px;max-width:
 .cloudFallbackCaption{margin:12px 0 6px}
 .cloudFallbackCaption h3{margin:6px 0 9px;font-size:19px}
 @media(max-width:580px){.cloudSourceCard{padding:12px}.cloudSourceCard .flex button{flex:1 1 100%;width:100%}}
+
+
+/* One-time media setup, shared live on PC/iPad/phone/TV */
+.sharedLibraryPanel{margin-top:16px;padding:14px;border:1px solid #5e9eaf;border-radius:12px;background:linear-gradient(135deg,#112f41,#0a2634)}
+.sharedLibraryPanel>b{font-size:15px;color:#d9fff8}
+.sharedLibraryPanel p.small{font-size:12px;color:#bfd6df;line-height:1.5;margin:8px 0}
+.sharedLibraryPanel .flex{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;margin:11px 0}
+.sharedLibraryPanel .btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;text-align:center;font-size:13px;padding:9px 12px;border-radius:9px}
+#sharedLibraryStatus{border-left:3px solid #76e5df;padding-left:10px;overflow-wrap:anywhere}
+@media(max-width:640px){.sharedLibraryPanel{padding:12px}.sharedLibraryPanel .btn{flex:1 1 100%}}
