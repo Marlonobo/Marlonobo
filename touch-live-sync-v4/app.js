@@ -156,7 +156,20 @@ function bindAdmin(){
  el('uploadVtt').parentElement.appendChild(stylePanel);
  const setValues=()=>{el('captionSize').value=state?.captionSize||100;el('captionPosition').value=state?.captionPosition||11;el('captionSizeValue').textContent=el('captionSize').value+' %';el('captionPositionValue').textContent=el('captionPosition').value+' %';};setValues();
  el('captionSize').oninput=()=>el('captionSizeValue').textContent=el('captionSize').value+' %';el('captionPosition').oninput=()=>el('captionPositionValue').textContent=el('captionPosition').value+' %';el('captionSizeSave').onclick=()=>adminAction('captionSize',{value:Number(el('captionSize').value)});el('captionPositionSave').onclick=()=>adminAction('captionPosition',{value:Number(el('captionPosition').value)});
- api('/api/storage/status').then(x=>{const n=el('cloudStorageState');if(n)n.textContent=x.configured?(x.videoReady?'Cloud-Speicher verbunden. Dein Film ist dauerhaft online gespeichert. Du kannst ihn auch nach einem Serverneustart wieder auswählen.':'Cloud-Speicher verbunden. MP4 einmal hochladen, danach auf allen Geräten nutzen.'):'Dauerhaftes Hochladen noch nicht aktiv: Einmalig S3- oder Cloudflare-R2-Speicher verbinden. Bis dahin kannst du einen YouTube-Link verwenden.';}).catch(()=>{const n=el('cloudStorageState');if(n)n.textContent='Cloud-Speicherstatus konnte nicht geladen werden.';});
+ api('/api/storage/status').then(x=>{
+  const n=el('cloudStorageState'),up=el('uploadButton'),file=el('bigFile'),saved=el('useStoredVideo'),help=el('cloudHelp');
+  cloudUploadReady=!!x.configured;
+  up.disabled=!cloudUploadReady;file.disabled=!cloudUploadReady;saved.disabled=!(cloudUploadReady&&x.videoReady);
+  if(help)help.hidden=cloudUploadReady;
+  if(n){
+    n.classList.toggle('is-ready',cloudUploadReady);
+    n.textContent=cloudUploadReady?(x.videoReady?'✓ Cloud-Speicher verbunden. Du hast einen dauerhaft gespeicherten Film.':'✓ Cloud-Speicher verbunden. Du kannst deine MP4 jetzt einmalig hochladen.'):'MP4-Upload momentan nicht möglich: Es fehlt der Cloud-Speicher. Du kannst sofort YouTube „Nicht gelistet“ benutzen oder einmalig Cloudflare R2 verbinden.';
+  }
+ }).catch(e=>{
+  cloudUploadReady=false;
+  el('uploadButton').disabled=true;el('bigFile').disabled=true;el('useStoredVideo').disabled=true;
+  const n=el('cloudStorageState');if(n)n.textContent='Speicherprüfung fehlgeschlagen: '+e.message+'. YouTube kannst du weiterhin nutzen.';
+ });
  const cohost=adminInfo?.cohostKey;
  if(cohost){const panel=document.createElement('section');panel.className='card';panel.style.marginTop='18px';panel.innerHTML='<span class="label">ZWEITES GERÄT · CO-MODERATION</span><h2>Mit deiner Freundin gemeinsam steuern</h2><p>Dieser Link steuert die Sendung (Start, Pause, Ergebnisse), aber nicht die privaten Admin-Einstellungen.</p><div class="linkbox" id="friendLink"></div><button id="copyFriend">Mitsteuer-Link kopieren</button><p class="small">Privat weitergeben: Wer diesen Link besitzt, kann den Live-Ablauf steuern.</p>';el('adminRoot').appendChild(panel);const link=location.origin+'/host?key='+encodeURIComponent(cohost);el('friendLink').textContent=link;el('copyFriend').onclick=()=>copy(link);}
  const zc=document.createElement('section');zc.className='card';zc.style.marginTop='18px';
@@ -171,6 +184,12 @@ function bindAdmin(){
  el('timelineJson').value=JSON.stringify(adminInfo?.questions||[],null,2);
  el('timelineSave').onclick=async()=>{try{const questions=JSON.parse(el('timelineJson').value);const r=await api('/api/questions','POST',{questions},adminKey);el('timelineResult').textContent=r.count+' Fragen gespeichert.';}catch(e){el('timelineResult').textContent='Fehler: '+e.message;}};
 
+}
+function refreshAdminVideoControls(){
+ if(!state||role!=='admin')return;
+ const btn=el('subtitleQuickToggle');
+ if(btn){const on=state.subtitles!==false;btn.textContent=on?'Untertitel: AN':'Untertitel: AUS';btn.classList.toggle('is-on',on);btn.classList.toggle('is-off',!on);btn.setAttribute('aria-pressed',String(on));}
+ const n=el('videoNow');if(n)n.textContent='Aktueller Film: '+(state.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation')+' · '+(state.video.type==='none'?'noch keine Quelle':state.video.type==='youtube'?'YouTube':state.video.storage==='s3'?'Cloud-MP4':'MP4-Link');
 }
 function renderAdminAnswers(){const box=el('adminAnswers');if(!box||!adminInfo)return;const Qs=adminInfo.questions||[],R=adminInfo.ranking||[];let n=0;
  if(!R.length){box.innerHTML='<p class="small">Noch niemand angemeldet.</p>';return;}
@@ -335,7 +354,7 @@ async function poll(force=false){
  if(role==='join'||role==='teacher'){const player=state.player||{};const q=state.quiz;const sig=[role,state.phase,q?.id||'',q?.accepting||false,player.choice,player.score,state.revision,state.participants,JSON.stringify(player.jokers||{}),(player.hide||[]).join(),player.hint||'',JSON.stringify(state.zoomResult||'')].join('|');if(force||renderSignature!==sig){renderSignature=sig;userPage();participantMode();}else if(q){if(el('liveTimer'))el('liveTimer').textContent=q.remaining+' s';if(state.phase==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!state.player?.zoomFound});}}
  if(role==='tv'){tvDisplay();}
  if(role==='remote'){const status=el('remoteStatus');if(status)status.textContent='Live: '+next.phase.toUpperCase()+' · '+secText(next.time)+' · '+next.participants+' Teilnehmende · '+(next.playing?'Video läuft':'Video pausiert');}
- if(role==='admin'){if(el('adminStatus'))el('adminStatus').textContent='Status: '+state.phase.toUpperCase()+' · Filmzeit: '+secText(state.time)+' · '+state.participants+' Teilnehmende · '+(state.video.type==='none'?'kein Film':state.video.type);if(el('adminParticipants'))el('adminParticipants').textContent=state.participants+' Teilnehmende';if(el('adminTime'))el('adminTime').textContent=secText(state.time);if(el('adminRanking')&&adminInfo){el('adminRanking').textContent='Live-Regie aktiv. Für vollständige Teilnehmerantworten nutze den Ergebnis-Modus.';}if(el('adminFeedback'))el('adminFeedback').textContent=String(state.feedbackCount);}
+ if(role==='admin'){refreshAdminVideoControls();if(el('adminStatus'))el('adminStatus').textContent='Status: '+state.phase.toUpperCase()+' · Filmzeit: '+secText(state.time)+' · '+state.participants+' Teilnehmende · '+(state.video.type==='none'?'kein Film':state.video.type);if(el('adminParticipants'))el('adminParticipants').textContent=state.participants+' Teilnehmende';if(el('adminTime'))el('adminTime').textContent=secText(state.time);if(el('adminRanking')&&adminInfo){el('adminRanking').textContent='Live-Regie aktiv. Für vollständige Teilnehmerantworten nutze den Ergebnis-Modus.';}if(el('adminFeedback'))el('adminFeedback').textContent=String(state.feedbackCount);}
  }catch(e){const x=el('adminStatus');if(x)x.textContent='Verbindung unterbrochen: '+e.message;}
 }
 window.addEventListener('hashchange',router);
