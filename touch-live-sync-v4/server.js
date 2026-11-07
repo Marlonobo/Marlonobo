@@ -265,6 +265,18 @@ async function handler(req,res){
  const z=ZOOM();if(z&&!s.zoomDone&&s.time>=z.open&&s.time<z.open+20){startZoom();return send(res,200,{ok:true,zoom:true});}
  s.playing=!!b.playing;if(b.ended===true){s.phase='results';s.resultsAt=Date.now();s.playing=false;s.revision++;await persist();}return send(res,200,{ok:true});
  }
+ // LG remote can start/stop the ORIGINAL welcome loop directly, even without Spotify.
+ if(m==='POST'&&p==='/api/tv/welcome-music'){
+  if(!isTv(req))return unauthorized(res);
+  const body=await read(req,2000);
+  if(s.phase!=='welcome')return send(res,409,{error:'Willkommensmusik ist nur auf der Willkommensfolie verfügbar.'});
+  if(typeof body.on!=='boolean')return send(res,400,{error:'Bitte on=true oder on=false angeben.'});
+  if(!s.welcomeMusic||typeof s.welcomeMusic!=='object')s.welcomeMusic={url:'',id:'',type:'',on:false};
+  s.welcomeMusic.on=body.on;
+  s.revision++;
+  await persist();
+  return send(res,200,{ok:true,on:s.welcomeMusic.on});
+ }
  if(m==='POST'&&(p==='/api/admin'||p==='/api/remote')){
  if(p==='/api/admin'?!isAdmin(req):!isCohost(req))return unauthorized(res);
  const b=await read(req),cmd=b.cmd;
