@@ -395,3 +395,62 @@ body:has(.phoneRemote){background:#071724}
  #tvApp .tvRemoteBar{max-width:calc(100vw - 16px);padding:8px;gap:6px}
  #tvApp .tvRemoteBar #tvFullscreen{min-width:0;flex:1 1 130px}
 }
+
+
+/* Spotify playlist & login: native compact official Spotify player, optional account link */
+.welcomeMusicAdmin{background:linear-gradient(148deg,#0b2935,#081f2e);border:1px solid #356e6c}
+.welcomeMusicAdmin h2{margin-bottom:7px}
+.welcomeMusicAdmin>p.small{line-height:1.55}
+.spotifyAccountPanel{margin:19px 0 16px;background:#0b1720;border:1px solid #355c59;border-radius:16px;padding:clamp(12px,2vw,17px);color:#e8fbf6}
+.spotifyAccountHeader{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+.spotifyAccountHeader strong{font-size:17px;letter-spacing:-.01em}
+.spotifyAccountHeader p{font-size:12px;line-height:1.5;color:#b6d3d0;margin:6px 0}
+.spotifyAccountChip{background:#163c32;border:1px solid #397c61;color:#a4f7cf;font-size:11px;font-weight:800;padding:6px 10px;border-radius:100px;white-space:nowrap}
+.spotifyAccountSetup{padding:11px 0 5px}
+.spotifyAccountSetup p.small{font-size:12px;line-height:1.55;color:#c6d8d5}
+.spotifyAccountSetup label{display:block;font-size:12px;font-weight:750;margin:12px 0 6px}
+.spotifyAccountSetup input{width:100%;background:#0c2530;color:#e9fffa;border:1px solid #53837d;border-radius:10px;min-height:45px;max-width:100%}
+.spotifyAccountSetup code{color:#aaf2e1;overflow-wrap:anywhere;word-break:break-word;font-size:11px}
+.spotifyAccountSetup button{margin:7px 0;min-height:44px}
+.spotifyAccountSetup a{color:#a5ffe8}
+.spotifyAccountStatus{font-size:12px;line-height:1.55;background:#09242d;border-left:3px solid #55c4ac;border-radius:6px;padding:9px 12px;color:#ccf5e8;margin-top:10px}
+.spotifyAccountStatus.error{border-color:#e5a3a0;color:#ffe3de;background:#312027}
+.spotifyAccountTools{display:flex;flex-wrap:wrap;gap:8px;margin:13px 0 17px}
+.spotifyAccountTools button{padding:9px 12px;min-height:42px;font-size:13px}
+.spotifyConnectControl{border:1px solid #375d60;border-radius:12px;background:#092530;padding:11px;margin:12px 0}
+.spotifyConnectControl>label{font-size:12px;font-weight:800;display:block;color:#c7f0e3;margin-bottom:7px}
+.spotifyConnectControl select{width:100%;min-height:42px;background:#0c3240;color:#fff;border:1px solid #4f8b8b;border-radius:9px;margin-bottom:11px}
+.spotifyConnectButtons{display:flex;gap:6px;flex-wrap:wrap}
+.spotifyConnectButtons button{min-height:44px;border-radius:9px;min-width:43px}
+.spotifyConnectButtons .primary{flex:1 1 180px}
+.spotifyMyPlaylists{display:grid;gap:7px;max-height:348px;overflow:auto;overscroll-behavior:contain}
+.spotifyPlaylistItem{display:flex;align-items:center;gap:10px;border-radius:10px;background:#122c32;padding:7px;min-width:0;border:1px solid #2b4a4b}
+.spotifyPlaylistItem img,.spotifyPlaylistFaux{width:48px;height:48px;object-fit:cover;flex:0 0 48px;border-radius:7px;background:#254d45}
+.spotifyPlaylistFaux{display:grid;place-items:center;font-size:25px}
+.spotifyPlaylistMeta{flex:1 1 auto;min-width:0;overflow:hidden}
+.spotifyPlaylistMeta b{font-size:13px;font-weight:800;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.spotifyPlaylistMeta small{font-size:11px;color:#9cbab5;display:block;margin-top:3px}
+.spotifyPlaylistButtons{display:flex;flex-wrap:wrap;gap:5px;flex:0 0 auto}
+.spotifyPlaylistButtons button{font-size:11px;font-weight:750;min-height:36px;line-height:1.2;padding:6px 8px;border-radius:8px}
+.spotifyWelcomeControls{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0 11px}
+.spotifyWelcomeControls button,.spotifyWelcomeControls .btn{min-height:43px;display:inline-flex;align-items:center;justify-content:center;padding:9px 12px;font-size:12px;border-radius:10px}
+.spotifyPreviewControls{display:flex;align-items:center;flex-wrap:wrap;justify-content:space-between;gap:10px;padding:9px 0}
+.spotifyPreviewControls button{background:transparent;border:1px solid #45736a;border-radius:9px;font-size:13px;min-height:39px;padding:7px 13px}
+.spotifyPreviewControls a{font-size:12px;color:#9ff0dd}
+.spotifyPreviewControls a[hidden]{display:none!important}
+.spotifyAdminEmbed[hidden]{display:none!important}
+.spotifyAdminEmbed{max-width:520px;margin:10px auto 15px}
+.spotifyAdminEmbed iframe{width:100%;max-width:100%;display:block;border:0;border-radius:12px;background:#112e30}
+/* Tiny and only optional on LG TV. The extra label/intro panel is gone. */
+#tvApp .tvSpotifyDock{width:min(310px,calc(100vw - 24px));right:16px;bottom:16px;border-radius:12px;padding:5px;background:#111e21;border:1px solid #3d6a64;box-shadow:0 8px 22px #0006;backdrop-filter:none}
+#tvApp .tvSpotifySlot{min-height:152px;height:152px}
+#tvApp .spotifyLabel,#tvApp .spotifyNote{display:none!important}
+@media(max-width:640px){
+ .spotifyAccountHeader{align-items:flex-start;flex-direction:column}
+ .spotifyPlaylistItem{gap:6px}
+ .spotifyPlaylistItem img,.spotifyPlaylistFaux{width:40px;height:40px;flex-basis:40px}
+ .spotifyPlaylistButtons{flex-direction:column}
+ .spotifyPlaylistButtons button{min-height:31px}
+ .spotifyWelcomeControls button,.spotifyWelcomeControls .btn{flex:1 1 100%}
+ #tvApp .tvSpotifyDock{right:10px;bottom:8px;width:min(290px,calc(100vw - 20px))}
+}
