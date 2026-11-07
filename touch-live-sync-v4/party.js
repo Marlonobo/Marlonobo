@@ -64,7 +64,7 @@ video.addEventListener('error',()=>{
  cloudFallback=true;const frame=$('partyDrivePreview');if(frame){frame.src=state.video.previewUrl||state.video.shareUrl;frame.hidden=false;}
  updateScene();showError('Google Drive öffnet die Vorschau. Sie kann nicht automatisch zur Quiz-Zeit synchronisiert werden; dafür einen direkten MP4-Link oder YouTube nutzen.');
 });
-let errorTimer=null,pollInFlight=false,tickInFlight=false;
+let errorTimer=null,pollInFlight=false,tickInFlight=false,rejoinBusy=false,lastRejoinAt=0;
 function showError(msg){const e=$('partyError');e.hidden=false;e.textContent=msg;clearTimeout(errorTimer);errorTimer=setTimeout(()=>e.hidden=true,10500);}
 async function api(path,body,authenticated=false){
  const headers={'Content-Type':'application/json'};
@@ -290,6 +290,15 @@ async function poll(){
  try{
   const path='/api/state'+(participantId?'?id='+encodeURIComponent(participantId):'');
   state=await api(path);
+  // Rejoin only when the server has forgotten this browser after a restart.
+  if(participantId&&participantName&&!state.player&&!rejoinBusy&&Date.now()-lastRejoinAt>12000){
+   rejoinBusy=true;lastRejoinAt=Date.now();
+   try{
+    const joined=await api('/api/join',{id:participantId,name:participantName,role:'student'});
+    if(joined?.id===participantId){state=await api('/api/state?id='+encodeURIComponent(participantId));quizSignature='';}
+   }catch(e){showError('Quiz-Anmeldung wird erneut verbunden: '+e.message);}
+   finally{rejoinBusy=false;}
+  }
   const p=$('partyStatus');p.textContent=({'welcome':'Wartet auf Start','film':'Film läuft','demo':'Testquiz','zoom':'Zoom-Spiel','gesture':'Gesten-Spiel','results':'Siegerehrung','handout':'Handout','end':'Abschluss'})[state.phase]||state.phase;
   $('partyTime').textContent=sec(state.time)+' / 51:47 · '+state.participants+' angemeldet';
   const titleNode=$('partyFilmTitle');if(titleNode)titleNode.textContent='🎬 '+(state.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation');
