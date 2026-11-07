@@ -9,10 +9,11 @@ function mount(container,options={}){
  const onFind=typeof options.onFind==='function'?options.onFind:async()=>({ok:true,points:240});
  const hints=['Tipp 1: Ein Tier versteckt sich nicht auf dem Boden.','Tipp 2: Suche in der Nähe der Berghütte.','Tipp 3: Schau im kleinen Dachfenster nach.'];
  let z=1,pan={x:0,y:0},pointers=new Map(),dragging=false,pinch=null,down=null,found=!!options.found,disabled=!!options.disabled,
- remaining=typeof options.remaining==='number'?options.remaining:75,trying=false,hintIndex=-1,misses=0,soundOn=true,audioCtx=null;
- container.innerHTML='<div class="egg-game"><div class="egg-topline"><div><span class="egg-kicker">🎮 MINI-GAME · KAPITEL 4 · MULTITOUCH</span><h3>Mission: Finde das Easter Egg!</h3><p>Eine winzige Katze ist im Wimmelbild versteckt. Zoome hinein und tippe genau auf ihr Versteck.</p></div><div class="egg-game-clock"><span>ZEIT</span><strong data-egg-time>'+remaining+' s</strong></div></div><div class="egg-stage" data-egg-stage><svg class="egg-svg" data-egg-svg viewBox="0 0 1000 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Zoombares Wimmelbild mit Bergen, einem See und einer Hütte. Eine Katze ist versteckt." tabindex="0"><g data-egg-world><image href="/easter-scene.svg" x="0" y="0" width="1000" height="620"/></g></svg><div class="egg-location">⛰️ BERGTAL · GEHEIMNISSTUFE 01</div><div class="egg-zoom-indicator" data-egg-zoom>100 %</div><div class="egg-tap" data-egg-tap aria-live="polite">🔎 Erst zoomen. Dann die Katze antippen!</div><div class="egg-celebration" data-egg-celebration hidden><div class="egg-confetti" aria-hidden="true"></div><span class="egg-star">🏆</span><h4>EASTER EGG GEFUNDEN!</h4><p>Du hast die Katze entdeckt. Mission geschafft!</p><strong data-egg-points></strong></div></div><div class="egg-tools">'+button('−','minus','Verkleinern')+button('＋','plus','Vergrößern')+button('⟲','reset','Bild zurücksetzen')+button('💡 Hinweis','hint','Einen Tipp anzeigen')+button('🔊 Ton','sound','Spielton ein- oder ausschalten')+'<span class="egg-tools-help">iPad: zwei Finger zum Zoomen · PC: Mausrad · ein Finger: verschieben</span></div><div class="egg-hint" data-egg-hint aria-live="polite">⭐ Je früher du sie findest, desto mehr Bonuspunkte bekommst du.</div></div>';
+ remaining=typeof options.remaining==='number'?options.remaining:75,trying=false,hintIndex=-1,misses=0,soundOn=true,audioCtx=null,hasPanned=false,hasZoomed=false;
+ container.innerHTML='<div class="egg-game"><div class="egg-topline"><div><span class="egg-kicker">KAPITEL 4 · MULTITOUCH IN DER PRAXIS</span><h3>Mission: Entdecke den versteckten Touchpunkt!</h3><p>Ein verstecktes Easter Egg wartet auf diesem virtuellen Touchscreen. Nutze die Gesten aus der Doku: zoomen, verschieben und antippen.</p></div><div class="egg-game-clock"><span>ZEIT</span><strong data-egg-time>'+remaining+' s</strong></div></div><div class="egg-lesson"><span data-step="zoom">① <b>ZOOMEN</b><small>Zwei Finger auseinanderziehen</small></span><span data-step="pan">② <b>VERSCHIEBEN</b><small>Bild mit einem Finger bewegen</small></span><span data-step="tap">③ <b>ANTIPPEN</b><small>Easter Egg direkt auswählen</small></span></div><div class="egg-hardware"><div class="egg-hardware-top"><span>TOUCH LIVE · MULTITOUCH-LAB</span><span class="egg-hardware-camera" aria-hidden="true"></span></div><div class="egg-stage" data-egg-stage><svg class="egg-svg" data-egg-svg viewBox="0 0 1000 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Zoombares Wimmelbild mit Bergen, einem See und einer Hütte. Eine Katze ist versteckt." tabindex="0"><g data-egg-world><image href="/easter-scene.svg" x="0" y="0" width="1000" height="620"/></g></svg><div class="egg-location">🔎 SUCHBILD · TOUCHSCREEN 01</div><div class="egg-zoom-indicator" data-egg-zoom>100 %</div><div class="egg-tap" data-egg-tap aria-live="polite">👆 Vergrößere das Bild und finde das versteckte Detail!</div><div class="egg-celebration" data-egg-celebration hidden><div class="egg-confetti" aria-hidden="true"></div><span class="egg-star">🏆</span><h4>EASTER EGG GEFUNDEN!</h4><p>Super! Du hast den kleinen Touchpunkt gefunden!</p><strong data-egg-points></strong><div class="egg-learned">Das war echte Touchscreen-Bedienung: <b>Pinch-to-Zoom</b> zum Vergrößern, <b>Pan</b> zum Verschieben und <b>Tap</b> zum Auswählen.</div></div></div></div><div class="egg-tools">'+button('−','minus','Verkleinern')+button('＋','plus','Vergrößern')+button('⟲','reset','Bild zurücksetzen')+button('💡 Hinweis','hint','Einen Tipp anzeigen')+button('🔊 Ton','sound','Spielton ein- oder ausschalten')+'<span class="egg-tools-help">iPad: Pinch-to-Zoom & Pan · PC: Mausrad & Ziehen</span></div><div class="egg-hint" data-egg-hint aria-live="polite">🎓 So lernst du genau die Gesten, die in Kapitel 4 erklärt werden. Schnelle Funde bringen Bonuspunkte.</div></div>';
  const game=container.querySelector('.egg-game'),svg=container.querySelector('[data-egg-svg]'),world=container.querySelector('[data-egg-world]');
  const readout=container.querySelector('[data-egg-tap]'),counter=container.querySelector('[data-egg-zoom]'),clock=container.querySelector('[data-egg-time]');
+ const lessonZoom=container.querySelector('[data-step="zoom"]'),lessonPan=container.querySelector('[data-step="pan"]'),lessonTap=container.querySelector('[data-step="tap"]');
  const hint=container.querySelector('[data-egg-hint]'),celebration=container.querySelector('[data-egg-celebration]'),pointsNode=container.querySelector('[data-egg-points]');
  const unit=client=>{const m=svg.getScreenCTM();if(!m)return{x:VIEW.cx,y:VIEW.cy};return new DOMPoint(client.x,client.y).matrixTransform(m.inverse());};
  function worldPt(client){const m=world.getScreenCTM();if(!m)return{x:VIEW.cx,y:VIEW.cy};return new DOMPoint(client.x,client.y).matrixTransform(m.inverse());}
@@ -27,7 +28,7 @@ function mount(container,options={}){
  }
  function message(txt,bad=false){readout.textContent=txt;readout.classList.toggle('egg-miss',bad);if(bad){game.classList.remove('egg-shake');void game.offsetWidth;game.classList.add('egg-shake');}}
  function constrain(){const maxX=(z-1)*VIEW.w/2+80,maxY=(z-1)*VIEW.h/2+80;pan.x=clamp(pan.x,-maxX,maxX);pan.y=clamp(pan.y,-maxY,maxY);}
- function draw(){constrain();world.setAttribute('transform','translate('+pan.x+' '+pan.y+') translate('+VIEW.cx+' '+VIEW.cy+') scale('+z+') translate(-'+VIEW.cx+' -'+VIEW.cy+')');counter.textContent=Math.round(z*100)+' %';game.classList.toggle('egg-zoomed',z>=2.25);}
+ function draw(){if(z>=2.25&&!hasZoomed){hasZoomed=true;lessonZoom.classList.add('egg-step-done');}constrain();world.setAttribute('transform','translate('+pan.x+' '+pan.y+') translate('+VIEW.cx+' '+VIEW.cy+') scale('+z+') translate(-'+VIEW.cx+' -'+VIEW.cy+')');counter.textContent=Math.round(z*100)+' %';game.classList.toggle('egg-zoomed',z>=2.25);}
  function zoomAt(value,anchor){
   const next=clamp(value,1,7),old=z;if(Math.abs(next-old)<.0001)return;
   const a=anchor||{x:VIEW.cx,y:VIEW.cy},f=next/old;
@@ -37,11 +38,11 @@ function mount(container,options={}){
   if(z>=2.25&&!found&&!disabled)message('🎯 Jetzt such das kleine Dachfenster und tippe auf die Katze.');
  }
  function finish(result){
-  if(!found)playSound('win');found=true;disabled=true;game.classList.add('egg-found');
+  if(!found)playSound('win');lessonZoom.classList.add('egg-step-done');lessonTap.classList.add('egg-step-done');found=true;disabled=true;game.classList.add('egg-found');
   celebration.hidden=false;
   pointsNode.textContent=(result?.points??240)+' PUNKTE';
   message('🏆 Super! Easter Egg gefunden!');
-  hint.textContent='Geschafft! Jetzt kannst du wieder auf den Film schauen.';
+  hint.textContent='Geschafft! Damit hast du gezeigt, wie Multitouch und das Antippen eines kleinen Ziels funktionieren. Gleich geht es mit der Doku weiter.';
   try{if(global.navigator?.vibrate)global.navigator.vibrate([70,70,120]);}catch{}
  }
  async function tryFind(e){
@@ -79,7 +80,7 @@ function mount(container,options={}){
   if(down&&Math.hypot(e.clientX-down.x,e.clientY-down.y)>9)dragging=true;
   if(pointers.size===1){
    const old=unit(prev),now=unit({x:e.clientX,y:e.clientY});
-   pan.x+=now.x-old.x;pan.y+=now.y-old.y;draw();
+   pan.x+=now.x-old.x;pan.y+=now.y-old.y;if(!hasPanned&&Math.hypot(pan.x,pan.y)>18){hasPanned=true;lessonPan.classList.add('egg-step-done');}draw();
   }else if(pointers.size>=2){
    const vals=[...pointers.values()],a=vals[0],b=vals[1],nowDist=Math.hypot(b.x-a.x,b.y-a.y)||1,nowMid={x:(a.x+b.x)/2,y:(a.y+b.y)/2};
    if(pinch){zoomAt(z*nowDist/pinch.distance,unit(pinch.center));const oldScene=unit(oldMid||pinch.center),newScene=unit(nowMid);pan.x+=newScene.x-oldScene.x;pan.y+=newScene.y-oldScene.y;draw();}
