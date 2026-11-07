@@ -454,3 +454,20 @@ body:has(.phoneRemote){background:#071724}
  .spotifyWelcomeControls button,.spotifyWelcomeControls .btn{flex:1 1 100%}
  #tvApp .tvSpotifyDock{right:10px;bottom:8px;width:min(290px,calc(100vw - 20px))}
 }
+
+
+/* Spotify Connect: search, repeat playlist, and LG/PC device transfer */
+.spotifySearchPanel{margin:16px 0;border:1px solid #3b665f;background:#0a2630;border-radius:12px;padding:14px}
+.spotifySearchPanel>label{display:block;font-weight:800;font-size:13px;color:#baf7e7;margin-bottom:9px}
+.spotifySearchRow{display:flex;gap:8px;margin-bottom:10px}
+.spotifySearchRow input{flex:1 1 180px;min-width:0;min-height:43px;border-radius:9px;background:#0d3440;border:1px solid #548e8a;color:#fff}
+.spotifySearchRow button{min-height:43px;padding:8px 14px;border-radius:9px}
+.spotifySearchPanel .spotifyMyPlaylists{max-height:320px}
+.spotifyRepeatControls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:14px;padding:12px 0;border-top:1px solid #376260}
+.spotifyRepeatControls label{font-size:12px;font-weight:750;flex:1 1 100%}
+.spotifyRepeatControls select{margin:0;flex:1 1 170px}
+.spotifyRepeatControls button{min-height:42px;flex:1 1 140px}
+.spotifyNowPlaying{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:12px;padding:10px;border:1px solid #477a73;border-radius:10px;background:#10303b;font-size:12px;line-height:1.5;color:#b9e8dd}
+.spotifyNowPlaying button{flex:0 0 auto;min-height:36px}
+#spotifyTransfer{min-height:43px;margin:4px 0 12px}
+@media(max-width:520px){.spotifySearchRow{flex-wrap:wrap}.spotifySearchRow button{flex:1 1 100%}.spotifyNowPlaying{flex-wrap:wrap}}
