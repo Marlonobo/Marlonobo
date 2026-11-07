@@ -63,7 +63,7 @@ function publicState(id){
  const rank=[...users.entries()].map(([uid,x])=>({id:uid,name:x.name,role:x.role,score:x.score,answered:Object.keys(x.answers).length})).sort((x,y)=>y.score-x.score||x.name.localeCompare(y.name,'de')).map((x,i)=>({name:x.name,role:x.role,score:x.score,rank:i+1,answered:x.answered}));
  const normal=Q.filter(x=>x.type!=='zoom');
  let player=null;
- if(u){const jk=u.jokers||{};player={id,role:u.role,name:u.name,score:final?u.score:null,choice:q?u.answers[q.id]??null:null,zoomFound:!!(ZOOM()&&Object.hasOwn(u.answers,ZOOM().id)),zoomPoints:u.zoomPoints||0,jokers:{fifty:!!jk.fifty,hint:!!jk.hint}};
+ if(u){const jk=u.jokers||{};player={id,role:u.role,name:u.name,score:final?u.score:null,choice:q?u.answers[q.id]??null:null,zoomFound:!!(ZOOM()&&Object.hasOwn(u.answers,ZOOM().id)),zoomPoints:final?(u.zoomPoints||0):null,jokers:{fifty:!!jk.fifty,hint:!!jk.hint}};
   if(q&&jk.fifty===q.id)player.hide=[0,1,2,3].filter(i=>i!==q.correct&&i!==q.fifty);
   if(q&&jk.hint===q.id)player.hint=q.hint||'';}
  const z=ZOOM();let zoomResult=null;
@@ -160,10 +160,10 @@ async function handler(req,res){
  if(Object.hasOwn(x.answers,z.id))return send(res,409,{error:'Easter Egg wurde bereits gefunden.'});
  const px=Number(b.x),py=Number(b.y),zoom=Number(b.zoom);
  if(!Number.isFinite(px)||!Number.isFinite(py)||!Number.isFinite(zoom)||px<0||px>1000||py<0||py>620||zoom<1.7||zoom>7.05)return send(res,400,{error:'Zoome ins Bild und tippe das versteckte Objekt an.'});
- if(Math.abs(px-746)>27||Math.abs(py-332)>25)return send(res,400,{error:'Noch nicht richtig – such weiter! Es gibt keinen Punktabzug.'});
+ if(Math.abs(px-746)>27||Math.abs(py-332)>25)return send(res,400,{error:'FALSCH – versuch es nochmal! Kein Punktabzug.'});
  const bonus=Math.min(130,Math.max(0,Math.round(a.remaining/(z.duration||30)*130/10)*10)),points=170+bonus;
  x.answers[z.id]=z.correct;x.zoomPoints=points;x.score+=points;saveUsers();
- return send(res,200,{ok:true,correct:true,message:'RICHTIG! Easter Egg gefunden!',points,bonus,foundCount:[...users.values()].filter(u=>Object.hasOwn(u.answers,z.id)).length});
+ return send(res,200,{ok:true,correct:true,message:'RICHTIG! Easter Egg gefunden! Punkte werden erst bei den Ergebnissen angezeigt.'});
  }
  if(m==='POST'&&p==='/api/answer'){
  const b=await read(req,1000),x=users.get(String(b.id||'')),a=active();
