@@ -35,7 +35,7 @@ function podium(){
  const podiumCard=(pos)=>{
  const p=people[pos-1];return '<div class="partyPodi"><div style="font-size:27px">'+(pos===1?'👑':pos===2?'🥈':'🥉')+'</div><strong>'+(p?safe(p.name):'Noch offen')+'</strong><small>'+(p?p.score+' Punkte':'')+'</small><div class="rise">'+pos+'</div></div>';
  };
- return '<div class="partySceneInner"><span class="eyebrow">LIVE-SIEGEREHRUNG</span><h2>Die besten drei!</h2><div class="partyPodium">'+podiumCard(2)+podiumCard(1)+podiumCard(3)+'</div></div>';
+ return '<div class="partySceneInner partyWinners"><span class="eyebrow">ABSCHLUSSQUIZ · SIEGEREHRUNG</span><h2>Unsere Top 3!</h2><div class="partyCountdown" aria-hidden="true"><span>3</span><span>2</span><span>1</span></div><div class="partyPodium">'+podiumCard(2)+podiumCard(1)+podiumCard(3)+'</div><p class="partyWinnersFoot">Herzlichen Glückwunsch! 🏆</p></div>';
 }
 function updateScene(){
  if(!state)return;
@@ -187,6 +187,7 @@ function connectButtons(){
    await hostCommand(yt?'videoYoutube':'videoLink',{url:link});
   };
  }
+ const copyFriend=$('partyCopyFriend');if(copyFriend)copyFriend.onclick=()=>{const url=location.origin+'/watch';if(navigator.clipboard?.writeText)navigator.clipboard.writeText(url).then(()=>{copyFriend.textContent='✓ Zuschauerlink kopiert';}).catch(()=>prompt('Diesen Link verschicken:',url));else prompt('Diesen Link verschicken:',url);};
  $('partyJoinForm').onsubmit=async e=>{
   e.preventDefault();
   const name=$('partyName').value.trim();if(!name)return;
@@ -206,9 +207,9 @@ async function hostCommand(cmd,body={}){
 }
 function connectedUI(){
  $('hostUnlock').hidden=true;$('partyMain').hidden=false;
- $('hostPanel').hidden=!host;$('partyRole').textContent=host?'Moderatorin · Steuerung':'Zuschauer · nur mitspielen';
- $('partyTitle').innerHTML=host?'Du führst <em>Regie.</em>':'Gemeinsam <em>schauen.</em>';
- $('partySub').textContent=host?'Du spielst die Doku hier ab und steuerst gleichzeitig das Quiz für beide Geräte.':'Du siehst denselben Film, beantwortest Fragen und kannst beim Gesten-Spiel mitmachen. Du kannst die Sendung nicht steuern.';
+ $('hostPanel').hidden=!host;$('partyRole').textContent=host?'Deine Regie · Film & Quiz':'Deine Freundin · Zuschauen & Quiz';
+ $('partyTitle').innerHTML=host?'Du steuerst <em>die Doku.</em>':'Ihr schaut <em>zusammen.</em>';
+ $('partySub').textContent=host?'Du startest den Film, pausierst und öffnest Quiz oder Gesten-Spiel. Deine Freundin sieht die gleiche Filmstelle. Du kannst selbst beim Quiz mitmachen.':'Der Film läuft synchron zum Gerät deines Freundes. Du kannst Fragen beantworten und das Gesten-Spiel nutzen, aber die Sendung nicht steuern.';
  if(participantName&&participantId){$('partyJoinForm').hidden=true;$('participantTitle').textContent='Hallo, '+participantName+'!';$('joinStatus').textContent='Du bist beim gemeinsamen Quiz angemeldet.';}else $('partyJoinForm').hidden=false;
  connectButtons();poll();
 }
