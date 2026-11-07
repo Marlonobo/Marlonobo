@@ -62,7 +62,7 @@ async function hydrateCloudMedia(){
   if(settings.remoteVideo&&typeof settings.remoteVideo==='object'){
    const rv=settings.remoteVideo;
    if(rv.type==='youtube'&&/^[A-Za-z0-9_-]{11}$/.test(rv.id||''))s.remoteVideo={type:'youtube',id:rv.id,url:'https://www.youtube.com/watch?v='+rv.id};
-   else if(rv.type==='url'&&typeof rv.url==='string'&&rv.url.startsWith('https://'))s.remoteVideo={type:'url',url:rv.url,id:null};
+   else if(rv.type==='url'&&typeof rv.url==='string'&&(rv.url.startsWith('https://')||(rv.url==='/api/storage/video'&&rv.storage==='s3'&&!!manifest.video)))s.remoteVideo={type:'url',url:rv.url,id:null,...(rv.storage==='s3'?{storage:'s3'}:{})};
   }
   if(manifest.captions)s.cloudCaptions=true;
   const title=settings.videoTitle||manifest.videoTitle;
@@ -205,7 +205,7 @@ async function handler(req,res){
  if(m==='GET'&&p==='/api/state')return send(res,200,publicState(u.searchParams.get('id')));
  if(m==='GET'&&p==='/api/version')return send(res,200,{version:BUILD_VERSION});
  if(m==='GET'&&p==='/api/health')return send(res,200,{ok:true,questionCount:Q.length,now:Date.now(),cloudStorageConfigured:S3.enabled});
- if(m==='GET'&&p==='/api/storage/status')return send(res,200,{configured:S3.enabled,durable:S3.enabled,settingsReady:!!cloudManifest?.settings,videoReady:!!cloudManifest?.video,subtitlesReady:!!cloudManifest?.captions,maximumBytes:10*1024**3,partSize:16*1024**2});
+ if(m==='GET'&&p==='/api/storage/status')return send(res,200,{configured:S3.enabled,durable:S3.enabled,settingsReady:!!cloudManifest?.settings,videoReady:!!cloudManifest?.video,subtitlesReady:!!cloudManifest?.captions,remoteWatchReady:!!(s.remoteVideo&&s.remoteVideo.storage==='s3'&&cloudManifest?.video),maximumBytes:10*1024**3,partSize:16*1024**2});
  if((m==='GET'||m==='HEAD')&&p==='/api/storage/video'){
   if(!S3.enabled)return send(res,503,{error:'Cloud-Speicher nicht eingerichtet.'});
   res.writeHead(302,{'Location':S3.videoUrl(),'Cache-Control':'private, no-store','Referrer-Policy':'no-referrer'});return res.end();
@@ -237,8 +237,15 @@ async function handler(req,res){
   let config={};try{config=await S3.manifest()||{};}catch(e){console.error(e.message);}
   config.video={name:String(b.name||'touchscreen.mp4').slice(0,120),size,uploadedAt:new Date().toISOString()};
   await S3.putManifest(config);cloudManifest=config;
-  s.video={type:'url',url:'/api/storage/video',id:null,storage:'s3'};await saveDurableMediaSettings();s.revision++;await persist();
-  return send(res,200,{ok:true,videoReady:true,durable:true});
+  // Keep the Windows HDMI player unchanged when uploading a copy for distant viewers.
+   // In every other mode the uploaded MP4 becomes the primary shared film.
+   if(s.video?.type==='local'){
+    s.remoteVideo={type:'url',url:'/api/storage/video',id:null,storage:'s3'};
+   }else{
+    s.video={type:'url',url:'/api/storage/video',id:null,storage:'s3'};
+   }
+   await saveDurableMediaSettings();s.revision++;await persist();
+  return send(res,200,{ok:true,videoReady:true,durable:true,remoteOnly:s.video?.type==='local',videoUrl:'/api/storage/video'});
  }
 
  if(m==='GET'&&p==='/api/admin-info'){if(!isAdmin(req))return unauthorized(res);return send(res,200,{tvKey:TV,cohostKey:COHOST,questions:Q.map(q=>({id:q.id,type:q.type||'quiz',open:q.open,close:q.close,duration:q.duration,q:q.q,a:q.a,correct:q.correct,chapter:q.chapter,hint:q.hint,fifty:q.fifty})),ranking:[...users.values()].map(x=>({name:x.name,role:x.role,score:x.score,answers:x.answers,jokers:x.jokers||{}})).sort((a,b)=>b.score-a.score),feedback});}
