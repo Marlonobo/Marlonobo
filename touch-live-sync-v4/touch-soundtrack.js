@@ -81,7 +81,7 @@
  }
  function schedule(){
   if(!ctx||!master||mode==='off'||ctx.state!=='running')return;
-  const stepDur=60/(mode==='results'?112:72);
+  const stepDur=60/(mode==='results'?112:mode==='welcome'?84:72);
   const limit=ctx.currentTime+.28;
   let guard=0;
   while(nextAt<limit&&guard++<9){scheduleBeat(nextAt,step++);nextAt+=stepDur;}
