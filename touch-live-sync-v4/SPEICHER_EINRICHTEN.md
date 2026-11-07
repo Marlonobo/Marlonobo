@@ -1,54 +1,74 @@
-# TOUCH LIVE – einmaliger Upload für alle Geräte
+# TOUCH LIVE – MP4 direkt aus deinen Dateien hochladen
 
-Die neue TOUCH-LIVE-Version ist online. **Damit ein 3,03-GB-Film dauerhaft nur ein einziges Mal hochgeladen werden muss**, muss der Betreiber einen S3-kompatiblen Objektspeicher verbinden. Der bisherige Render-Webserver besitzt ohne zusätzliche Konfiguration **keinen dauerhaften Videospeicher**.
+**Bestehende Seite:** https://touch-live-unterricht-2026.onrender.com/#admin
 
-## Einmalige Einrichtung (Beispiel: Cloudflare R2)
+Dein Film (ca. 3,03 GB) wird im Browser in 16-MiB-Blöcken direkt in einen Cloudflare-R2-Bucket hochgeladen. Das Render-Webprojekt verarbeitet nur die Steuerdaten; es empfängt **nicht die 3,03 GB**. Die Video-URL wird nach dem fertigen Upload automatisch in TOUCH LIVE hinterlegt.
 
-1. R2-Bucket erstellen (z. B. `touch-live-doku`).
-2. Nur für diesen Bucket einen S3-Zugang mit Objekt-Lese- und Schreibrechten erzeugen.
-3. In [Render – TOUCH LIVE](https://dashboard.render.com/web/srv-dbn0f7ei0phs73d16p20), unter **Environment**, diese Variablen hinterlegen (Werte niemals ins öffentliche GitHub-Repository schreiben):
+**Wichtig:** Solange bei https://touch-live-unterricht-2026.onrender.com/api/storage/status `"configured":false` steht, kannst du deine MP4 auswählen, aber **nicht hochladen**. Du musst zuerst R2 aktivieren und die Zugangsdaten auf Render hinterlegen. Der Assistent kann diese Zugangsdaten nicht selbst erzeugen, ohne Zugriff auf dein Cloudflare-Konto. Gib Zugangsdaten nicht im Chat und nicht auf GitHub weiter.
 
-```
-S3_ENDPOINT=https://DEINE_ACCOUNT_ID.r2.cloudflarestorage.com
-S3_BUCKET=touch-live-doku
-S3_REGION=auto
-S3_ACCESS_KEY_ID=...aus dem R2-Dashboard...
-S3_SECRET_ACCESS_KEY=...aus dem R2-Dashboard...
-S3_PREFIX=touch-live
-```
+## Einmalige Einrichtung – Cloudflare R2 (Standard)
 
-4. Für Uploads direkt aus dem Browser die folgende **CORS-Konfiguration** in den R2-Bucket einfügen:
+1. Öffne https://dash.cloudflare.com/ → **R2 object storage** → **Create bucket**. Name z. B. `touch-live-doku`. Wähle **Standard** (nicht Infrequent Access).
+2. Unter **R2 → Manage API tokens** einen *Account API token* oder *User API token* mit **Object Read & Write** und Zugriff **nur auf den Bucket** `touch-live-doku` erstellen.
+3. Merke dir den **S3 API Endpoint**, die **Access Key ID** und den **Secret Access Key**. Diese 3 Werte niemals in GitHub eintragen!
+4. Öffne https://dashboard.render.com/web/srv-dbn0f7ei0phs73d16p20 → **Environment** und trage ein:
 
-```json
-[
-  {
-    "AllowedOrigins": [
-      "https://touch-live-unterricht-2026.onrender.com"
-    ],
-    "AllowedMethods": ["GET", "PUT", "HEAD"],
-    "AllowedHeaders": ["*"],
-    "ExposeHeaders": ["ETag"],
-    "MaxAgeSeconds": 3600
-  }
-]
-```
+   ```text
+   S3_ENDPOINT=https://DEINE_ACCOUNT_ID.r2.cloudflarestorage.com
+   S3_BUCKET=touch-live-doku
+   S3_REGION=auto
+   S3_ACCESS_KEY_ID=<aus Cloudflare R2>
+   S3_SECRET_ACCESS_KEY=<aus Cloudflare R2>
+   S3_PREFIX=touch-live
+   ```
 
-5. Nach dem Render-Neustart prüfen: `https://touch-live-unterricht-2026.onrender.com/api/storage/status` muss `"configured":true` melden.
-6. Im Admin-Bereich einmalig MP4 wählen und „Einmalig hochladen“ klicken. Der Browser überträgt 16-MB-Blöcke mit mehreren parallelen Verbindungen. Bei Abbruch dieselbe Datei erneut auswählen und fortsetzen. Das ursprüngliche Browserfenster und der lokale Browser-Speicher dürfen für eine Fortsetzung nicht gelöscht werden.
-7. Nach dem vollständigen Upload wechselt die gemeinsame Quelle zu `/api/storage/video`. Alle Geräte erhalten diese zentrale Datei über einen zeitlich begrenzten, signierten Link; keine erneuten Uploads auf iPad, Fernseher oder bei der Moderatorin erforderlich.
-8. Die .vtt- oder .srt-Untertitel im Adminbereich hochladen; sie werden ebenfalls im Bucket gespeichert. Auf Beamer, Zuschauerbildschirm und Moderatorinnenansicht erscheinen die Untertitel weiß mit Kontur ohne schwarzen Balken. Größe und Position sind im Adminbereich einstellbar.
+   Nach dem Speichern wird der Render-Dienst neu gestartet. Die vorhandene Webadresse bleibt dieselbe.
 
-## Für andere S3-kompatible Anbieter
+5. Öffne in Cloudflare **R2 → dein Bucket → Settings → CORS policy** und füge diese Regel ein:
 
-Entsprechend S3_ENDPOINT, S3_BUCKET, S3_REGION, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY und die Browser-CORS-Freigabe hinterlegen. Der vorhandene Adapter benötigt keine zusätzlichen npm-Pakete.
+   ```json
+   [
+     {
+       "AllowedOrigins": ["https://touch-live-unterricht-2026.onrender.com"],
+       "AllowedMethods": ["GET", "PUT", "HEAD"],
+       "AllowedHeaders": ["*"],
+       "ExposeHeaders": ["ETag", "Content-Length", "Content-Range"],
+       "MaxAgeSeconds": 3600
+     }
+   ]
+   ```
 
-## iPad im Vollbild
+   Wichtig: **ETag** muss bei den PUT-Antworten lesbar sein, sonst kann TOUCH LIVE keine Blöcke bestätigen. Die Origin darf keinen abschließenden Schrägstrich haben. Ein Fehler kann noch kurz nach dem Speichern auftreten, während CORS verteilt wird.
 
-Nach Eingabe des Namens versucht TOUCH LIVE sofort, in den Vollbildmodus zu wechseln. Wenn Safari den Vorgang nicht erlaubt, „⛶ Vollbild öffnen“ auf der Schülerseite drücken. Für einen dauerhaft rahmenlosen Start die Webseite in Safari über „Teilen“ → „Zum Home-Bildschirm“ hinzufügen und dann über dieses Symbol starten. Apples Fullscreen-Einschränkungen sind browser-/geräteabhängig.
+6. Prüfe https://touch-live-unterricht-2026.onrender.com/api/storage/status. Dort muss `configured:true` stehen. Anschließend die Adminseite neu öffnen.
 
-## Wichtige Grenzen
+## Video direkt von deinem PC hochladen
 
-- Die S3-Verbindung ist derzeit **noch nicht konfiguriert**; Code allein kann kein Cloud-Konto oder Zugangsdaten ersetzen.
-- Der Upload einer echten 3,03-GB-Datei wurde mangels bereitgestellter Datei und Cloud-Zugang nicht als End-to-End-Test durchgeführt.
-- Für echte dauerhafte Teilnehmer-Ergebnisse und Live-Daten ist zusätzlich eine Datenbank empfehlenswert; das aktuelle Live-Backend verwaltet einen Teil der Daten auf dem Render-Server.
-- Videowiedergabe bleibt von stabiler Internetverbindung, Videoformat, Smart-TV-Browser und Autoplay-Beschränkungen abhängig.
+1. Öffne die Adminseite und suche **„VIDEO HOCHLADEN · AUS DEINEN DATEIEN“**.
+2. Auf **„MP4-Datei auswählen“** klicken und deine ca. 3,03-GB-Datei auswählen.
+3. Auf **„MP4 hochladen“** klicken. Das Fortschrittsfeld zeigt die bereits bestätigten Blöcke. Lass diesen Browser-Tab geöffnet.
+4. Bricht die Verbindung ab, dieselbe Datei erneut auswählen und erneut auf „MP4 hochladen“ klicken. Das System fragt bereits gespeicherte Blöcke bei R2 ab und setzt fort.
+5. Erst nach der Meldung **„Upload fertig“** kann dein Film remote abgespielt werden.
+
+**Zwei Städte mit HDMI:** Wenn im Admin vorher **„Lokale MP4 / HDMI“** aktiviert wurde, wird die hochgeladene Filmkopie *nur für /watch* gespeichert. Die Wiedergabe auf deinem HDMI-PC bleibt lokal. Falls kein lokaler HDMI-Modus aktiv ist, wird die hochgeladene MP4 die gemeinsame Online-Filmquelle für alle Geräte. Die Quiz-Timer und das Zoom-Spiel bleiben mit der Server-Filmzeit synchronisiert.
+
+**Zusammen schauen:** https://touch-live-unterricht-2026.onrender.com/watch – beide mit Vornamen anmelden. Auf einem Gerät beim Filmstart einmal den Ton freigeben, danach wird zur Quizfrage gescrollt und anschließend zurück zum Film. Alternativ auf Gerät 2 nur das Quiz über https://touch-live-unterricht-2026.onrender.com/join öffnen.
+
+## Kosten und Grenzen
+
+Cloudflare R2 **Standard** hat monatlich 10 GB-Monate Speicher, 1 Million Class-A-Aufrufe und 10 Millionen Class-B-Aufrufe im kostenlosen Kontingent; ausgehender Datentransfer aus R2 ist kostenlos. Ein einmal gespeicherter 3,03-GB-Film liegt innerhalb der Freimenge. **Cloudflare kann ein Abrechnungsprofil verlangen und die Überschreitung des kostenlosen Kontingents kann Kosten verursachen.**
+
+- Keine MP4-Datei im Repo, keine S3-Geheimnisse im Browser und kein Upload per Render-Request.
+- Die Datei ist über die bestehende TOUCH-LIVE-Webseite für Besucher mit Link abrufbar. **Es ist kein persönlicher DRM- oder Zugangsschutz** für die Filmdatei.
+- Für die richtige Synchronisierung muss der Film die Zeitmarken der Doku beibehalten. Falls der exportierte Film einen anderen Schnitt oder eine andere Länge hat, die Quiz-Marker im Adminbereich anpassen.
+- Die Datei sollte MP4 (H.264/AAC) sein, für breite Wiedergabe auf Safari, Chrome und LG-TV.
+- Ohne echte R2-Zugangsdaten und die 3,03-GB-Datei kann die reale Übertragung noch nicht vollständig getestet werden.
+- Auf kostenlosen Render-Instanzen können Sitzungsdaten bei Neustarts verloren gehen. Für dauerhaft gespeicherte Teilnehmerdaten wäre eine eigene Datenbank nötig.
+
+### Technische Details
+
+- Einmaliger multipart-Upload in 16-MiB-Teilen mit 3 gleichzeitigen Verbindungen und automatischen Wiederholungen.
+- Signierte Upload-URLs vom Render-Server; Passwort und API-Schlüssel bleiben dort.
+- Datei in R2 als `touch-live/master-video.mp4`, Stream-URL für die Besucher: `/api/storage/video`.
+- Wiedergabe per HTTPS mit Range-Anfragen, soweit der Browser und R2 dies unterstützen.
+- CORS-Origin: `https://touch-live-unterricht-2026.onrender.com`.
