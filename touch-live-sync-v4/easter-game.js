@@ -9,13 +9,22 @@ function mount(container,options={}){
  const onFind=typeof options.onFind==='function'?options.onFind:async()=>({ok:true,points:240});
  const hints=['Tipp 1: Ein Tier versteckt sich nicht auf dem Boden.','Tipp 2: Suche in der Nähe der Berghütte.','Tipp 3: Schau im kleinen Dachfenster nach.'];
  let z=1,pan={x:0,y:0},pointers=new Map(),dragging=false,pinch=null,down=null,found=!!options.found,disabled=!!options.disabled,
- remaining=typeof options.remaining==='number'?options.remaining:75,trying=false,hintIndex=-1,misses=0;
- container.innerHTML='<div class="egg-game"><div class="egg-topline"><div><span class="egg-kicker">🎮 MINI-GAME · KAPITEL 4 · MULTITOUCH</span><h3>Mission: Finde das Easter Egg!</h3><p>Eine winzige Katze ist im Wimmelbild versteckt. Zoome hinein und tippe genau auf ihr Versteck.</p></div><div class="egg-game-clock"><span>ZEIT</span><strong data-egg-time>'+remaining+' s</strong></div></div><div class="egg-stage" data-egg-stage><svg class="egg-svg" data-egg-svg viewBox="0 0 1000 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Zoombares Wimmelbild mit Bergen, einem See und einer Hütte. Eine Katze ist versteckt." tabindex="0"><g data-egg-world><image href="/easter-scene.svg" x="0" y="0" width="1000" height="620"/></g></svg><div class="egg-location">⛰️ BERGTAL · GEHEIMNISSTUFE 01</div><div class="egg-zoom-indicator" data-egg-zoom>100 %</div><div class="egg-tap" data-egg-tap aria-live="polite">🔎 Erst zoomen. Dann die Katze antippen!</div><div class="egg-celebration" data-egg-celebration hidden><div class="egg-confetti" aria-hidden="true"></div><span class="egg-star">🏆</span><h4>EASTER EGG GEFUNDEN!</h4><p>Du hast die Katze entdeckt. Mission geschafft!</p><strong data-egg-points></strong></div></div><div class="egg-tools">'+button('−','minus','Verkleinern')+button('＋','plus','Vergrößern')+button('⟲','reset','Bild zurücksetzen')+button('💡 Hinweis','hint','Einen Tipp anzeigen')+'<span class="egg-tools-help">iPad: zwei Finger zum Zoomen · PC: Mausrad · ein Finger: verschieben</span></div><div class="egg-hint" data-egg-hint aria-live="polite">⭐ Je früher du sie findest, desto mehr Bonuspunkte bekommst du.</div></div>';
+ remaining=typeof options.remaining==='number'?options.remaining:75,trying=false,hintIndex=-1,misses=0,soundOn=true,audioCtx=null;
+ container.innerHTML='<div class="egg-game"><div class="egg-topline"><div><span class="egg-kicker">🎮 MINI-GAME · KAPITEL 4 · MULTITOUCH</span><h3>Mission: Finde das Easter Egg!</h3><p>Eine winzige Katze ist im Wimmelbild versteckt. Zoome hinein und tippe genau auf ihr Versteck.</p></div><div class="egg-game-clock"><span>ZEIT</span><strong data-egg-time>'+remaining+' s</strong></div></div><div class="egg-stage" data-egg-stage><svg class="egg-svg" data-egg-svg viewBox="0 0 1000 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Zoombares Wimmelbild mit Bergen, einem See und einer Hütte. Eine Katze ist versteckt." tabindex="0"><g data-egg-world><image href="/easter-scene.svg" x="0" y="0" width="1000" height="620"/></g></svg><div class="egg-location">⛰️ BERGTAL · GEHEIMNISSTUFE 01</div><div class="egg-zoom-indicator" data-egg-zoom>100 %</div><div class="egg-tap" data-egg-tap aria-live="polite">🔎 Erst zoomen. Dann die Katze antippen!</div><div class="egg-celebration" data-egg-celebration hidden><div class="egg-confetti" aria-hidden="true"></div><span class="egg-star">🏆</span><h4>EASTER EGG GEFUNDEN!</h4><p>Du hast die Katze entdeckt. Mission geschafft!</p><strong data-egg-points></strong></div></div><div class="egg-tools">'+button('−','minus','Verkleinern')+button('＋','plus','Vergrößern')+button('⟲','reset','Bild zurücksetzen')+button('💡 Hinweis','hint','Einen Tipp anzeigen')+button('🔊 Ton','sound','Spielton ein- oder ausschalten')+'<span class="egg-tools-help">iPad: zwei Finger zum Zoomen · PC: Mausrad · ein Finger: verschieben</span></div><div class="egg-hint" data-egg-hint aria-live="polite">⭐ Je früher du sie findest, desto mehr Bonuspunkte bekommst du.</div></div>';
  const game=container.querySelector('.egg-game'),svg=container.querySelector('[data-egg-svg]'),world=container.querySelector('[data-egg-world]');
  const readout=container.querySelector('[data-egg-tap]'),counter=container.querySelector('[data-egg-zoom]'),clock=container.querySelector('[data-egg-time]');
  const hint=container.querySelector('[data-egg-hint]'),celebration=container.querySelector('[data-egg-celebration]'),pointsNode=container.querySelector('[data-egg-points]');
  const unit=client=>{const m=svg.getScreenCTM();if(!m)return{x:VIEW.cx,y:VIEW.cy};return new DOMPoint(client.x,client.y).matrixTransform(m.inverse());};
  function worldPt(client){const m=world.getScreenCTM();if(!m)return{x:VIEW.cx,y:VIEW.cy};return new DOMPoint(client.x,client.y).matrixTransform(m.inverse());}
+ function playSound(kind){
+  if(!soundOn)return;
+  try{const Ctx=global.AudioContext||global.webkitAudioContext;if(!Ctx)return;if(!audioCtx)audioCtx=new Ctx();if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
+   const notes=kind==='win'?[523,659,784,1047]:kind==='miss'?[270]:[550];
+   notes.forEach((f,i)=>{const osc=audioCtx.createOscillator(),gain=audioCtx.createGain(),t=audioCtx.currentTime+(kind==='win'?i*.12:0),dur=kind==='win'?.27:.12;
+    osc.type=kind==='win'?'triangle':'sine';osc.frequency.setValueAtTime(f,t);osc.connect(gain);gain.connect(audioCtx.destination);
+    gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(kind==='win'?.12:.06,t+.015);gain.gain.exponentialRampToValueAtTime(.0001,t+dur);osc.start(t);osc.stop(t+dur+.015);});
+  }catch{}
+ }
  function message(txt,bad=false){readout.textContent=txt;readout.classList.toggle('egg-miss',bad);if(bad){game.classList.remove('egg-shake');void game.offsetWidth;game.classList.add('egg-shake');}}
  function constrain(){const maxX=(z-1)*VIEW.w/2+80,maxY=(z-1)*VIEW.h/2+80;pan.x=clamp(pan.x,-maxX,maxX);pan.y=clamp(pan.y,-maxY,maxY);}
  function draw(){constrain();world.setAttribute('transform','translate('+pan.x+' '+pan.y+') translate('+VIEW.cx+' '+VIEW.cy+') scale('+z+') translate(-'+VIEW.cx+' -'+VIEW.cy+')');counter.textContent=Math.round(z*100)+' %';game.classList.toggle('egg-zoomed',z>=2.25);}
@@ -28,7 +37,7 @@ function mount(container,options={}){
   if(z>=2.25&&!found&&!disabled)message('🎯 Jetzt such das kleine Dachfenster und tippe auf die Katze.');
  }
  function finish(result){
-  found=true;disabled=true;game.classList.add('egg-found');
+  if(!found)playSound('win');found=true;disabled=true;game.classList.add('egg-found');
   celebration.hidden=false;
   pointsNode.textContent=(result?.points??240)+' PUNKTE';
   message('🏆 Super! Easter Egg gefunden!');
@@ -37,10 +46,10 @@ function mount(container,options={}){
  }
  async function tryFind(e){
   if(disabled||found||trying)return;
-  if(z<2.25){message('🔎 Das ist noch zu weit weg. Zoome mindestens auf 225 %.',true);return;}
+  if(z<2.25){playSound('miss');message('🔎 Das ist noch zu weit weg. Zoome mindestens auf 225 %.',true);return;}
   const pos=worldPt({x:e.clientX,y:e.clientY});
   if(Math.abs(pos.x-VIEW.targetX)>20||Math.abs(pos.y-VIEW.targetY)>19){
-   misses++;
+   misses++;playSound('miss');
    message(misses>2?'🧐 Noch nicht! Probiere das kleine Fenster unter dem Dach.':'Da ist kein Easter Egg. Such weiter!',true);
    return;
   }
@@ -93,10 +102,11 @@ function mount(container,options={}){
   if(e.key==='0'){e.preventDefault();z=1;pan={x:0,y:0};draw();}
  });
  container.querySelectorAll('[data-egg]').forEach(b=>b.addEventListener('click',()=>{
-  if(b.dataset.egg==='hint'){hintIndex=(hintIndex+1)%hints.length;hint.textContent='💡 '+hints[hintIndex];return;}
+  if(b.dataset.egg==='sound'){soundOn=!soundOn;b.textContent=soundOn?'🔊 Ton':'🔇 Stumm';if(soundOn)playSound('tap');return;}
+  if(b.dataset.egg==='hint'){playSound('tap');hintIndex=(hintIndex+1)%hints.length;hint.textContent='💡 '+hints[hintIndex];return;}
   if(disabled||found)return;
-  if(b.dataset.egg==='plus')zoomAt(z*1.5);
-  else if(b.dataset.egg==='minus')zoomAt(z/1.5);
+  if(b.dataset.egg==='plus'){playSound('tap');zoomAt(z*1.5);}
+  else if(b.dataset.egg==='minus'){playSound('tap');zoomAt(z/1.5);}
   else if(b.dataset.egg==='reset'){z=1;pan={x:0,y:0};draw();message('Startklar: Suche mit dem Zoom!');}
  }));
  function update(next={}){
