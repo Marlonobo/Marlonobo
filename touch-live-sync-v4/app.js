@@ -487,13 +487,15 @@ function tvFocusControl(id='tvFullscreen'){
 function tvControlsVisible(show=true){
  const bar=el('tvRemoteBar'),help=el('tvRemoteHelp');if(!bar)return;
  if(tvRemoteAutoHide){clearTimeout(tvRemoteAutoHide);tvRemoteAutoHide=null;}
- bar.classList.toggle('tvRemoteHidden',!show);if(help)help.hidden=!show;
- if(show){
-  // 90 seconds rather than 6–13 seconds. Keep the menu visible while setting up.
-  // It can always be closed manually with "Menü ausblenden".
-  tvRemoteAutoHide=setTimeout(()=>{
-   if(role==='tv'&&state?.phase==='film'&&state?.playing)tvControlsVisible(false);
-  },90000);
+ // Only the welcome screen contains the LG setup bar. During a film, quiz,
+ // paused film or awards the video/presentation stays unobstructed.
+ const welcomeOnly=!state||state.phase==='welcome';
+ const visible=show&&welcomeOnly;
+ bar.classList.toggle('tvRemoteHidden',!visible);
+ if(help)help.hidden=!visible;
+ if(visible){
+  // Welcome setup stays visible until the presenter hides it manually.
+  tvFocusControl('tvFullscreen');
  }
 }
 function tvFullscreenHint(message){
@@ -543,10 +545,13 @@ function tvShowSoundPrompt(){
  if(role!=='tv'||!el('tvPlay'))return;
  tvSoundBlocked=true;
  el('tvPlay').textContent='▶ Ton & Vollbild mit OK freigeben';
- tvControlsVisible(true);
+ if(state?.phase==='welcome')tvControlsVisible(true);
+ const overlay=el('tvFilmUnlock');
+ if(overlay)overlay.hidden=state?.phase!=='film'||!state?.playing?true:false;
 }
 function tvEnablePlayback(){
  try{window.TouchSoundtrack?.activate?.();}catch{}
+ const overlay=el('tvFilmUnlock');if(overlay)overlay.hidden=true;
  // This is always called from a real LG OK / mouse click, so the browser can
  // grant audio and native fullscreen if permitted.
  tvSoundActivated=true;tvSoundBlocked=false;tvAutoplayMuted=false;playerReady=true;
@@ -563,6 +568,10 @@ function tvEnablePlayback(){
  }catch{tvShowSoundPrompt();}
 }
 function tvRemoteBack(){
+ if(state?.phase!=='welcome'){
+  if(tvSoundBlocked||tvAutoplayMuted){const unlock=el('tvFilmUnlock');if(unlock){unlock.hidden=false;tvFocusControl('tvFilmUnlock');}}
+  return;
+ }
  const bar=el('tvRemoteBar');
  if(bar?.classList.contains('tvRemoteHidden')){
   tvControlsVisible(true);tvFocusControl('tvFullscreen');return;
@@ -579,6 +588,15 @@ function tvRemoteKeydown(e){
  if(role!=='tv'||!el('tvApp'))return;
  const code=e.keyCode||e.which;
  const bar=el('tvRemoteBar');if(!bar)return;
+ // Film and quiz are distraction-free. Only the exceptional audio-unlock button
+ // can be focused by the TV remote after autoplay restrictions.
+ if(state?.phase!=='welcome'){
+  const code=e.keyCode||e.which;
+  if(['Enter','MediaPlay','MediaPlayPause'].includes(e.key)||[13,415].includes(code)){
+   if(tvSoundBlocked||tvAutoplayMuted){e.preventDefault();tvEnablePlayback();}
+  }
+  return;
+ }
  const keys=['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
  if(keys.includes(e.key)||[37,38,39,40].includes(code)){
   e.preventDefault();if(bar.classList.contains('tvRemoteHidden'))tvControlsVisible(true);
@@ -611,11 +629,12 @@ function tvRemoteKeydown(e){
 window.addEventListener('keydown',tvRemoteKeydown,true);
 function tvView(){
  if(!tvKey){app.innerHTML='<div class="wrap page"><h1>Beamer verbinden</h1><p>Bitte den Beamerlink aus der Admin-Ansicht öffnen.</p><label>Beamer-Zugangsschlüssel</label><input type="password" id="tvInput"><p></p><button class="primary" id="tvSubmit">Verbinden</button></div>';el('tvSubmit').onclick=()=>{tvKey=el('tvInput').value;sessionStorage.setItem('touch_tv_key',tvKey);localStorage.setItem('touch_tv_key',tvKey);tvView();};return;}
- app.innerHTML='<div id="tvApp"><div id="tvScene" class="tvScene"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><iframe id="cloudFrame" title="Google Drive Filmvorschau" allow="autoplay; fullscreen; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvFullscreen" type="button" tabindex="0" autofocus>⛶ Vollbild – OK</button><button id="tvSoundtrackUnlock" type="button" tabindex="0">♫ Musik-Ton aktivieren</button><button id="tvSpotifyPlay" type="button" tabindex="0" hidden>♫ Willkommensmusik ▶</button><button id="tvCloudOpen" type="button" tabindex="0" hidden>☁ iCloud-Datei öffnen</button><button id="tvCaptionSync" type="button" tabindex="0" hidden>⏱ Untertitel synchronisieren</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><div id="tvSpotifyDock" class="tvSpotifyDock" hidden aria-label="Optionale Spotify-Willkommensmusik"></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
+ app.innerHTML='<div id="tvApp"><div id="tvScene" class="tvScene"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><iframe id="cloudFrame" title="Google Drive Filmvorschau" allow="autoplay; fullscreen; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvFullscreen" type="button" tabindex="0" autofocus>⛶ Vollbild – OK</button><button id="tvSoundtrackUnlock" type="button" tabindex="0">♫ Musik-Ton aktivieren</button><button id="tvSpotifyPlay" type="button" tabindex="0" hidden>♫ Willkommensmusik ▶</button><button id="tvCloudOpen" type="button" tabindex="0" hidden>☁ iCloud-Datei öffnen</button><button id="tvCaptionSync" type="button" tabindex="0" hidden>⏱ Untertitel synchronisieren</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><button id="tvFilmUnlock" class="tvFilmUnlock" type="button" hidden>🔊 Filmton mit OK einschalten</button><div id="tvSpotifyDock" class="tvSpotifyDock" hidden aria-label="Optionale Spotify-Willkommensmusik"></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
  videoEl=el('tvVideo');
  // Never intentionally start the TV movie muted.
  videoEl.muted=false;videoEl.defaultMuted=false;videoEl.volume=1;
  el('tvPlay').onclick=tvEnablePlayback;
+ el('tvFilmUnlock').onclick=tvEnablePlayback;
  el('tvFullscreen').onclick=()=>tvRemoteFullscreen(false);
  el('tvSoundtrackUnlock').onclick=async()=>{
   const enabled=await window.TouchSoundtrack?.activate?.();
@@ -720,6 +739,9 @@ function syncWelcomeMusic(){
 function tvDisplay(){
  if(!state||role!=='tv'||!el('tvScene'))return;
  const phase=state.phase;const videoMode=phase==='film';
+ tvControlsVisible(phase==='welcome');
+ const filmUnlock=el('tvFilmUnlock');
+ if(filmUnlock)filmUnlock.hidden=!(phase==='film'&&state.playing&&(tvSoundBlocked||tvAutoplayMuted));
  const layer=el('videoLayer');if(layer)layer.style.display=videoMode&&state.video.type!=='none'?'block':'none';
  const scene=el('tvScene');
  syncWelcomeMusic();
@@ -748,7 +770,7 @@ function ensureMedia(){
  if(ytPlayer){try{ytPlayer.destroy();}catch{}ytPlayer=null;}el('youtubeTarget').style.display='none';videoEl.style.display='none';videoEl.pause();
  if(video.type==='youtube'){el('youtubeTarget').style.display='block';loadYouTube(video.id);}
  else if(video.type==='drive'||video.type==='upload'||video.type==='url'){
-  videoEl.style.display='block';videoEl.muted=false;videoEl.volume=1;videoEl.src=video.url;videoEl.load();fetchCaptions();
+  videoEl.style.display='block';videoEl.muted=!tvSoundActivated;videoEl.volume=1;videoEl.src=video.url;videoEl.load();fetchCaptions();
   // Drive direct MP4 behaves like a normal HTML5 video; no on-screen warnings.
  }
  else if(video.type==='icloud'){
@@ -782,7 +804,7 @@ function ensureMedia(){
      if(second?.then)second.then(()=>{
       tvSoundBlocked=false;
       const button=el('tvPlay');if(button)button.textContent='🔊 Ton mit OK einschalten';
-      tvControlsVisible(true);
+      const overlay=el('tvFilmUnlock');if(overlay)overlay.hidden=false;
      }).catch(()=>tvShowSoundPrompt());
     });
    }catch{tvShowSoundPrompt();}
@@ -805,7 +827,7 @@ function makeYouTube(id){
   events:{
    onReady:()=>{try{if(tvAutoplayMuted)ytPlayer.mute();else ytPlayer.unMute();}catch{}if(state?.phase==='film')ensureMedia();},
    onAutoplayBlocked:()=>{
-    if(!tvAutoplayMuted){tvAutoplayMuted=true;try{ytPlayer.mute();ytPlayer.playVideo();}catch{tvShowSoundPrompt();}const b=el('tvPlay');if(b)b.textContent='🔊 Ton mit OK einschalten';tvControlsVisible(true);}
+    if(!tvAutoplayMuted){tvAutoplayMuted=true;try{ytPlayer.mute();ytPlayer.playVideo();}catch{tvShowSoundPrompt();}const b=el('tvPlay');if(b)b.textContent='🔊 Ton mit OK einschalten';const unlock=el('tvFilmUnlock');if(unlock)unlock.hidden=false;}
     else tvShowSoundPrompt();
    },
    onStateChange:e=>{if(e.data===1){tvSoundBlocked=false;}}
