@@ -293,3 +293,6 @@ body.studentEntry.touchStudent .participantFullBar{margin:0 auto 10px;max-width:
  .tvRemoteBar button{min-height:42px;min-width:0;flex:1;font-size:12px;padding:7px}
  .tvRemoteHelp{top:85px;left:8px;max-width:calc(100vw - 16px)}
 }
+
+/* No film overlay: broadcast HUD/chapters/time stay off screen on LG TV and projectors. */
+#tvApp .tvBroadcastHud{display:none!important}
