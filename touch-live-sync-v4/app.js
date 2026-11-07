@@ -7,6 +7,7 @@ let role='home',state=null,renderSignature='',userId='',userName='',adminKey=ses
 let easterInstance=null,cloudUploadReady=false,libraryRecoveryStarted=false;
 let tvAutoplayMuted=false;
 let spotifyApi=null,spotifyController=null,spotifyUri='',spotifyWanted=false,spotifyScriptLoading=false;
+let welcomeAudioPending=false,welcomeAudioBlocked=false,welcomeAudioError='';
 let adminInfo=null,videoEl=null,ytPlayer=null,mediaType='',youtubeReady=false,playerReady=false,subtitles=[],lastFilmPhase='',lastRevision=-1,lastCaptionRevision=-1,gesturePointers=new Map(),gestureTransform={x:0,y:0,scale:1,rotate:0},gestureSnapshot=null;
 const CH=['Geschichte der Touchscreens','Wie Touchscreens funktionieren','Fünf Touchscreen-Arten','Multitouch und Display','Touchscreens im Alltag','Probleme und Zukunft','Fazit und Abschlussquiz'];
 const times=['04:28','06:29','10:28','12:40','16:12','20:18','24:39','26:42','30:33','32:42','35:32','39:01','44:22','45:37','46:46','47:56','49:06'];
@@ -563,7 +564,7 @@ function tvShowSoundPrompt(){
  el('tvPlay').textContent='▶ Ton & Vollbild mit OK freigeben';
  if(state?.phase==='welcome')tvControlsVisible(true);
  const overlay=el('tvFilmUnlock');
- if(overlay)overlay.hidden=state?.phase!=='film'||!state?.playing?true:false;
+ if(overlay)overlay.hidden=true; // No visible overlay during the documentary.
 }
 function tvEnablePlayback(){
  try{window.TouchSoundtrack?.activate?.();}catch{}
@@ -585,7 +586,8 @@ function tvEnablePlayback(){
 }
 function tvRemoteBack(){
  if(state?.phase!=='welcome'){
-  if(tvSoundBlocked||tvAutoplayMuted){const unlock=el('tvFilmUnlock');if(unlock){unlock.hidden=false;tvFocusControl('tvFilmUnlock');}}
+  // Hidden TV remote OK can still unlock video sound; never show a film overlay.
+  if(tvSoundBlocked||tvAutoplayMuted)tvEnablePlayback();
   return;
  }
  const bar=el('tvRemoteBar');
@@ -645,42 +647,55 @@ function tvRemoteKeydown(e){
 window.addEventListener('keydown',tvRemoteKeydown,true);
 function tvView(){
  if(!tvKey){app.innerHTML='<div class="wrap page"><h1>Beamer verbinden</h1><p>Bitte den Beamerlink aus der Admin-Ansicht öffnen.</p><label>Beamer-Zugangsschlüssel</label><input type="password" id="tvInput"><p></p><button class="primary" id="tvSubmit">Verbinden</button></div>';el('tvSubmit').onclick=()=>{tvKey=el('tvInput').value;sessionStorage.setItem('touch_tv_key',tvKey);localStorage.setItem('touch_tv_key',tvKey);tvView();};return;}
- app.innerHTML='<div id="tvApp"><div id="tvScene" class="tvScene"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><iframe id="cloudFrame" title="Google Drive Filmvorschau" allow="autoplay; fullscreen; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvFullscreen" type="button" tabindex="0" autofocus>⛶ Vollbild – OK</button><button id="tvSoundtrackUnlock" type="button" tabindex="0">♫ Musik-Ton aktivieren</button><button id="tvSpotifyPlay" type="button" tabindex="0" hidden>♫ Willkommensmusik ▶</button><button id="tvCloudOpen" type="button" tabindex="0" hidden>☁ iCloud-Datei öffnen</button><button id="tvCaptionSync" type="button" tabindex="0" hidden>⏱ Untertitel synchronisieren</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><button id="tvFilmUnlock" class="tvFilmUnlock" type="button" hidden>🔊 Filmton mit OK einschalten</button><div id="tvWelcomeMusicStatus" class="tvWelcomeMusicStatus" hidden aria-live="polite"></div><div id="tvSpotifyDock" class="tvSpotifyDock" hidden aria-label="Spotify-Vorschau auf LG deaktiviert"></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
+ app.innerHTML='<div id="tvApp"><audio id="tvWelcomeAudio" src="/welcome-music.wav" preload="auto" loop playsinline style="display:none"></audio><div id="tvScene" class="tvScene"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><iframe id="cloudFrame" title="Google Drive Filmvorschau" allow="autoplay; fullscreen; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvFullscreen" type="button" tabindex="0" autofocus>⛶ Vollbild – OK</button><button id="tvSoundtrackUnlock" type="button" tabindex="0">♫ Musik-Ton aktivieren</button><button id="tvSpotifyPlay" type="button" tabindex="0" hidden>♫ Willkommensmusik ▶</button><button id="tvCloudOpen" type="button" tabindex="0" hidden>☁ iCloud-Datei öffnen</button><button id="tvCaptionSync" type="button" tabindex="0" hidden>⏱ Untertitel synchronisieren</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><button id="tvFilmUnlock" class="tvFilmUnlock" type="button" hidden>🔊 Filmton mit OK einschalten</button><div id="tvWelcomeMusicStatus" class="tvWelcomeMusicStatus" hidden aria-live="polite"></div><div id="tvSpotifyDock" class="tvSpotifyDock" hidden aria-label="Spotify-Vorschau auf LG deaktiviert"></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
  videoEl=el('tvVideo');
+ const welcomeAudio=el('tvWelcomeAudio');
+ if(welcomeAudio){
+  welcomeAudio.loop=true;welcomeAudio.volume=.8;welcomeAudio.muted=false;
+  welcomeAudio.addEventListener('playing',()=>{
+   welcomeAudioPending=false;welcomeAudioBlocked=false;welcomeAudioError='';
+   if(state?.phase==='welcome')syncWelcomeMusic();
+  });
+  welcomeAudio.addEventListener('error',()=>{
+   welcomeAudioPending=false;welcomeAudioBlocked=true;
+   welcomeAudioError='Die Audio-Datei konnte vom LG-Browser nicht geladen werden.';
+   if(state?.phase==='welcome')syncWelcomeMusic();
+  });
+  welcomeAudio.addEventListener('pause',()=>{
+   welcomeAudioPending=false;
+   if(state?.phase==='welcome')syncWelcomeMusic();
+  });
+ }
  // Never intentionally start the TV movie muted.
  videoEl.muted=false;videoEl.defaultMuted=false;videoEl.volume=1;
  el('tvPlay').onclick=tvEnablePlayback;
  el('tvFilmUnlock').onclick=tvEnablePlayback;
  el('tvFullscreen').onclick=()=>{
-  // One LG OK during welcome prepares fullscreen AND grants the browser audio activation.
-  // Later, admin's "Film starten" can launch video with sound where webOS permits it.
   tvSoundActivated=true;tvAutoplayMuted=false;
   try{window.TouchSoundtrack?.activate?.();}catch{}
+  if(state?.phase==='welcome'&&state?.welcomeMusic?.on)playWelcomeAudio();
   tvRemoteFullscreen(false);
 };
  el('tvSoundtrackUnlock').onclick=async()=>{
   if(!state||state.phase!=='welcome')return;
+  const audio=el('tvWelcomeAudio');
   const current=state.welcomeMusic?.on===true;
-  const unlocked=!!window.TouchSoundtrack?.unlocked?.();
-  const on=!(current&&unlocked);
-  const button=el('tvSoundtrackUnlock');
-  if(button)button.disabled=true;
-  // Begin audio activation SYNCHRONOUSLY on remote OK before awaiting the network.
-  const activation=window.TouchSoundtrack?.activate?.();
+  const on=!(current&&audio&&!audio.paused);
+  const button=el('tvSoundtrackUnlock');if(button)button.disabled=true;
+  // The play() invocation happens on the actual TV remote event, not after await.
   if(on){
-   window.TouchSoundtrack?.sync?.({...state,welcomeMusic:{...(state.welcomeMusic||{}),on:true}});
-  }else window.TouchSoundtrack?.silence?.();
+   welcomeAudioBlocked=false;welcomeAudioError='';
+   playWelcomeAudio();
+   try{window.TouchSoundtrack?.activate?.();}catch{}
+  }else if(audio){try{audio.pause();audio.currentTime=0;}catch{}}
   try{
    await api('/api/tv/welcome-music','POST',{on},tvKey);
-   const allowed=await activation;
-   if(on&&!allowed)tvFullscreenHint('LG-Audio wurde blockiert oder nicht unterstützt. Probiere „⛶ Vollbild – OK“ und danach „LG-Musik starten“.');
    await poll(true);
   }catch(err){
-   tvFullscreenHint('Musik konnte nicht geändert werden: '+err.message);
+   welcomeAudioError='Musik konnte nicht gespeichert werden: '+err.message;
+   if(on&&audio){try{audio.pause();}catch{}}
    await poll(true);
-  }finally{
-   if(button)button.disabled=false;
-  }
+  }finally{if(button)button.disabled=false;}
   tvControlsVisible(true);
  };
  el('tvSpotifyPlay').onclick=()=>{
@@ -724,38 +739,78 @@ function tvView(){
  videoEl.addEventListener('ended',()=>{if(state?.phase==='film')sendTick(false,true);});
 }
 function tvScene(html){const node=el('tvScene');if(node&&node.__h!==html){node.innerHTML=html;node.__h=html;}}
+function playWelcomeAudio(){
+ const audio=el('tvWelcomeAudio');
+ if(!audio)return false;
+ if(!audio.paused&&audio.readyState>=2){
+  welcomeAudioPending=false;welcomeAudioBlocked=false;return true;
+ }
+ try{
+  audio.loop=true;audio.muted=false;
+  audio.volume=Math.max(.35,Math.min(1,(state?.soundtrack?.volume??.25)*3));
+  welcomeAudioPending=true;welcomeAudioError='';
+  // Native HTML5 audio works on LG webOS more broadly than oscillator-only Web Audio.
+  // Call directly from remote OK when the browser requires a user gesture.
+  const attempt=audio.play();
+  if(attempt&&typeof attempt.then==='function'){
+   attempt.then(()=>{welcomeAudioPending=false;welcomeAudioBlocked=false;welcomeAudioError='';})
+    .catch(err=>{
+     welcomeAudioPending=false;welcomeAudioBlocked=true;
+     welcomeAudioError=err?.name==='NotAllowedError'
+      ?'LG blockiert den automatischen Musikstart. Drücke einmal OK auf „LG-Musik starten“.'
+      :'LG konnte das Audio nicht abspielen. Prüfe die TV-Lautstärke und lade die Seite neu.';
+    });
+  }else welcomeAudioPending=false;
+  return true;
+ }catch(err){
+  welcomeAudioPending=false;welcomeAudioBlocked=true;
+  welcomeAudioError='Musikstart fehlgeschlagen: '+(err?.message||'LG-Audioplayer');
+  return false;
+ }
+}
 function syncWelcomeMusic(){
- // Spotify embeds display a 30-second Preview on this LG; no full music via iframe.
- // The LG instead uses the original continuous soundtrack in TouchSoundtrack.
+ // Spotify Preview is NOT used as a soundtrack on the LG.
  const dock=el('tvSpotifyDock');
- if(dock){dock.hidden=true;if(dock.childNodes.length)dock.replaceChildren();}
+ if(dock){dock.hidden=true;if(dock.firstChild)dock.replaceChildren();}
  if(spotifyController){try{spotifyController.pause();spotifyController.destroy();}catch{}spotifyController=null;}
  spotifyWanted=false;spotifyUri='';
- const oldSpotifyButton=el('tvSpotifyPlay');
- if(oldSpotifyButton)oldSpotifyButton.hidden=true;
- const active=state?.phase==='welcome'&&state?.welcomeMusic?.on===true;
+ const oldSpotifyButton=el('tvSpotifyPlay');if(oldSpotifyButton)oldSpotifyButton.hidden=true;
+ const audio=el('tvWelcomeAudio');
+ const enabled=state?.phase==='welcome'&&state?.welcomeMusic?.on===true;
+ if(audio){
+  if(!enabled){
+   if(!audio.paused){try{audio.pause();audio.currentTime=0;}catch{}}
+   welcomeAudioBlocked=false;welcomeAudioPending=false;welcomeAudioError='';
+  }else{
+   // Automatic attempt if PC/phone switched on the music; LG may require remote OK.
+   if(audio.paused&&!welcomeAudioPending&&!welcomeAudioBlocked)playWelcomeAudio();
+  }
+ }
+ const actuallyPlaying=!!(enabled&&audio&&!audio.paused&&audio.readyState>=2);
  const chip=el('tvWelcomeMusicStatus');
- const unlocked=!!window.TouchSoundtrack?.unlocked?.();
  if(chip){
-  chip.hidden=!active;
-  chip.textContent=unlocked?'♫ Willkommensmusik läuft · ENDLOSSCHLEIFE':'♫ Musik bereit – auf LG einmal „Musik-Ton aktivieren“ drücken';
-  chip.classList.toggle('is-playing',active&&unlocked);
+  chip.hidden=!enabled;
+  chip.textContent=actuallyPlaying?'♫ Musik wird abgespielt · DAUERSCHLEIFE'
+   :(welcomeAudioError||'♫ Musik ist eingeschaltet · am LG mit OK den Ton starten');
+  chip.classList.toggle('is-playing',actuallyPlaying);
  }
  const button=el('tvSoundtrackUnlock');
- if(button)button.textContent=active?(unlocked?'⏹ LG-Musik stoppen':'▶ Musik-Ton freigeben'):'♫ LG-Musik starten';
+ if(button)button.textContent=actuallyPlaying?'⏹ LG-Musik stoppen'
+  :enabled?'▶ LG-Musik jetzt hören':'♫ LG-Musik starten';
 }
 function tvDisplay(){
  if(!state||role!=='tv'||!el('tvScene'))return;
  const phase=state.phase;const videoMode=phase==='film';
+ const tvRoot=el('tvApp');if(tvRoot)tvRoot.classList.toggle('tvPlayingFilm',videoMode);
  if(phase==='welcome'&&tvLastDisplayPhase!=='welcome')tvWelcomeDismissed=false;
  tvLastDisplayPhase=phase;
  tvControlsVisible(phase==='welcome'&&!tvWelcomeDismissed);
  const filmUnlock=el('tvFilmUnlock');
- if(filmUnlock)filmUnlock.hidden=!(phase==='film'&&state.playing&&(tvSoundBlocked||tvAutoplayMuted));
+ if(filmUnlock)filmUnlock.hidden=true; // Film must never show a bottom audio/setup overlay.
  const layer=el('videoLayer');if(layer)layer.style.display=videoMode&&state.video.type!=='none'?'block':'none';
  const scene=el('tvScene');
  syncWelcomeMusic();
- window.TouchSoundtrack?.sync?.(state);
+ window.TouchSoundtrack?.sync?.({...state,welcomeMusic:{...(state.welcomeMusic||{}),on:false}}); // HTML5 WAV owns welcome audio.
  if(phase==='welcome'){scene.style.display='flex';tvScene('<div class="welcomeArtwork"><div><span class="eyebrow">LERNFELD 14 · INTERAKTIVE DOKUMENTATION</span><h1>TOUCH<em>SCREEN</em></h1><p class="welcomeProgramTitle">'+esc(state.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation')+'</p><p>Geschichte, Technik und Zukunft – gemeinsam entdecken.</p><p class="welcomePrompt">Öffnet den Schülerlink auf eurem iPad. Gleich geht es los!</p></div><img src="/touchscreen-motiv.svg" alt="Leuchtender Touchscreen mit Berührungswellen"></div>');pauseTV();}
  else if(phase==='gesture'){scene.style.display='flex';tvScene('<div><span class="eyebrow">KAPITEL 04 / MULTITOUCH</span><h1><em>Gesten üben.</em></h1><p>Auf den iPads verschieben, vergrößern und drehen!</p></div>');pauseTV();}
  else if(phase==='zoom'){scene.style.display='flex';const q=state.quiz;tvScene('<div class="egg-projector"><div><span class="eyebrow">KAPITEL 04 · MULTITOUCH LIVE-EXPERIMENT</span><h1>Die <em>Touch-Challenge!</em></h1><p>So funktioniert Multitouch in der Praxis: Vergrößert das digitale Bild mit zwei Fingern, verschiebt es und tippt auf das versteckte Easter Egg.</p><div class="egg-tv-counter"><strong>'+(q?q.remaining:0)+' s</strong><span>⏱ Zeit übrig<br>🔎 '+(q?q.foundCount:0)+' von '+state.participants+' haben das Easter Egg gefunden</span></div><p class="small" style="margin-top:22px">Pinch-to-Zoom = zwei Finger auseinanderziehen · Pan = verschieben · Tap = antippen.</p></div><img class="egg-tv-art" src="/easter-scene.svg" alt="Panorama mit Berghütte als Easter-Egg-Spiel"></div>');pauseTV();}
@@ -814,7 +869,7 @@ function ensureMedia(){
      if(second?.then)second.then(()=>{
       tvSoundBlocked=false;
       const button=el('tvPlay');if(button)button.textContent='🔊 Ton mit OK einschalten';
-      const overlay=el('tvFilmUnlock');if(overlay)overlay.hidden=false;
+      const overlay=el('tvFilmUnlock');if(overlay)overlay.hidden=true;
      }).catch(()=>tvShowSoundPrompt());
     });
    }catch{tvShowSoundPrompt();}
