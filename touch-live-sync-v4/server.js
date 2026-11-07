@@ -93,6 +93,8 @@ async function handler(req,res){
  if(m==='GET'&&(p==='/'||p==='/index.html'))return serve(res,path.join(ROOT,'index.html'),mime['.html']);
  if(m==='GET'&&(p==='/app.js'||p==='/style.css'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
  if(m==='GET'&&p==='/touchscreen-motiv.svg')return serve(res,path.join(ROOT,'touchscreen-motiv.svg'),'image/svg+xml');
+ if(m==='GET'&&p==='/touch-icon.svg')return serve(res,path.join(ROOT,'touch-icon.svg'),'image/svg+xml');
+ if(m==='GET'&&p==='/site.webmanifest')return serve(res,path.join(ROOT,'site.webmanifest'),'application/manifest+json; charset=utf-8');
  if(m==='GET'&&(p==='/watch'||p==='/host'))return serve(res,path.join(ROOT,'party.html'),'text/html; charset=utf-8');
  if(m==='GET'&&(p==='/party.js'||p==='/party.css'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
  if(m==='GET'&&p==='/api/state')return send(res,200,publicState(u.searchParams.get('id')));
