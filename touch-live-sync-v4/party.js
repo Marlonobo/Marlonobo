@@ -9,9 +9,14 @@ let key=fromUrl||sessionStorage.getItem(keyStore)||'';
 if(fromUrl){sessionStorage.setItem(keyStore,key);history.replaceState({},'',location.pathname);}
 let state=null,participantId=localStorage.getItem(idStore)||'',participantName=localStorage.getItem(nameStore)||'';
 let screenSignature='',quizSignature='',sourceRef='',activated=false,ytPlayer=null,ytReady=false,ytVideoId='',ytApiLoading=false,localRevision=-1,lastCaptionRevision=-1;
-let easterInstance=null;
+let easterInstance=null,cloudFallback=false;
 let captions=[],gesturePoints=new Map(),gestureState={x:0,y:0,scale:1,rotation:0},gestureOrigin=null;
 const video=$('partyVideo'),container=$('partyYoutube'),screen=$('partyScene'),capt=$('partyCaption'),playBtn=$('partyEnable');
+video.addEventListener('error',()=>{
+ if(state?.video?.type!=='drive'||video.getAttribute('src')!==state.video.url)return;
+ cloudFallback=true;const frame=$('partyDrivePreview');if(frame){frame.src=state.video.previewUrl||state.video.shareUrl;frame.hidden=false;}
+ updateScene();showError('Google Drive öffnet die Vorschau. Sie kann nicht automatisch zur Quiz-Zeit synchronisiert werden; dafür einen direkten MP4-Link oder YouTube nutzen.');
+});
 let errorTimer=null,pollInFlight=false,tickInFlight=false;
 function showError(msg){const e=$('partyError');e.hidden=false;e.textContent=msg;clearTimeout(errorTimer);errorTimer=setTimeout(()=>e.hidden=true,10500);}
 async function api(path,body,authenticated=false){
@@ -42,8 +47,14 @@ function updateScene(){
  if(!state)return;
  const phase=state.phase,haveVideo=state.video&&state.video.type!=='none';
  const film=phase==='film'&&haveVideo;
- screen.hidden=film;video.hidden=!film||state.video.type==='youtube';container.hidden=!film||state.video.type!=='youtube';
- playBtn.hidden=!(film&&(!activated||(state.playing&&((state.video.type==='youtube'&&ytPlayer&&ytReady&&ytPlayer.getPlayerState()!==1)||(state.video.type!=='youtube'&&video.paused)))));
+ screen.hidden=film;
+ video.hidden=!film||state.video.type==='youtube'||state.video.type==='icloud'||(state.video.type==='drive'&&cloudFallback);
+ container.hidden=!film||state.video.type!=='youtube';
+ const driveFrame=$('partyDrivePreview'),iCloudBox=$('partyCloudExternal');
+ if(driveFrame)driveFrame.hidden=!(film&&state.video.type==='drive'&&cloudFallback);
+ if(iCloudBox)iCloudBox.hidden=!(film&&state.video.type==='icloud');
+ if(iCloudBox&&film&&state.video.type==='icloud')$('partyCloudLink').href=state.video.shareUrl||state.video.url;
+ playBtn.hidden=!(film&&state.video.type!=='icloud'&&!(state.video.type==='drive'&&cloudFallback)&&(!activated||(state.playing&&((state.video.type==='youtube'&&ytPlayer&&ytReady&&ytPlayer.getPlayerState()!==1)||(state.video.type!=='youtube'&&video.paused)))));
  if(film){screenSignature='';return;}
  let html='';
  if(phase==='welcome')html=slide('Willkommen bei TOUCH LIVE','Die Dokumentation startet, sobald die Moderatorin bereit ist.','<small>Gemeinsam schauen und mitspielen – egal von welchem Ort.</small>');
@@ -61,7 +72,7 @@ function updateScene(){
 function stopPlayback(){try{if(!video.paused)video.pause();if(ytPlayer&&ytPlayer.pauseVideo)ytPlayer.pauseVideo();}catch{}}
 function playerTime(){
  try{if(state?.video?.type==='youtube')return ytPlayer&&ytReady?Number(ytPlayer.getCurrentTime())||0:null;
- if(state?.video?.type==='upload'||state?.video?.type==='url')return video.readyState>0&&Number.isFinite(video.currentTime)?video.currentTime:null;}catch{}
+ if(state?.video?.type==='upload'||state?.video?.type==='url'||(state?.video?.type==='drive'&&!cloudFallback))return video.readyState>0&&Number.isFinite(video.currentTime)?video.currentTime:null;}catch{}
  return null;
 }
 function ytLoad(){
@@ -84,10 +95,12 @@ function syncMovie(force=false){
  const v=state.video,ref=v.type+':'+(v.url||v.id);
  if(state.captionsAvailable&&lastCaptionRevision!==state.captionsRevision){lastCaptionRevision=state.captionsRevision;loadCaptions();}
  if(ref!==sourceRef){
- sourceRef=ref;localRevision=-1;
+ sourceRef=ref;localRevision=-1;cloudFallback=false;
+  const iframe=$('partyDrivePreview');if(iframe){iframe.hidden=true;iframe.removeAttribute('src');}
  if(ytPlayer){try{ytPlayer.destroy();}catch{}ytPlayer=null;ytReady=false;}
  video.pause();video.removeAttribute('src');video.load();
  if(v.type==='youtube'){ytVideoId=v.id||'';ytLoad();}
+ else if(v.type==='icloud'){ytVideoId='';container.replaceChildren();updateScene();showError('iCloud-Link öffnen: Freigabelinks bieten keine direkte automatische Video-/Quiz-Synchronisierung.');}
  else{ytVideoId='';container.replaceChildren();video.src=v.url;video.load();loadCaptions();}
  }
  const serverPos=Number(state.time)||0,change=force||localRevision!==state.revision;
@@ -96,6 +109,8 @@ function syncMovie(force=false){
   try{const local=Number(ytPlayer.getCurrentTime())||0;if(change||Math.abs(local-serverPos)>(host?8:3.5))ytPlayer.seekTo(serverPos,true);
     if(state.playing&&activated)ytPlayer.playVideo();else if(!state.playing)ytPlayer.pauseVideo();
   }catch{}
+ }else if(v.type==='icloud'||(v.type==='drive'&&cloudFallback)){
+  // No readable video clock in the provider viewer; never send fake timestamps.
  }else{
   if(video.readyState>0){
    try{if(change||Math.abs((video.currentTime||0)-serverPos)>(host?8:3.5))video.currentTime=serverPos;}catch{}
