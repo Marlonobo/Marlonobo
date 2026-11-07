@@ -102,3 +102,28 @@
 .partyStartShared>button{min-height:55px;font-size:15px}
 .partyStartShared>p{flex-basis:100%}
 @media(max-width:650px){.partyHostUpload{padding:13px}.partyUploadButtons button,.partyStartShared button{width:100%}}
+
+/* Private /host participant status, score and answer view. */
+.partyHostRoster{margin:15px 0;padding:18px;background:linear-gradient(145deg,#0b2232,#102f40);border:1px solid #427989;border-radius:15px}
+.partyHostRoster h3{font-size:clamp(16px,2vw,21px);margin:4px 0}
+.partyHostRoster .between{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.partyHostRoster .small{color:#bad3de}
+.partyRosterScroll{width:100%;overflow-x:auto;border:1px solid #315c70;border-radius:10px}
+.partyRosterTable{width:100%;border-collapse:collapse;font-size:13px;min-width:430px}
+.partyRosterTable th,.partyRosterTable td{padding:10px 8px;text-align:center;border-bottom:1px solid #2b4a59}
+.partyRosterTable td:first-child,.partyRosterTable th:first-child{text-align:left}
+.partyRosterTable td:first-child small{display:block;color:#aac4d1}
+.partyRosterTable tr:last-child td{border:0}
+.partyOnlineDot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.partyOnlineDot.isOnline{background:#62eab2;box-shadow:0 0 0 3px #62eab22a}
+.partyOnlineDot.isOffline{background:#71838f}
+.partyRosterDetails{display:grid;gap:8px;margin-top:13px}
+.partyRosterDetails details{background:#091c28;border:1px solid #31556a;border-radius:10px;padding:11px}
+.partyRosterDetails summary{cursor:pointer;font-size:13px;font-weight:700}
+.partyAnswerChips{display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:7px;margin-top:10px}
+.partyAnswerStatus{display:flex;flex-direction:column;gap:3px;padding:8px;border-radius:8px;background:#162b3b;border:1px solid #37546b;font-size:12px}
+.partyAnswerStatus.correct{border-color:#50bd93;color:#b9f5d9}
+.partyAnswerStatus.wrong{border-color:#bc7883;color:#ffcbd1}
+.partyAnswerStatus.unanswered{color:#b3c9d8}
+#partyCaptionToggle[aria-pressed="false"]{background:#13222d;border-color:#637a84;color:#e1e8ed}
+@media(max-width:650px){.partyHostRoster{padding:12px}.partyRosterTable th,.partyRosterTable td{padding:8px 6px}}
