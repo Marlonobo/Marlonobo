@@ -69,7 +69,7 @@ function userPage(){
  wrap(page('Die Dokumentation läuft.',isTeacher?'LEHRER · LIVE MITMACHEN':'SCHÜLER · LIVE MITMACHEN','Teilnehmer: '+esc(userName)+' · '+(isTeacher?'Lehrer':'Schüler')+' · '+state.participants+' angemeldet')+body+notes);
  document.querySelectorAll('[data-choice]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await api('/api/answer','POST',{id:userId,choice:+b.dataset.choice});renderSignature='';await poll();}catch(e){alert(e.message);renderSignature='';await poll();}});
  document.querySelectorAll('[data-joker]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await api('/api/joker','POST',{id:userId,type:b.dataset.joker});}catch(e){alert(e.message);}renderSignature='';await poll();});
- if(state.phase==='zoom')initEaster();
+ if(q?.type==='zoom')initEaster();
  if(isTeacher){el('teacherNotes').oninput=e=>localStorage.setItem('touch_teacher_notes',e.target.value);el('saveNotes').onclick=()=>saveText('TOUCH-LIVE-Lehrernotizen.txt',el('teacherNotes').value);}
  if(state.phase==='gesture')initGesture();
 }
@@ -1068,7 +1068,7 @@ async function poll(force=false){
  if((role==='admin'||role==='control')&&old?.phase!=='film'&&next.phase==='film'&&next.playing&&window.SpotifyConnect?.connected?.()){
   window.SpotifyConnect.pauseForFilm().catch(()=>{});
  }
- if(role==='join'||role==='teacher'){const player=state.player||{};const q=state.quiz;const sig=[role,state.phase,q?.id||'',q?.accepting||false,player.choice,player.score,state.revision,state.participants,JSON.stringify(player.jokers||{}),(player.hide||[]).join(),player.hint||'',JSON.stringify(state.zoomResult||'')].join('|');if(force||renderSignature!==sig){renderSignature=sig;userPage();participantMode();}else if(q){if(el('liveTimer'))el('liveTimer').textContent=q.remaining+' s';if(state.phase==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!state.player?.zoomFound});}}
+ if(role==='join'||role==='teacher'){const player=state.player||{};const q=state.quiz;const sig=[role,state.phase,q?.id||'',q?.accepting||false,player.choice,player.score,state.revision,state.participants,JSON.stringify(player.jokers||{}),(player.hide||[]).join(),player.hint||'',JSON.stringify(state.zoomResult||'')].join('|');if(force||renderSignature!==sig){renderSignature=sig;userPage();participantMode();}else if(q){if(el('liveTimer'))el('liveTimer').textContent=q.remaining+' s';if(q?.type==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!state.player?.zoomFound});}}
  if(role==='tv'){tvDisplay();
    const signal=Number(state.tvReloadRequest||0);
    if(window.__touchTVReloadSeen===undefined)window.__touchTVReloadSeen=signal;
