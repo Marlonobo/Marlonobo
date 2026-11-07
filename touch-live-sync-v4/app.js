@@ -681,6 +681,9 @@ function tvView(){
   const audio=el('tvWelcomeAudio');
   const current=state.welcomeMusic?.on===true;
   const on=!(current&&audio&&!audio.paused);
+  // Optimistic local state prevents the LG <audio> 'playing'/'pause' event
+  // from undoing the tap while the request is still in flight.
+  if(state.welcomeMusic)state.welcomeMusic.on=on;
   const button=el('tvSoundtrackUnlock');if(button)button.disabled=true;
   // The play() invocation happens on the actual TV remote event, not after await.
   if(on){
