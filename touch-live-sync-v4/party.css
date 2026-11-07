@@ -45,3 +45,37 @@
 .partyCloudExternal h3{margin:0;font-size:clamp(24px,3.5vw,40px)}
 .partyCloudExternal p{max-width:540px;font-size:clamp(12px,1.6vw,17px);line-height:1.5}
 .partyCloudExternal .btn{font-weight:800}
+
+
+/* TOUCH LIVE: two-city watch-along on iPhone, iPad, desktop and TV.
+   The movie node stays mounted while focus moves to the quiz. */
+.partyModePanel{display:flex;flex-direction:column;gap:10px;margin:0 0 20px;padding:18px 20px;background:#0e2a3d;border:1px solid #436f86;border-radius:14px}
+.partyModePanel[hidden]{display:none!important}
+.partyModeTitle{display:flex;flex-direction:column;gap:4px}
+.partyModeTitle strong{font-size:clamp(15px,2vw,19px);color:#eafaff}
+.partyModeActions{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.partyModeActions .btn,.partyModeActions button{min-height:42px;white-space:normal}
+.partyModeActions button[aria-pressed="true"]{background:#63d7c7;color:#06242a}
+.partyModeActions button[aria-pressed="false"]{background:#193b52;color:#dceef4}
+#partyModeStatus{color:#bfe1e5;margin:3px 0 0;line-height:1.5}
+#partyInteraction{scroll-margin-top:16px}
+#participant{scroll-margin-top:18px}
+#partyScreen{scroll-margin-top:16px}
+.partyAutoQuizFocus #partyInteraction{border-color:#5bcaba;box-shadow:0 0 0 1px #4dd4b550,0 16px 36px #00141c44}
+.partyAutoQuizFocus .partyQuestion .timer{color:#8fffea}
+@media(min-width:851px){
+ .partyAutoQuizFocus.partyLayout{grid-template-columns:minmax(280px,.8fr) minmax(340px,1.3fr)}
+}
+@media(max-width:850px){
+ .partyModePanel{padding:14px;margin-bottom:15px}
+ .partyModeActions{display:grid;grid-template-columns:1fr 1fr}
+ .partyModeActions button:first-child{grid-column:1/-1}
+ .partyAutoQuizFocus .partyScreen{width:min(100%,410px);margin-left:auto;margin-right:auto}
+ .partyAutoQuizFocus .partyRight{order:2}
+ .partyAutoQuizFocus .partyLeft{order:1}
+}
+@media(max-width:420px){
+ .partyModeActions{grid-template-columns:1fr}
+ .partyModeActions button:first-child{grid-column:auto}
+ .partyModeActions .btn,.partyModeActions button{width:100%;text-align:center}
+}
