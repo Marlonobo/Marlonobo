@@ -144,6 +144,25 @@ async function media(req,res){
 async function handler(req,res){
  const u=new URL(req.url,'http://localhost'),p=u.pathname,m=req.method;
  if(m==='GET'&&(p==='/'||p==='/index.html'||p==='/join'||p==='/control'||p==='/spotify-callback'))return serve(res,path.join(ROOT,'index.html'),mime['.html']);
+ if((m==='GET'||m==='HEAD')&&p==='/welcome-music.wav'){
+  // Standard HTML5 PCM audio for LG WebOS; no Spotify authorization or AudioContext needed.
+  const wav=require('./welcome-audio.js')();
+  let first=0,last=wav.length-1,status=200;
+  const range=req.headers.range;
+  if(range){
+   const match=/^bytes=(\d+)-(\d*)$/.exec(range);
+   if(!match)return send(res,416,{error:'Ungültiger Audio-Range.'});
+   first=Number(match[1]);last=match[2]?Math.min(last,Number(match[2])):last;
+   if(!Number.isSafeInteger(first)||!Number.isSafeInteger(last)||first>=wav.length||first>last){
+    res.writeHead(416,{'Content-Range':'bytes */'+wav.length});return res.end();
+   }
+   status=206;
+  }
+  const headers={'Content-Type':'audio/wav','Accept-Ranges':'bytes','Content-Length':String(last-first+1),'Cache-Control':'public, max-age=3600','X-Content-Type-Options':'nosniff'};
+  if(status===206)headers['Content-Range']='bytes '+first+'-'+last+'/'+wav.length;
+  res.writeHead(status,headers);
+  return m==='HEAD'?res.end():res.end(wav.subarray(first,last+1));
+ }
  if(m==='GET'&&(p==='/app.js'||p==='/style.css'||p==='/spotify-connect.js'||p==='/touch-soundtrack.js'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
  if(m==='GET'&&p==='/touchscreen-motiv.svg')return serve(res,path.join(ROOT,'touchscreen-motiv.svg'),'image/svg+xml');
  if(m==='GET'&&p==='/easter-scene.svg')return serve(res,path.join(ROOT,'easter-scene.svg'),'image/svg+xml');
