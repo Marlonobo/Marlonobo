@@ -351,7 +351,7 @@ function tvRemoteKeydown(e){
  const keys=['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
  if(keys.includes(e.key)||[37,38,39,40].includes(code)){
   e.preventDefault();if(bar.classList.contains('tvRemoteHidden'))tvControlsVisible(true);
-  const targets=[...bar.querySelectorAll('button:not(:disabled)')];let n=targets.indexOf(document.activeElement);
+  const targets=[...bar.querySelectorAll('button:not(:disabled):not([hidden])')];let n=targets.indexOf(document.activeElement);
   n=n<0?0:(n+((e.key==='ArrowLeft'||e.key==='ArrowUp'||code===37||code===38)?-1:1)+targets.length)%targets.length;
   targets[n]?.focus();tvControlsVisible(true);return;
  }
