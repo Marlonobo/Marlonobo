@@ -78,6 +78,6 @@ async function put(key,content,contentType='application/octet-stream'){
 async function readText(key){return (await request('GET',key)).text;}
 async function manifest(){try{return JSON.parse(await readText(MANIFEST));}catch(e){if(e.status===404)return null;throw e;}}
 async function putManifest(value){await put(MANIFEST,JSON.stringify(value),'application/json');}
-function videoUrl(){return presign('GET',VIDEO,{},3600);}
+function videoUrl(){return presign('GET',VIDEO,{},14400);} // 4h: 52min film + pauses + seeks
 async function captionText(){try{return await readText(CAPTIONS);}catch(e){if(e.status===404)return null;throw e;}}
 module.exports={enabled,VIDEO,CAPTIONS,MANIFEST,initiate,partUrl,list,complete,put,readText,manifest,putManifest,videoUrl,captionText};
