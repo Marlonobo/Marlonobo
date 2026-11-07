@@ -107,7 +107,7 @@ function syncMovie(force=false){
  if(v.type==='youtube'){
   if(!ytPlayer||!ytReady)return;
   try{const local=Number(ytPlayer.getCurrentTime())||0;if(change||Math.abs(local-serverPos)>(host?8:3.5))ytPlayer.seekTo(serverPos,true);
-    if(state.playing&&activated)ytPlayer.playVideo();else if(!state.playing)ytPlayer.pauseVideo();
+    if(state.playing){if(!activated)ytPlayer.mute();else ytPlayer.unMute();ytPlayer.playVideo();}else ytPlayer.pauseVideo();
   }catch{}
  }else if(v.type==='icloud'||(v.type==='drive'&&cloudFallback)){
   // No readable video clock in the provider viewer; never send fake timestamps.
@@ -115,7 +115,7 @@ function syncMovie(force=false){
   if(video.readyState>0){
    try{if(change||Math.abs((video.currentTime||0)-serverPos)>(host?8:3.5))video.currentTime=serverPos;}catch{}
   }
-  if(state.playing&&activated&&video.paused)video.play().catch(()=>{activated=false;$('partyEnable').hidden=false;});
+  if(state.playing&&video.paused){if(!activated)video.muted=true;video.play().catch(()=>{activated=false;$('partyEnable').hidden=false;});}
   if(!state.playing&&!video.paused)video.pause();
  }
  localRevision=state.revision;
