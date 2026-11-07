@@ -379,3 +379,19 @@ body:has(.phoneRemote){background:#071724}
 .tvSpotifySlot{width:100%;min-height:152px}
 .tvSpotifyDock .spotifyNote{font-size:11px;line-height:1.35;color:#d3e7e9;margin:7px 1px 0}
 @media(max-width:720px){.welcomeMusicAdmin .flex button{flex:1 1 100%}.phoneRemote{padding-top:27px}.tvSpotifyDock{bottom:14px;right:10px;padding:8px;width:min(320px,calc(100vw - 20px))}}
+
+
+/* LG Magic Remote: favor D-pad selection / OK over on-page mouse pointer.
+   The operating-system cursor itself is outside webpage control. */
+#tvApp,#tvApp *{cursor:none!important}
+#tvApp .tvRemoteBar{z-index:30!important;box-sizing:border-box;max-width:calc(100vw - 30px);border-color:#70b7ca;box-shadow:0 16px 55px #000b}
+#tvApp .tvRemoteBar button{cursor:none!important;outline-offset:4px;white-space:normal}
+#tvApp .tvRemoteBar #tvFullscreen{min-width:180px;border-color:#8ff6e7!important;background:#16625c!important;color:#f0fffc!important;box-shadow:0 0 20px #50dcd328}
+#tvApp .tvRemoteBar #tvFullscreen:focus,#tvApp .tvRemoteBar #tvFullscreen:focus-visible{background:#98f8e8!important;color:#082b30!important;outline:5px solid #e4fff8!important;box-shadow:0 0 0 9px #50bdba80}
+#tvApp .tvRemoteHelp{z-index:29;line-height:1.45;max-width:min(820px,calc(100vw - 44px))}
+#tvApp .tvRemoteBar.tvRemoteHidden,#tvApp .tvRemoteHelp[hidden]{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
+#tvApp.tvCinema .tvFooter{display:none!important}
+@media(max-width:650px){
+ #tvApp .tvRemoteBar{max-width:calc(100vw - 16px);padding:8px;gap:6px}
+ #tvApp .tvRemoteBar #tvFullscreen{min-width:0;flex:1 1 130px}
+}
