@@ -49,7 +49,7 @@ async function request(method,key,query={},body='',extraHeaders={}){
 const xmlEscape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
 const xmlTag=(txt,name)=>{const x=txt.match(new RegExp('<(?:\\w+:)?'+name+'(?:\\s[^>]*)?>([\\s\\S]*?)<\\/(?:\\w+:)?'+name+'>','i'));return x?x[1]:null;};
 async function initiate(){
- const x=await request('POST',VIDEO,{uploads:''},'');
+ const x=await request('POST',VIDEO,{uploads:''},'',{'content-type':'video/mp4'});
  const uploadId=xmlTag(x.text,'UploadId');
  if(!uploadId)throw Error('Cloud-Speicher hat keine Upload-ID geliefert.');return uploadId;
 }
