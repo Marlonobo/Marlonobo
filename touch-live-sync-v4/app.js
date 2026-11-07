@@ -359,7 +359,7 @@ function refreshAdminVideoControls(){
  const music=state.welcomeMusic||{};
  renderSpotifyAdminPreview();
  const note=el('spotifyStatus');
- if(note&&document.activeElement?.id!=='spotifyInput')note.textContent=music.id?(music.on?'♫ Willkommensmusik eingeschaltet. Falls sie nicht hörbar ist, im Spotify-Player einmal ▶ drücken.':'♫ Spotify gespeichert, Musik AUS – bei Bedarf freiwillig einschalten.'):'Noch kein Spotify-Link gespeichert – Willkommensfolie ohne Musik.';
+ if(note&&document.activeElement?.id!=='spotifyInput')note.textContent=music.id?(music.on?'♫ Spotify-Player auf der Willkommensfolie sichtbar. Ganze Titel über die Spotify-App auf PC/LG und Spotify Connect abspielen; eingebettete Player können auf 30 Sekunden begrenzt sein.':'♫ Spotify gespeichert, Musik AUS – bei Bedarf freiwillig einschalten.'):'Noch kein Spotify-Link gespeichert – Willkommensfolie ohne Musik.';
  const spotifyInput=el('spotifyInput');if(spotifyInput&&document.activeElement!==spotifyInput&&spotifyInput.value!==(music.url||''))spotifyInput.value=music.url||'';
  const titleInput=el('videoTitleInput');if(titleInput&&document.activeElement!==titleInput&&state.videoTitle&&titleInput.value!==state.videoTitle)titleInput.value=state.videoTitle;
  const n=el('videoNow');if(n)n.textContent='Aktueller Film: '+(state.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation')+' · '+(state.video.type==='none'?'noch keine Quelle':state.video.type==='youtube'?'YouTube':state.video.type==='drive'?'Google Drive':state.video.type==='icloud'?'iCloud Drive':state.video.storage==='s3'?'Cloud-MP4':'MP4-Link');
@@ -624,8 +624,12 @@ function tvView(){
   tvControlsVisible(true);
  };
  el('tvSpotifyPlay').onclick=()=>{
-  if(spotifyController){try{spotifyController.play();tvControlsVisible(true);}catch{tvControlsVisible(true);}}
-  else{const frame=el('tvSpotifyDock')?.querySelector('iframe');if(frame){frame.focus();tvControlsVisible(true);}else tvControlsVisible(true);}
+  const frame=el('tvSpotifyDock')?.querySelector('iframe');
+  if(frame){
+   try{frame.focus({preventScroll:true});}catch{frame.focus();}
+   tvFullscreenHint('Spotify: Starte den vollständigen Song direkt mit ▶ im Spotify-Player. Wenn nur eine 30-Sekunden-Vorschau hörbar ist, öffne die Spotify-App auf dem LG-TV und wähle ihn über Spotify Connect.');
+  }else tvFullscreenHint('Spotify-Player wird vorbereitet. Für ganze Songs auf dem LG-TV nutze Spotify Connect.');
+  tvControlsVisible(true);
  };
  el('tvHideControls').onclick=()=>tvControlsVisible(false);
  el('tvCloudOpen').onclick=()=>{if(state?.video?.type==='icloud'){const url=state.video.shareUrl||state.video.url;if(url)window.open(url,'_blank','noopener');}};
@@ -674,7 +678,8 @@ function syncWelcomeMusic(){
  const uri='spotify:'+music.type+':'+music.id;
  dock.hidden=false;
  if(spotifyUri===uri){
-  if(!spotifyWanted){spotifyWanted=true;try{spotifyController?.play();}catch{}}
+  // Do not invoke Spotify IFrame API play() repeatedly: it can fall back to 30-second previews.
+  if(!spotifyWanted)spotifyWanted=true;
   return;
  }
  if(spotifyController){try{spotifyController.destroy();}catch{}spotifyController=null;}
@@ -687,7 +692,8 @@ function syncWelcomeMusic(){
   if(spotifyApi){
    spotifyApi.createController(slot,{uri,width:'100%',height:152},ctrl=>{
     spotifyController=ctrl;
-    try{if(state?.phase==='welcome'&&state?.welcomeMusic?.on)ctrl.play();}catch{}
+    // Native embed ▶ or Spotify Connect (PC/LG Spotify app) gives the full-track experience.
+    // Programmatic ctrl.play() can produce a short preview, so do not auto-skip/play here.
    });
   }else{
    const frame=document.createElement('iframe');
