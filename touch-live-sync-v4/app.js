@@ -488,7 +488,7 @@ async function uploadFilm(){
  finally{btn.disabled=!cloudUploadReady;}
 }
 function secText(n){n=Math.max(0,Math.floor(Number(n)||0));return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');}
-let tvRemoteAutoHide=null,tvSoundBlocked=false,tvSoundActivated=false,tvAutoCinemaTried=false;
+let tvRemoteAutoHide=null,tvSoundBlocked=false,tvSoundActivated=false,tvAutoCinemaTried=false,tvWelcomeDismissed=false,tvLastDisplayPhase='';
 const lgFullscreenActive=()=>!!(document.fullscreenElement||document.webkitFullscreenElement||document.msFullscreenElement);
 function tvRemoteButtons(){
  const bar=el('tvRemoteBar');
@@ -590,7 +590,7 @@ function tvRemoteBack(){
  }
  const bar=el('tvRemoteBar');
  if(bar?.classList.contains('tvRemoteHidden')){
-  tvControlsVisible(true);tvFocusControl('tvFullscreen');return;
+  tvWelcomeDismissed=false;tvControlsVisible(true);tvFocusControl('tvFullscreen');return;
  }
  // Back with menu already visible may exit native fullscreen, but never
  // abandons the presentation or opens a different website.
@@ -615,7 +615,7 @@ function tvRemoteKeydown(e){
  }
  const keys=['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'];
  if(keys.includes(e.key)||[37,38,39,40].includes(code)){
-  e.preventDefault();if(bar.classList.contains('tvRemoteHidden'))tvControlsVisible(true);
+  e.preventDefault();if(bar.classList.contains('tvRemoteHidden')){tvWelcomeDismissed=false;tvControlsVisible(true);}
   const targets=tvRemoteButtons();if(!targets.length)return;
   let n=targets.indexOf(document.activeElement);
   // Direct D-pad navigation; never activate LG's simulated pointer.
@@ -666,7 +666,7 @@ function tvView(){
   }else tvFullscreenHint('Spotify-Player wird vorbereitet. Für ganze Songs auf dem LG-TV nutze Spotify Connect.');
   tvControlsVisible(true);
  };
- el('tvHideControls').onclick=()=>tvControlsVisible(false);
+ el('tvHideControls').onclick=()=>{tvWelcomeDismissed=true;tvControlsVisible(false);};
  el('tvCloudOpen').onclick=()=>{if(state?.video?.type==='icloud'){const url=state.video.shareUrl||state.video.url;if(url)window.open(url,'_blank','noopener');}};
  el('tvCaptionSync').onclick=()=>{
   if(state?.video?.type==='drive'&&el('cloudFrame')?.style.display==='block'){
@@ -755,7 +755,9 @@ function syncWelcomeMusic(){
 function tvDisplay(){
  if(!state||role!=='tv'||!el('tvScene'))return;
  const phase=state.phase;const videoMode=phase==='film';
- tvControlsVisible(phase==='welcome');
+ if(phase==='welcome'&&tvLastDisplayPhase!=='welcome')tvWelcomeDismissed=false;
+ tvLastDisplayPhase=phase;
+ tvControlsVisible(phase==='welcome'&&!tvWelcomeDismissed);
  const filmUnlock=el('tvFilmUnlock');
  if(filmUnlock)filmUnlock.hidden=!(phase==='film'&&state.playing&&(tvSoundBlocked||tvAutoplayMuted));
  const layer=el('videoLayer');if(layer)layer.style.display=videoMode&&state.video.type!=='none'?'block':'none';
