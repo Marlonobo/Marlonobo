@@ -239,7 +239,26 @@ async function handler(req,res){
   s=Object.assign(def(),keep);users=new Map();feedback=[];saveUsers();
  }
  else if(cmd==='videoYoutube'){const id=youtubeId(b.url);if(!id)return send(res,400,{error:'Kein gueltiger YouTube-Link'});s.video={type:'youtube',id,url:'https://www.youtube.com/watch?v='+id};}
- else if(cmd==='videoLink'){try{const link=new URL(b.url);if(link.protocol!=='https:')throw Error();s.video={type:'url',url:link.toString(),id:null};}catch{return send(res,400,{error:'Bitte HTTPS-MP4-Link eingeben.'});}}
+ else if(cmd==='videoCloud'){
+  const provider=String(b.provider||'').toLowerCase();
+  let parsed;try{parsed=new URL(String(b.url||'').trim());}catch{return send(res,400,{error:'Bitte einen vollständigen HTTPS-Freigabelink einfügen.'});}
+  if(parsed.protocol!=='https:')return send(res,400,{error:'Cloud-Freigaben müssen HTTPS verwenden.'});
+  const host=parsed.hostname.toLowerCase();
+  if(provider==='drive'){
+   if(!['drive.google.com','docs.google.com'].includes(host))return send(res,400,{error:'Bitte einen Google-Drive-Freigabelink verwenden.'});
+   const sections=parsed.pathname.split('/').filter(Boolean);
+   const id=(sections[0]==='file'&&sections[1]==='d'?sections[2]:sections[0]==='d'?sections[1]:parsed.searchParams.get('id'))||'';
+   if(!/^[a-zA-Z0-9_-]{12,128}$/.test(id))return send(res,400,{error:'Google-Drive-Datei-ID nicht erkannt. Öffne die MP4 in Drive und kopiere ihren Freigabelink.'});
+   const resourceKey=parsed.searchParams.get('resourcekey');
+   let preview='https://drive.google.com/file/d/'+id+'/preview';
+   if(resourceKey&&/^[a-zA-Z0-9_-]{1,128}$/.test(resourceKey))preview+='?resourcekey='+encodeURIComponent(resourceKey);
+   s.video={type:'drive',id,url:preview,shareUrl:parsed.toString()};
+  }else if(provider==='icloud'){
+   if(!['icloud.com','www.icloud.com','share.icloud.com'].includes(host))return send(res,400,{error:'Bitte einen echten öffentlichen iCloud-Freigabelink einfügen.'});
+   s.video={type:'icloud',id:null,url:parsed.toString(),shareUrl:parsed.toString()};
+  }else return send(res,400,{error:'Bitte Google Drive oder iCloud wählen.'});
+ }
+ else if(cmd==='videoLink'){try{const link=new URL(b.url);if(link.protocol!=='https:')throw Error();if(['drive.google.com','docs.google.com','icloud.com','www.icloud.com','share.icloud.com'].includes(link.hostname.toLowerCase()))return send(res,400,{error:'Das ist ein Cloud-Freigabelink, keine direkte MP4-Adresse. Verwende oben Google Drive / iCloud.'});s.video={type:'url',url:link.toString(),id:null};}catch{return send(res,400,{error:'Bitte einen direkt abspielbaren HTTPS-MP4-Link eingeben.'});}}
  else if(cmd==='videoUpload'){if(!fs.existsSync(VIDEO_FILE))return send(res,404,{error:'Noch kein Video hochgeladen'});s.video={type:'upload',url:'/media/video',id:null};}
  else if(cmd==='videoStored'){if(!S3.enabled||!cloudManifest?.video)return send(res,404,{error:'Noch kein dauerhaft gespeichertes Video vorhanden.'});s.video={type:'url',url:'/api/storage/video',id:null,storage:'s3'};}
  else if(cmd==='captionOffset'){const v=Number(b.value);if(!Number.isFinite(v)||Math.abs(v)>3600)return send(res,400,{error:'Offset ungueltig'});s.subtitleOffset=v;}
