@@ -4,7 +4,7 @@
 const el=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','"':'&quot;',"'":'&#39;'}[c]));
 const ORIGIN=location.origin+location.pathname, app=el('app');
 let role='home',state=null,renderSignature='',userId='',userName='',adminKey=sessionStorage.getItem('touch_admin_key')||'',remoteKey=sessionStorage.getItem('touch_cohost_key')||'',tvKey=sessionStorage.getItem('touch_tv_key')||'';
-let adminInfo=null,videoEl=null,ytPlayer=null,mediaType='',youtubeReady=false,playerReady=false,subtitles=[],lastFilmPhase='',lastRevision=-1,gesturePointers=new Map(),gestureTransform={x:0,y:0,scale:1,rotate:0},gestureSnapshot=null;
+let adminInfo=null,videoEl=null,ytPlayer=null,mediaType='',youtubeReady=false,playerReady=false,subtitles=[],lastFilmPhase='',lastRevision=-1,lastCaptionRevision=-1,gesturePointers=new Map(),gestureTransform={x:0,y:0,scale:1,rotate:0},gestureSnapshot=null;
 const CH=['Geschichte der Touchscreens','Wie Touchscreens funktionieren','Fünf Touchscreen-Arten','Multitouch und Display','Touchscreens im Alltag','Probleme und Zukunft','Fazit und Abschlussquiz'];
 const times=['04:28','06:29','10:28','12:40','16:12','20:18','24:39','26:42','30:33','32:42','35:32','39:01','44:22','45:37','46:46','47:56','49:06'];
 async function api(url,method='GET',body,key=''){const opt={method,headers:{}};if(key)opt.headers['x-'+(role==='tv'?'tv':role==='remote'?'cohost':'admin')+'-key']=key;if(body!==undefined){opt.headers['Content-Type']='application/json';opt.body=JSON.stringify(body);}const r=await fetch(url,opt);let data={};try{data=await r.json();}catch{}if(!r.ok)throw Error(data.error||'Fehler '+r.status);return data;}
@@ -18,12 +18,32 @@ function podium(){const people=(state?.ranking||[]),rank=n=>people[n-1]||null;
  const card=(n)=>{const u=rank(n);return '<div class="podiumCard podium-rank-'+n+'"><div class="medalIcon">'+(n===1?'👑':n===2?'🥈':'🥉')+'</div><div class="podiumAvatar">'+(u?esc(u.name.slice(0,1).toUpperCase()):'?')+'</div><div class="podiumName">'+(u?esc(u.name):'Noch offen')+'</div><div class="podiumScore">'+(u?u.score+' Punkte':'—')+'</div><div class="podiumBase">'+n+'<span>PLATZ</span></div></div>';};
  return '<section class="podiumWrap" aria-label="Die besten drei Plätze"><div class="podiumCountdown" aria-hidden="true"><span>3</span><span>2</span><span>1</span></div><div class="podiumStage">'+card(2)+card(1)+card(3)+'</div></section>';}
 function ranking(){const rows=(state?.ranking||[]).map((x,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(x.name)+(x.role==='teacher'?' · Lehrer':'')+'</td><td>'+x.score+'</td></tr>').join('');return '<table class="rank"><thead><tr><th>Platz</th><th>Name</th><th>Punkte</th></tr></thead><tbody>'+(rows||'<tr><td colspan="3">Noch keine Ergebnisse vorhanden.</td></tr>')+'</tbody></table>';}
+function requestParticipantFullscreen(){
+ try{
+  const active=document.activeElement;if(active&&typeof active.blur==='function')active.blur();
+  const root=document.documentElement;
+  if(!document.fullscreenElement){
+    const enter=root.requestFullscreen||root.webkitRequestFullscreen;
+    if(enter){const result=enter.call(root);if(result&&typeof result.catch==='function')result.catch(()=>{});}
+  }
+ }catch{}
+}
+function participantMode(){
+ const on=(role==='join'||role==='teacher')&&!!userName;
+ document.body.classList.toggle('touchStudent',on);
+ if(!on)return;
+ const main=document.querySelector('main.wrap');if(!main||el('participantFullscreen'))return;
+ const bar=document.createElement('div');bar.className='participantFullBar';
+ bar.innerHTML='<span class="small">TOUCH LIVE · LIVE-QUIZ</span><button id="participantFullscreen" class="participantFullBtn">⛶ Vollbild öffnen</button>';
+ main.prepend(bar);
+ el('participantFullscreen').onclick=()=>requestParticipantFullscreen();
+}
 function userPage(){
  const isTeacher=role==='teacher',userRole=isTeacher?'teacher':'student';
  const idKey='touch_'+userRole+'_id',nameKey='touch_'+userRole+'_name';
  userId=localStorage.getItem(idKey)||'';userName=localStorage.getItem(nameKey)||'';
- if(!userId||!userName){wrap(page(isTeacher?'Lehreransicht':'Schüleransicht',isTeacher?'LEHRER · MITMACHEN UND NOTIZEN':'SCHÜLER · LIVE QUIZ','Hier startet die gemeinsame Touchscreen-Präsentation.')+'<div class="card" style="max-width:550px"><h2>Willkommen bei TOUCH LIVE</h2><p>Gib deinen Anzeigenamen ein. Es ist kein Konto nötig.</p><form id="joinForm"><label>Dein Vorname oder Spitzname</label><input id="joinName" maxlength="26" required placeholder="Dein Name" autocomplete="nickname"><p></p><button class="primary">Teilnehmen</button></form></div>');el('joinForm').onsubmit=async e=>{e.preventDefault();try{const name=el('joinName').value.trim();const x=await api('/api/join','POST',{id:userId,name,role:userRole});localStorage.setItem(idKey,x.id);localStorage.setItem(nameKey,name);renderSignature='';await poll();}catch(err){alert(err.message);}};return;}
- if(!state){wrap(waiting('Verbindung wird hergestellt …','Die Präsentation wird geladen.'));return;}
+ if(!userId||!userName){wrap(page(isTeacher?'Lehreransicht':'Schüleransicht',isTeacher?'LEHRER · MITMACHEN UND NOTIZEN':'SCHÜLER · LIVE QUIZ','Hier startet die gemeinsame Touchscreen-Präsentation.')+'<div class="card" style="max-width:550px"><h2>Willkommen bei TOUCH LIVE</h2><p>Gib deinen Anzeigenamen ein. Es ist kein Konto nötig.</p><form id="joinForm"><label>Dein Vorname oder Spitzname</label><input id="joinName" maxlength="26" required placeholder="Dein Name" autocomplete="nickname"><p></p><button class="primary">Teilnehmen</button></form></div>');el('joinForm').onsubmit=async e=>{e.preventDefault();requestParticipantFullscreen();try{const name=el('joinName').value.trim();const x=await api('/api/join','POST',{id:userId,name,role:userRole});localStorage.setItem(idKey,x.id);localStorage.setItem(nameKey,name);renderSignature='';await poll();}catch(err){alert(err.message);}};return;}
+ if(!state){wrap(waiting('Verbindung wird hergestellt …','Die Präsentation wird geladen.'));participantMode();return;}
  const q=state.quiz,p=state.player||{},answered=q&&p.choice!==null&&p.choice!==undefined;
  let body='';
  if(state.phase==='welcome')body=waiting('Willkommen, '+esc(userName)+'!','Wir beginnen gleich. Bitte schaut auf den Beamer.','✦');
@@ -236,6 +256,7 @@ function router(){const h=location.hash.slice(1).split('?'),query=new URLSearchP
  if(role==='admin'&&query.get('key')){adminKey=query.get('key');sessionStorage.setItem('touch_admin_key',adminKey);history.replaceState({},'',location.pathname+'#admin');}
  if(role==='tv'&&query.get('key')){tvKey=query.get('key');sessionStorage.setItem('touch_tv_key',tvKey);history.replaceState({},'',location.pathname+'#tv');}
  if(role==='remote'){location.replace('/host'+(remoteKey?'?key='+encodeURIComponent(remoteKey):''));return;}
+ if(role!=='join'&&role!=='teacher')document.body.classList.remove('touchStudent');
  renderSignature='';state=null;mediaType='';if(role==='admin'){showAdmin();loadAdminInfo();}else if(role==='remote')remotePage();else if(role==='tv')tvView();else if(role==='handout')handout();else if(role==='join'||role==='teacher')userPage();else home();poll();}
 async function loadAdminInfo(){if(!adminKey)return;try{adminInfo=await api('/api/admin-info','GET',undefined,adminKey);if(role==='admin')showAdmin();}catch(e){if(role==='admin'){const x=el('adminStatus');if(x)x.textContent='Admin-Verbindung fehlgeschlagen: '+e.message;}}}
 async function poll(force=false){
@@ -244,7 +265,7 @@ async function poll(force=false){
  const rp=role==='join'?'student':role==='teacher'?'teacher':role;
  const id=(rp==='student'||rp==='teacher')?(localStorage.getItem('touch_'+rp+'_id')||''):'';
  const next=await api('/api/state'+(id?'?id='+encodeURIComponent(id):''));const old=state;state=next;
- if(role==='join'||role==='teacher'){const player=state.player||{};const q=state.quiz;const sig=[role,state.phase,q?.id||'',q?.accepting||false,player.choice,player.score,state.revision,state.participants,JSON.stringify(player.jokers||{}),(player.hide||[]).join(),player.hint||'',JSON.stringify(state.zoomResult||'')].join('|');if(force||renderSignature!==sig){renderSignature=sig;userPage();}else if(q&&el('liveTimer'))el('liveTimer').textContent=q.remaining+' s';}
+ if(role==='join'||role==='teacher'){const player=state.player||{};const q=state.quiz;const sig=[role,state.phase,q?.id||'',q?.accepting||false,player.choice,player.score,state.revision,state.participants,JSON.stringify(player.jokers||{}),(player.hide||[]).join(),player.hint||'',JSON.stringify(state.zoomResult||'')].join('|');if(force||renderSignature!==sig){renderSignature=sig;userPage();participantMode();}else if(q&&el('liveTimer'))el('liveTimer').textContent=q.remaining+' s';}
  if(role==='tv'){tvDisplay();}
  if(role==='remote'){const status=el('remoteStatus');if(status)status.textContent='Live: '+next.phase.toUpperCase()+' · '+secText(next.time)+' · '+next.participants+' Teilnehmende · '+(next.playing?'Video läuft':'Video pausiert');}
  if(role==='admin'){if(el('adminStatus'))el('adminStatus').textContent='Status: '+state.phase.toUpperCase()+' · Filmzeit: '+secText(state.time)+' · '+state.participants+' Teilnehmende · '+(state.video.type==='none'?'kein Film':state.video.type);if(el('adminParticipants'))el('adminParticipants').textContent=state.participants+' Teilnehmende';if(el('adminTime'))el('adminTime').textContent=secText(state.time);if(el('adminRanking')&&adminInfo){el('adminRanking').textContent='Live-Regie aktiv. Für vollständige Teilnehmerantworten nutze den Ergebnis-Modus.';}if(el('adminFeedback'))el('adminFeedback').textContent=String(state.feedbackCount);}
