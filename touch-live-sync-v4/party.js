@@ -10,7 +10,8 @@ if(fromUrl){sessionStorage.setItem(keyStore,key);history.replaceState({},'',loca
 let state=null,participantId=localStorage.getItem(idStore)||'',participantName=localStorage.getItem(nameStore)||'';
 let screenSignature='',quizSignature='',sourceRef='',activated=false,ytPlayer=null,ytReady=false,ytVideoId='',ytApiLoading=false,localRevision=-1,lastCaptionRevision=-1;
 let easterInstance=null,cloudFallback=false;
-let partyViewMode=localStorage.getItem('touch_party_view_mode')==='side'?'side':'auto';
+const partyModeKey='touch_party_view_mode_'+(host?'host':'viewer');
+let partyViewMode=localStorage.getItem(partyModeKey)==='auto'?'auto':localStorage.getItem(partyModeKey)==='side'?'side':(host?'side':'auto');
 let lastFocusKey='',lastFocusTransition=0;
 const onlineVideo=()=>state?.video?.type==='local'?(state.remoteVideo||{type:'none',id:null,url:null}):(state?.video||{type:'none',id:null,url:null});
 function updatePartyViewMode(){
@@ -50,7 +51,7 @@ function setupPartyViewMode(){
  const toggle=$('partyModeToggle');
  if(toggle)toggle.onclick=()=>{
   partyViewMode=partyViewMode==='auto'?'side':'auto';
-  localStorage.setItem('touch_party_view_mode',partyViewMode);
+  localStorage.setItem(partyModeKey,partyViewMode);
   lastFocusKey='';lastFocusTransition++;
   if(state)updatePartyViewMode();
  };
@@ -63,8 +64,15 @@ function setupPartyViewMode(){
  };
 }
 
-let captions=[],gesturePoints=new Map(),gestureState={x:0,y:0,scale:1,rotation:0},gestureOrigin=null;
+let captions=[],watchCaptionsEnabled=localStorage.getItem('touch_live_watch_cc')!=='off',gesturePoints=new Map(),gestureState={x:0,y:0,scale:1,rotation:0},gestureOrigin=null;
 const video=$('partyVideo'),container=$('partyYoutube'),screen=$('partyScene'),capt=$('partyCaption'),playBtn=$('partyEnable');
+function updateCaptionPreference(){
+ const toggle=$('partyCaptionToggle');
+ if(toggle){toggle.textContent=watchCaptionsEnabled?'CC Untertitel AUS':'CC Untertitel AN';toggle.setAttribute('aria-pressed',String(watchCaptionsEnabled));}
+ if(!watchCaptionsEnabled)capt.hidden=true;
+ if(!watchCaptionsEnabled&&ytPlayer&&ytReady){try{ytPlayer.setOption?.('captions','track',{});}catch{}}
+}
+
 video.addEventListener('error',()=>{
  if(state?.video?.type!=='drive'||video.getAttribute('src')!==state.video.url)return;
  cloudFallback=true;const frame=$('partyDrivePreview');if(frame){frame.src=state.video.previewUrl||state.video.shareUrl;frame.hidden=false;}
@@ -139,8 +147,8 @@ function createYt(){
  if(!window.YT?.Player||!ytVideoId||!$('partyYoutube'))return;
  const slot=document.createElement('div');slot.id='partyYTEmbed';container.replaceChildren(slot);
  try{
- ytPlayer=new window.YT.Player('partyYTEmbed',{videoId:ytVideoId,playerVars:{autoplay:0,playsinline:1,controls:0,rel:0,enablejsapi:1,origin:location.origin},
- events:{onReady:()=>{ytReady=true;syncMovie(true);},onError:e=>showError('YouTube-Video kann hier nicht eingebettet werden (Fehler '+e.data+'). Nutze ein einbettbares Video oder MP4.'),onStateChange:e=>{if(host&&e.data===0&&state?.phase==='film')sendHostTick(true);}}});
+ ytPlayer=new window.YT.Player('partyYTEmbed',{videoId:ytVideoId,playerVars:{autoplay:0,playsinline:1,controls:0,rel:0,cc_load_policy:0,enablejsapi:1,origin:location.origin},
+ events:{onReady:()=>{ytReady=true;updateCaptionPreference();syncMovie(true);},onError:e=>showError('YouTube-Video kann hier nicht eingebettet werden (Fehler '+e.data+'). Nutze ein einbettbares Video oder MP4.'),onStateChange:e=>{if(host&&e.data===0&&state?.phase==='film')sendHostTick(true);}}});
  }catch(e){showError('YouTube konnte nicht geöffnet werden: '+e.message);}
 }
 function syncMovie(force=false){
@@ -160,8 +168,15 @@ function syncMovie(force=false){
  const serverPos=Number(state.time)||0,change=force||localRevision!==state.revision;
  if(v.type==='youtube'){
   if(!ytPlayer||!ytReady)return;
-  try{const local=Number(ytPlayer.getCurrentTime())||0;if(change||Math.abs(local-serverPos)>(host?8:3.5))ytPlayer.seekTo(serverPos,true);
-    if(state.playing){if(!activated)ytPlayer.mute();else ytPlayer.unMute();ytPlayer.playVideo();}else ytPlayer.pauseVideo();
+  try{const local=Number(ytPlayer.getCurrentTime())||0,drift=Math.abs(local-serverPos);
+   // Do not seek on every quiz/state revision if the position is already close.
+   if((change&&drift>2.8)||drift>(host?8:3.5))ytPlayer.seekTo(serverPos,true);
+   const ytState=Number(ytPlayer.getPlayerState());
+   if(state.playing){
+    if(!activated)ytPlayer.mute();else ytPlayer.unMute();
+    // BUFFERING=3: repeated playVideo calls would create a stutter loop.
+    if(ytState!==1&&ytState!==3)ytPlayer.playVideo();
+   }else if(ytState===1||ytState===3)ytPlayer.pauseVideo();
   }catch{}
  }else if(v.type==='icloud'||(v.type==='drive'&&cloudFallback)){
   // No readable video clock in the provider viewer; never send fake timestamps.
@@ -181,7 +196,7 @@ function vttParse(txt){
 }
 async function loadCaptions(){try{const r=await fetch('/captions.vtt',{cache:'no-store'});captions=r.ok?vttParse(await r.text()):[];}catch{captions=[];}}
 function updateCaptions(){
- if(!state?.subtitles||!captions.length){capt.hidden=true;return;}
+ if(!state?.subtitles||!watchCaptionsEnabled||!captions.length){capt.hidden=true;return;}
  const time=playerTime();if(time===null){capt.hidden=true;return;}
  const x=captions.find(c=>time-(state.subtitleOffset||0)>=c.start&&time-(state.subtitleOffset||0)<=c.end);
  capt.textContent=x?.text||'';capt.hidden=!x;
@@ -215,7 +230,7 @@ function interaction(){
  if(phase==='gesture'){
   part.innerHTML=gestureHtml();bindGesture();return;
  }
- if(phase==='zoom'&&q){
+ if(q?.type==='zoom'&&(phase==='zoom'||phase==='film')){
   part.innerHTML='<div class="partyQuestion"><div class="between"><span class="chip">🔎 MULTITOUCH · EASTER-EGG-SUCHE</span><span class="small">'+(q.foundCount||0)+' gefunden</span></div><div id="partyEaster"></div><p class="small">'+(participantId?'Wende die Touchscreen-Gesten aus Kapitel 4 an: zwei Finger zum Zoomen, ein Finger zum Verschieben und dann gezielt tippen. Punkte für den Fund werden erst nach dem Abschlussquiz gezeigt.':'Bitte oben mit deinem Namen teilnehmen, damit dein Fund zählt.')+'</p></div>';
   easterInstance=window.EasterGame?.mount($('partyEaster'),{remaining:q.remaining,found:!!p?.zoomFound,disabled:!q.accepting,onFind:async({x,y,zoom})=>{if(!participantId)throw Error('Bitte oben zuerst deinen Namen eingeben.');const r=await api('/api/easter/find',{id:participantId,x,y,zoom});setTimeout(()=>{quizSignature='';poll();},1500);return r;}});
   return;
@@ -240,8 +255,8 @@ async function sendHostTick(ended=false){
  const t=playerTime();if(t===null)return;
  tickInFlight=true;
  try{
-  const actuallyPlaying=onlineVideo().type==='youtube'?!!ytPlayer&&ytReady&&ytPlayer.getPlayerState()===1:!video.paused;
-  await api('/api/host/tick',{time:t,playing:ended?false:actuallyPlaying,ended},true);
+  // YouTube buffering is not an instruction to pause all devices.
+  await api('/api/host/tick',{time:t,playing:ended?false:state.playing!==false,ended},true);
  }catch(e){if(ended)showError(e.message);}finally{tickInFlight=false;}
 }
 function connectButtons(){
@@ -252,6 +267,13 @@ function connectButtons(){
   catch(e){playBtn.hidden=false;showError('Ton oder Autoplay wurde vom Browser blockiert. Tippe erneut auf „Film mit Ton aktivieren“.');}
   if(host&&state?.phase==='film'&&!state.playing&&state.video?.type!=='local'){await hostCommand('play');}
  };
+ const captionsBtn=$('partyCaptionToggle');
+ if(captionsBtn)captionsBtn.onclick=()=>{
+  watchCaptionsEnabled=!watchCaptionsEnabled;
+  localStorage.setItem('touch_live_watch_cc',watchCaptionsEnabled?'on':'off');
+  updateCaptionPreference();updateCaptions();
+ };
+ updateCaptionPreference();
  $('partyFullscreen').onclick=()=>{$('partyScreen').requestFullscreen?.().catch(()=>{showError('Vollbild wurde vom Browser nicht erlaubt.');});};
  video.addEventListener('ended',()=>{if(host&&state?.phase==='film')sendHostTick(true);});
  if(host){
@@ -264,6 +286,12 @@ function connectButtons(){
    await hostCommand(remote?(yt?'remoteVideoYoutube':'remoteVideoLink'):(yt?'videoYoutube':'videoLink'),{url:link});
   };
  }
+ const quizOnly=$('partyHostCopyQuiz');
+ if(quizOnly)quizOnly.onclick=()=>{
+  const link=location.origin+'/join';
+  if(navigator.clipboard?.writeText)navigator.clipboard.writeText(link).then(()=>{quizOnly.textContent='✓ Quiz-Link kopiert';}).catch(()=>prompt('Diesen Quiz-Link teilen:',link));
+  else prompt('Diesen Quiz-Link teilen:',link);
+ };
  const copyFriend=$('partyCopyFriend');if(copyFriend)copyFriend.onclick=()=>{const url=location.origin+'/watch';if(navigator.clipboard?.writeText)navigator.clipboard.writeText(url).then(()=>{copyFriend.textContent='✓ Zuschauerlink kopiert';}).catch(()=>prompt('Diesen Link verschicken:',url));else prompt('Diesen Link verschicken:',url);};
  $('partyJoinForm').onsubmit=async e=>{
   e.preventDefault();
