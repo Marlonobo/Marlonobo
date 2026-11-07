@@ -93,7 +93,10 @@ function renderPlaylists(){
  });
  list.querySelectorAll('[data-sp-play]').forEach(btn=>btn.onclick=async()=>{
   const id=btn.dataset.spPlay;
-  try{await startPlaylist('spotify:playlist:'+id);status('✓ Spotify-Wiedergabe auf deinem gewählten Gerät gestartet.');}
+  try{
+   const result=await startPlaylist('spotify:playlist:'+id);
+   status(result.configured?'✓ Spotify gestartet – derselbe Titel wird wiederholt, bis du stoppst.':'Spotify läuft, aber die Wiederholung konnte nicht eingestellt werden: '+result.reason,!result.configured);
+  }
   catch(e){status('Wiedergabe nicht gestartet: '+e.message,true);}
  });
 }
@@ -122,7 +125,10 @@ async function searchMusic(){
   });
   box.querySelectorAll('[data-search-play]').forEach(b=>b.onclick=async()=>{
    const x=searchResults[Number(b.dataset.searchPlay)];if(!x)return;
-   try{await startPlaylist('spotify:'+x._kind+':'+x.id);status('♫ '+x.name+' läuft auf deinem ausgewählten Spotify-Gerät.');}
+   try{
+    const result=await startPlaylist('spotify:'+x._kind+':'+x.id);
+    status(result.configured?'♫ '+x.name+' – Wiederholung: '+(result.repeat==='track'?'derselbe Titel':'ganze Playlist')+'.':'♫ '+x.name+' gestartet, aber Wiederholung nicht bestätigt: '+result.reason,!result.configured);
+   }
    catch(e){status(e.message,true);}
   });
   status(searchResults.length+' Suchergebnisse gefunden.');
