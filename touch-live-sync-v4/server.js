@@ -14,9 +14,29 @@ if(!process.env.TV_KEY)console.log('TOUCH LIVE TV_KEY: '+TV);
 fs.mkdirSync(DIR,{recursive:true});
 const USERS_FILE=path.join(DIR,'users.json'),STATE_FILE=path.join(DIR,'live-state.json'), VIDEO_FILE=path.join(DIR,'touchscreen.mp4'), SUB_FILE=path.join(DIR,'untertitel.vtt'), QUESTIONS_FILE=path.join(DIR,'custom-questions.json');
 try{const saved=JSON.parse(fs.readFileSync(QUESTIONS_FILE,'utf8'));if(Array.isArray(saved)&&saved.length>=1&&saved.length<=50)Q.splice(0,Q.length,...saved);}catch{}
+
+// One-time migration of the user-supplied chapter timestamps. Existing edited
+// question text/answers survive. Future manual changes survive later restarts.
+const FILM_CUES_20261107={"Q1":[268,317],"Q2":[376,424],"K2Q1":[602,652],"K2Q2":[722,767],"K3Q1":[921,966],"K3Q2":[1154,1199],"K4Z":[1338,1400],"K4Q1":[1402,1451],"K4Q2":[1513,1557],"K5Q1":[1732,1778],"K5Q2":[1850,1899],"K6Q1":[2007,2054],"K6Q2":[2203,2252],"K7Q1":[2512,2557],"K7Q2":[2571,2612],"K7Q3":[2626,2668],"K7Q4":[2681,2723],"K7Q5":[2736,2781]};
+const FILM_CUES_MARKER=path.join(DIR,'film-cues-2026-11-07-v1.applied');
+let migratedFilmCues=false;
+if(!fs.existsSync(FILM_CUES_MARKER)){
+ for(const q of Q){const times=FILM_CUES_20261107[q.id];if(!times)continue;
+  q.open=times[0];q.close=times[1];
+  if(q.type==='zoom')q.duration=times[1]-times[0];
+ }
+ try{
+  if(fs.existsSync(QUESTIONS_FILE))fs.writeFileSync(QUESTIONS_FILE,JSON.stringify(Q,null,2),'utf8');
+  fs.writeFileSync(FILM_CUES_MARKER,JSON.stringify({appliedAt:new Date().toISOString(),count:Object.keys(FILM_CUES_20261107).length}), 'utf8');
+  migratedFilmCues=true;
+ }catch(e){console.error('Film-Zeitmarken nicht dauerhaft gesichert:',e.message);}
+}
+
 const def=()=>({phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,videoTitle:'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{url:'',type:'',id:'',on:false},soundtrack:{pause:true,results:true,volume:.25},captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,resultsAt:0,clockSource:'tv',lastHostTick:0,revision:0});
 let s=def(), users=new Map(), upload=null,feedback=[],cloudManifest=null;
 try{s=Object.assign(def(),JSON.parse(fs.readFileSync(STATE_FILE,'utf8')));}catch{}
+if(migratedFilmCues){s.quizOffset=0;try{fs.writeFileSync(STATE_FILE,JSON.stringify(s),'utf8');}catch(e){console.error('Quiz-Offset nicht gesichert:',e.message);}}
+
 try{users=new Map(Object.entries(JSON.parse(fs.readFileSync(USERS_FILE,'utf8'))));}catch{}
 let usersTimer=null;function saveUsers(){clearTimeout(usersTimer);usersTimer=setTimeout(()=>fsp.writeFile(USERS_FILE,JSON.stringify(Object.fromEntries(users))).catch(console.error),400);}
 const ZOOM=()=>Q.find(q=>q.type==='zoom');
