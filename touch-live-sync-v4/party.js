@@ -17,7 +17,7 @@ const onlineVideo=()=>state?.video?.type==='local'?(state.remoteVideo||{type:'no
 function updatePartyViewMode(){
  const toggle=$('partyModeToggle'),stage=$('partyMain'),note=$('partyModeStatus');
  if(!stage||!state)return;
- const q=state.quiz,questionActive=state.phase==='zoom'||state.phase==='gesture'||state.phase==='demo'||(state.phase==='film'&&!!q?.accepting);
+ const q=state.quiz,questionActive=state.phase==='zoom'||state.phase==='gesture'||state.phase==='demo'||state.sideGame==='gesture'||(state.phase==='film'&&!!q?.accepting);
  stage.classList.toggle('partyAutoQuizFocus',partyViewMode==='auto'&&questionActive);
  if(toggle){toggle.setAttribute('aria-pressed',String(partyViewMode==='auto'));toggle.textContent=partyViewMode==='auto'?'✓ Automatischer Wechsel: EIN':'Automatischer Wechsel: AUS';}
  if(note){
@@ -264,7 +264,7 @@ function interaction(){
  const sig=[phase,q?.id||'',q?.type||'',q?.accepting||false,p?.choice??'unanswered',p?.score??'unknown',state.revision,participantId,(state.ranking||[]).length].join('|');
  if(sig===quizSignature){const timer=$('partyTimer');if(timer&&q)timer.textContent=q.remaining+' s';if(phase==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!p?.zoomFound});return;}
  quizSignature=sig;
- if(phase==='gesture'){
+ if(phase==='gesture'||state.sideGame==='gesture'){
   part.innerHTML=gestureHtml();bindGesture();return;
  }
  if(q?.type==='zoom'&&(phase==='zoom'||phase==='film')){
