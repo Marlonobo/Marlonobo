@@ -77,3 +77,66 @@
 .paper .lf14Footer{text-align:right;font-size:11px;color:#7794a2;margin-top:8px}
 @media(max-width:720px){.welcomeArtwork,.endArtwork{grid-template-columns:1fr;text-align:center}.welcomeArtwork img,.endArtwork img{max-height:34vh}.podiumBase{--height:120px;height:var(--height)}.podium-rank-1 .podiumBase{height:150px}.podium-rank-3 .podiumBase{height:100px}.podiumWrap{min-height:330px}.podiumScene>h1{font-size:36px}.lf14Cards{grid-template-columns:1fr}.lf14Timeline{grid-template-columns:repeat(3,1fr)}.lf14Head{padding:15px}.lf14Head img{display:none}.paper .lf14Score th,.paper .lf14Score td{font-size:11px!important}}
 @media print{.lf14Head{-webkit-print-color-adjust:exact;print-color-adjust:exact}.paper .lf14Score th{-webkit-print-color-adjust:exact;print-color-adjust:exact}.paper .lf14Total{-webkit-print-color-adjust:exact;print-color-adjust:exact}.lf14Head h2,.lf14Head span,.paper .lf14Score th,.paper .lf14Total{color:white!important}.paper .lf14Total strong{color:white!important}.paper textarea{height:45px!important}.paper .pageBreak{break-before:page}.paper .lf14Timeline div{padding:7px 4px}.drawCanvas{height:70px!important}}
+
+
+/* TOUCH LIVE: Netflix-inspired transparent subtitles + broadcast layout + iPad kiosk */
+#captionLayer,.captionLayer,#partyCaption,.partyCaption {
+ background:transparent!important;
+ border:none!important;
+ border-radius:0!important;
+ box-shadow:none!important;
+ padding:0!important;
+ color:#fff!important;
+ text-align:center!important;
+ white-space:pre-line!important;
+ font-family:Arial,"Helvetica Neue",system-ui,sans-serif!important;
+ font-weight:750!important;
+ letter-spacing:.005em;
+ line-height:1.34!important;
+ -webkit-text-stroke:.7px rgba(0,0,0,.95);
+ paint-order:stroke fill;
+ text-shadow:
+  -2px -2px 2px #000c,2px -2px 2px #000c,
+  -2px 2px 2px #000c,2px 2px 2px #000c,
+  0 3px 5px #000d,0 1px 9px #0009!important;
+ pointer-events:none!important;
+ z-index:9!important;
+}
+#captionLayer{position:absolute;left:9%;width:82%;right:auto;bottom:11%;font-size:clamp(19px,2.5vw,49px)}
+#partyCaption{position:absolute;left:8%;right:8%;bottom:11%;font-size:clamp(16px,1.8vw,35px)}
+.tvBroadcastHud{
+ position:absolute;z-index:7;top:80px;left:3.5%;right:3.5%;
+ pointer-events:none;filter:drop-shadow(0 2px 5px #0009);
+ opacity:.95
+}
+.tvBroadcastTop{
+ display:flex;align-items:center;justify-content:space-between;gap:20px;
+ color:#edfaff;font:700 clamp(12px,1.5vw,22px)/1.3 system-ui,Arial,sans-serif;
+ text-shadow:0 2px 6px #000;
+ padding:12px 18px;
+ border:1px solid #78d7ee44;
+ background:linear-gradient(90deg,#061825ca,#0b1b2bb3,#061825ca);
+ border-radius:12px 12px 0 0;
+}
+.tvBroadcastTop strong{color:#eaf9fd;letter-spacing:.11em;white-space:nowrap}.tvBroadcastTop strong span{color:#5de4ed}
+.tvBroadcastTop span:last-child{font:750 clamp(11px,1.2vw,17px)/1.3 Consolas,monospace;white-space:nowrap}
+.tvBroadcastTrack{height:4px;background:#ffffff2d;border-radius:0 0 10px 10px;overflow:hidden}
+#tvProgressBar{height:100%;width:0;background:linear-gradient(90deg,#53e2dd,#818afc);box-shadow:0 0 12px #53f7fa;transition:width .45s ease}
+.captionSettings{margin-top:15px;border-top:1px solid var(--stroke)}
+.captionSettings input[type=range]{accent-color:#62e4d7;padding:0;min-height:30px}
+.captionSettings input[type=checkbox]{accent-color:#62e4d7}
+.captionSettings label:has(input[type=checkbox]){display:flex;align-items:center;gap:9px;padding:5px 0}
+body.touchStudent{background:#050e19;overflow-x:hidden}
+body.touchStudent>div>.nav,body.touchStudent>div>footer{display:none}
+body.touchStudent main.wrap{max-width:100%;padding:12px max(14px,3vw) 30px;min-height:100dvh}
+body.touchStudent main.wrap>.page{padding:8px 0 16px}
+body.touchStudent main.wrap>.page h1{font-size:clamp(24px,4vw,38px)}
+body.touchStudent .card.quiz{max-width:1100px;margin:12px auto}
+body.touchStudent .card.quiz .answers{gap:15px}
+body.touchStudent .answer{min-height:72px;font-size:clamp(17px,2.4vw,25px)}
+body.touchStudent .centerstage{min-height:min(62vh,640px)}
+body.touchStudent .participantFullBar{position:relative;display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+body.touchStudent .participantFullBtn{font-size:12px;min-height:36px;padding:6px 12px;background:#102b3adf}
+@media(min-width:700px){body.touchStudent .answers{grid-template-columns:1fr 1fr}}
+@media(max-width:780px){.tvBroadcastHud{top:75px;left:2%;right:2%}.tvBroadcastTop{padding:7px;gap:7px;font-size:13px}.tvBroadcastTop span:last-child{font-size:11px}.participantFullBar .small{font-size:11px}}
+@media print{.participantFullBar{display:none!important}}
