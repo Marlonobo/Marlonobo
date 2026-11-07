@@ -3,7 +3,7 @@
   "short_name": "TOUCH LIVE",
   "description": "Live-Quiz, Multitouch und Beamer-Präsentation für Lernfeld 14",
   "lang": "de",
-  "start_url": "/#join",
+  "start_url": "/join",
   "scope": "/",
   "display": "fullscreen",
   "background_color": "#071827",
