@@ -255,7 +255,7 @@ function connectButtons(){
  $('partyFullscreen').onclick=()=>{$('partyScreen').requestFullscreen?.().catch(()=>{showError('Vollbild wurde vom Browser nicht erlaubt.');});};
  video.addEventListener('ended',()=>{if(host&&state?.phase==='film')sendHostTick(true);});
  if(host){
-  document.querySelectorAll('[data-host]').forEach(b=>b.addEventListener('click',()=>hostCommand(b.dataset.host)));
+  document.querySelectorAll('[data-host]').forEach(b=>b.addEventListener('click',()=>b.dataset.host==='start'?startOnHostDevice():hostCommand(b.dataset.host)));
   $('partySeekGo').onclick=()=>hostCommand('seek',{time:Number($('partySeek').value)});
   $('partyYouTubeForm').onsubmit=async e=>{
    e.preventDefault();const link=$('partySource').value.trim();
@@ -279,20 +279,23 @@ function connectButtons(){
 }
 async function hostCommand(cmd,body={}){
  if(!key)return showError('Du brauchst einen Mitsteuer-Code.');
- try{await api('/api/remote',{cmd,...body},true);await poll();if(cmd==='start'||cmd==='play'){$('partyEnable').hidden=!(!activated);}}
- catch(e){showError('Steuerung fehlgeschlagen: '+e.message);}
+ try{
+  await api('/api/remote',{cmd:cmd==='start'?'startOnline':cmd,...body},true);
+  await poll();if(cmd==='start'||cmd==='play'){$('partyEnable').hidden=!(!activated);}
+  return true;
+ }catch(e){showError('Steuerung fehlgeschlagen: '+e.message);return false;}
 }
 
 async function startOnHostDevice(){
  if(!host||!key)return showError('Dieser Startknopf ist nur für die private Regie bestimmt.');
  if(!state)return showError('Live-Sitzung wird noch verbunden.');
  const v=onlineVideo();
- if(state.video?.type==='local')return showError('Die Regie kann den HDMI-Film nicht über das Internet starten. Für zwei Städte zuerst eine MP4 in den Cloud-Speicher hochladen oder YouTube als gemeinsame Hauptquelle wählen.');
+ if(state.video?.type==='local'&&(!v||['none','local'].includes(v.type)))return showError('Aktuell ist nur die lokale HDMI-MP4 ausgewählt. Lade deine MP4 im Regiebereich in den Cloud-Speicher hoch oder hinterlege eine Online-Filmquelle für die andere Stadt.');
  if(!v||!['url','upload','youtube'].includes(v.type))return showError('Zuerst eine MP4 hochladen oder einen gültigen Online-Filmlink eintragen.');
  activated=true;
  if(v.type==='url'||v.type==='upload'){
   const ref=v.type+':'+(v.url||v.id);
-  if(sourceRef!==ref){
+  if(sourceRef!==ref||video.getAttribute('src')!==v.url){
    sourceRef=ref;localRevision=-1;cloudFallback=false;
    video.pause();video.src=v.url;video.load();
   }
@@ -311,7 +314,8 @@ async function startOnHostDevice(){
  if(v.type==='youtube'&&ytPlayer&&ytReady){
   try{ytPlayer.unMute();ytPlayer.playVideo();}catch{}
  }
- await hostCommand('start');
+ const started=await hostCommand('start');
+ if(!started){try{video.pause();}catch{}return;}
  if(v.type==='youtube')showError('Falls du keinen Ton hörst, tippe „Film mit Ton aktivieren“. YouTube kann den automatischen Tonstart blockieren.');
 }
 window.TouchLiveWatchHost={getState:()=>state,poll:()=>poll(),startOnDevice:startOnHostDevice};
