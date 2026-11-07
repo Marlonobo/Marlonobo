@@ -493,10 +493,11 @@ function tvControlsVisible(show=true){
  const visible=show&&welcomeOnly;
  bar.classList.toggle('tvRemoteHidden',!visible);
  if(help)help.hidden=!visible;
- if(visible){
-  // Welcome setup stays visible until the presenter hides it manually.
+ if(visible&&!bar.dataset.wasShown){
+  // Focus once; polling must not steal focus from LG remote button selection.
   tvFocusControl('tvFullscreen');
  }
+ bar.dataset.wasShown=visible?'1':'0';
 }
 function tvFullscreenHint(message){
  const note=el('tvRemoteHelp');
@@ -761,7 +762,7 @@ function ensureMedia(){
  if(!state||role!=='tv'||state.phase!=='film')return;
  const video=state.video,ref=video.type+':'+video.url;
  if(state.captionsAvailable&&lastCaptionRevision!==state.captionsRevision){lastCaptionRevision=state.captionsRevision;fetchCaptions();}
- if(ref!==mediaType){mediaType=ref;subtitles=[];lastRevision=-1;tvSoundBlocked=false;tvAutoplayMuted=false;
+ if(ref!==mediaType){mediaType=ref;subtitles=[];lastRevision=-1;tvSoundBlocked=false;tvAutoplayMuted=!tvSoundActivated;
   const iframe=el('cloudFrame'),external=el('tvCloudOpen'),sync=el('tvCaptionSync');
   fallbackCaptionsAt=0;fallbackCaptionsBase=0;
   if(sync){sync.hidden=true;sync.textContent='⏱ Untertitel synchronisieren';}
@@ -770,7 +771,7 @@ function ensureMedia(){
  if(ytPlayer){try{ytPlayer.destroy();}catch{}ytPlayer=null;}el('youtubeTarget').style.display='none';videoEl.style.display='none';videoEl.pause();
  if(video.type==='youtube'){el('youtubeTarget').style.display='block';loadYouTube(video.id);}
  else if(video.type==='drive'||video.type==='upload'||video.type==='url'){
-  videoEl.style.display='block';videoEl.muted=!tvSoundActivated;videoEl.volume=1;videoEl.src=video.url;videoEl.load();fetchCaptions();
+  videoEl.style.display='block';videoEl.muted=tvAutoplayMuted;videoEl.volume=1;videoEl.src=video.url;videoEl.load();fetchCaptions();
   // Drive direct MP4 behaves like a normal HTML5 video; no on-screen warnings.
  }
  else if(video.type==='icloud'){
