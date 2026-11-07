@@ -528,6 +528,8 @@ function syncWelcomeMusic(){
  const wanted=state?.phase==='welcome'&&music.on===true&&['track','album','playlist'].includes(music.type)&&/^[A-Za-z0-9]{22}$/.test(music.id||'');
  if(!wanted){
   if(spotifyController&&spotifyWanted){try{spotifyController.pause();}catch{}}
+  // For a plain Spotify iframe fallback, removing the iframe is necessary to stop its audio.
+  if(!spotifyController&&spotifyWanted){dock.replaceChildren();spotifyUri='';}
   spotifyWanted=false;dock.hidden=true;return;
  }
  const uri='spotify:'+music.type+':'+music.id;
