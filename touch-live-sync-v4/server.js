@@ -7,6 +7,8 @@ const PORT=Number(process.env.PORT||3000), ROOT=__dirname, DIR=process.env.DATA_
 const ADMIN=process.env.ADMIN_KEY||crypto.randomBytes(24).toString('hex');
 const TV=process.env.TV_KEY||crypto.randomBytes(24).toString('hex');
 const COHOST=process.env.COHOST_KEY||crypto.randomBytes(24).toString('hex');
+// A change to the deployed app is detected by an existing TV tab via /api/version.
+const BUILD_VERSION=process.env.RENDER_GIT_COMMIT||process.env.RENDER_DEPLOY_ID||crypto.randomBytes(12).toString('hex');
 if(!process.env.ADMIN_KEY)console.log('TOUCH LIVE ADMIN_KEY: '+ADMIN);
 if(!process.env.TV_KEY)console.log('TOUCH LIVE TV_KEY: '+TV);
 fs.mkdirSync(DIR,{recursive:true});
@@ -102,6 +104,7 @@ async function handler(req,res){
  if(m==='GET'&&(p==='/watch'||p==='/host'))return serve(res,path.join(ROOT,'party.html'),'text/html; charset=utf-8');
  if(m==='GET'&&(p==='/party.js'||p==='/party.css'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
  if(m==='GET'&&p==='/api/state')return send(res,200,publicState(u.searchParams.get('id')));
+ if(m==='GET'&&p==='/api/version')return send(res,200,{version:BUILD_VERSION});
  if(m==='GET'&&p==='/api/health')return send(res,200,{ok:true,questionCount:Q.length,now:Date.now(),cloudStorageConfigured:S3.enabled});
  if(m==='GET'&&p==='/api/storage/status')return send(res,200,{configured:S3.enabled,durable:S3.enabled,videoReady:!!cloudManifest?.video,subtitlesReady:!!cloudManifest?.captions,maximumBytes:10*1024**3,partSize:16*1024**2});
  if((m==='GET'||m==='HEAD')&&p==='/api/storage/video'){
