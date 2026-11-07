@@ -149,7 +149,7 @@ function publicState(id){
  const rank=[...users.entries()].map(([uid,x])=>({id:uid,name:x.name,role:x.role,score:x.score,answered:Object.keys(x.answers).length})).sort((x,y)=>y.score-x.score||x.name.localeCompare(y.name,'de')).map((x,i)=>({name:x.name,role:x.role,score:x.score,rank:i+1,answered:x.answered}));
  const normal=Q.filter(x=>x.type!=='zoom');
  let player=null;
- if(u){const jk=u.jokers||{};player={id,role:u.role,name:u.name,score:final?u.score:null,choice:q?u.answers[q.id]??null:null,zoomFound:!!(ZOOM()&&Object.hasOwn(u.answers,ZOOM().id)),zoomPoints:final?(u.zoomPoints||0):null,jokers:{fifty:!!jk.fifty,hint:!!jk.hint}};
+ if(u){const jk=u.jokers||{};player={id,role:u.role,name:u.name,score:final?u.score:null,liveScore:u.role==='student'?(Number(u.score)||0):null,choice:q?u.answers[q.id]??null:null,zoomFound:!!(ZOOM()&&Object.hasOwn(u.answers,ZOOM().id)),zoomPoints:final?(u.zoomPoints||0):null,jokers:{fifty:!!jk.fifty,hint:!!jk.hint}};
   if(q&&jk.fifty===q.id)player.hide=[0,1,2,3].filter(i=>i!==q.correct&&i!==q.fifty);
   if(q&&jk.hint===q.id)player.hint=q.hint||'';}
  const z=ZOOM();let zoomResult=null;
