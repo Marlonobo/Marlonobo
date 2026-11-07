@@ -15,6 +15,10 @@ function mount(container,options={}){
  const readout=container.querySelector('[data-egg-tap]'),counter=container.querySelector('[data-egg-zoom]'),clock=container.querySelector('[data-egg-time]');
  const lessonZoom=container.querySelector('[data-step="zoom"]'),lessonPan=container.querySelector('[data-step="pan"]'),lessonTap=container.querySelector('[data-step="tap"]');
  const hint=container.querySelector('[data-egg-hint]'),celebration=container.querySelector('[data-egg-celebration]'),pointsNode=container.querySelector('[data-egg-points]');
+ if(options.showLiveScore){
+  if(pointsNode)pointsNode.textContent='Deine Punkte werden oben im Quiz live angezeigt.';
+  if(hint)hint.textContent='🎓 Mit Zoomen, Verschieben und Antippen sammelst du Punkte. Dein aktueller Punktestand ist oben im Quiz sichtbar.';
+ }
  const unit=client=>{const m=svg.getScreenCTM();if(!m)return{x:VIEW.cx,y:VIEW.cy};return new DOMPoint(client.x,client.y).matrixTransform(m.inverse());};
  function worldPt(client){const m=world.getScreenCTM();if(!m)return{x:VIEW.cx,y:VIEW.cy};return new DOMPoint(client.x,client.y).matrixTransform(m.inverse());}
  function playSound(kind){
@@ -40,9 +44,9 @@ function mount(container,options={}){
  function finish(result){
   if(!found)playSound('win');lessonZoom.classList.add('egg-step-done');lessonTap.classList.add('egg-step-done');found=true;disabled=true;game.classList.add('egg-found');
   celebration.hidden=false;
-  pointsNode.textContent='Deine Punkte siehst du erst bei den Ergebnissen.';
+  pointsNode.textContent=options.showLiveScore?'Deine Punkte stehen oben im Quiz.':'Deine Punkte siehst du erst bei den Ergebnissen.';
   message('✅ RICHTIG! Easter Egg gefunden!');
-  hint.textContent='Geschafft! Damit hast du gezeigt, wie Multitouch und das Antippen eines kleinen Ziels funktionieren. Gleich geht es mit der Doku weiter.';
+  hint.textContent=options.showLiveScore?'Geschafft! Dein Punktestand oben aktualisiert sich automatisch. Gleich geht es mit dem Film weiter.':'Geschafft! Damit hast du gezeigt, wie Multitouch und das Antippen eines kleinen Ziels funktionieren. Gleich geht es mit der Doku weiter.';
   try{if(global.navigator?.vibrate)global.navigator.vibrate([70,70,120]);}catch{}
  }
  async function tryFind(e){
