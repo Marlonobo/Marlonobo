@@ -138,6 +138,7 @@ function active(){
 }
 function publicState(id){
  const a=active(),q=a.index>=0?Q[a.index]:null,u=users.get(String(id||''));
+ if(u)u.lastSeen=Date.now();
  const final=['results','end','handout'].includes(s.phase);
  const rank=[...users.entries()].map(([uid,x])=>({id:uid,name:x.name,role:x.role,score:x.score,answered:Object.keys(x.answers).length})).sort((x,y)=>y.score-x.score||x.name.localeCompare(y.name,'de')).map((x,i)=>({name:x.name,role:x.role,score:x.score,rank:i+1,answered:x.answered}));
  const normal=Q.filter(x=>x.type!=='zoom');
@@ -264,7 +265,7 @@ async function handler(req,res){
     const has=Object.hasOwn(u.answers||{},q.id),choice=has?u.answers[q.id]:null;
     return {id:q.id,status:!has?'unanswered':choice===q.correct?'correct':'wrong',choice,isZoom:q.type==='zoom'};
    });
-   return {name:u.name,role:u.role,score:u.score||0,answered:answers.filter(a=>a.status!=='unanswered').length,
+   return {name:u.name,role:u.role,online:Number.isFinite(u.lastSeen)&&Date.now()-u.lastSeen<30000,score:u.score||0,answered:answers.filter(a=>a.status!=='unanswered').length,
     correct:answers.filter(a=>a.status==='correct').length,wrong:answers.filter(a=>a.status==='wrong').length,answers};
   }).sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name,'de'));
   return send(res,200,{ok:true,players,questions,participantCount:players.length,phase:s.phase,time:s.time});
@@ -279,8 +280,8 @@ async function handler(req,res){
  const b=await read(req,2000),name=String(b.name||'').trim().slice(0,26),role=b.role==='teacher'?'teacher':'student';
  if(!name)return send(res,400,{error:'Bitte einen Namen eingeben.'});
  const id=/^[a-f0-9]{32}$/.test(String(b.id||''))?b.id:crypto.randomBytes(16).toString('hex');
- if(!users.has(id))users.set(id,{name,role,answers:{},score:0,jokers:{}});
- else {users.get(id).name=name;users.get(id).role=role;}
+ if(!users.has(id))users.set(id,{name,role,answers:{},score:0,jokers:{},lastSeen:Date.now()});
+ else {users.get(id).name=name;users.get(id).role=role;users.get(id).lastSeen=Date.now();}
  saveUsers();
  return send(res,200,{ok:true,id});
  }
