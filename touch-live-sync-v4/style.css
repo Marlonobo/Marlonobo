@@ -527,3 +527,16 @@ body:has(.phoneRemote){background:#071724}
 #tvApp .tvRemoteBar #tvSoundtrackUnlock{border:1px solid #7cbdb0;background:#17463e;color:#e5fff6;font-weight:800}
 #tvApp .tvRemoteBar #tvSoundtrackUnlock:focus-visible{outline:4px solid #e4fff5;outline-offset:4px}
 @media(max-width:640px){#tvApp .tvWelcomeMusicStatus{bottom:10px;left:10px;padding:8px 11px}}
+
+
+/* Movie mode is cinema-only: no banner, status, welcome music, TV footer or controls. */
+#tvApp.tvPlayingFilm .tvWelcomeMusicStatus,
+#tvApp.tvPlayingFilm .tvFilmUnlock,
+#tvApp.tvPlayingFilm .tvRemoteBar,
+#tvApp.tvPlayingFilm .tvRemoteHelp,
+#tvApp.tvPlayingFilm .tvFooter,
+#tvApp.tvPlayingFilm #tvSpotifyDock,
+#tvApp.tvPlayingFilm #tvSoundtrackUnlock,
+#tvApp.tvPlayingFilm #tvSpotifyPlay{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important}
+#tvApp.tvPlayingFilm .videoLayer{z-index:3;inset:0;background:#000}
+#tvApp #tvWelcomeAudio{display:none!important}
