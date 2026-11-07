@@ -1,0 +1,19 @@
+{
+  "name": "TOUCH LIVE – Interaktive Touchscreen-Dokumentation",
+  "short_name": "TOUCH LIVE",
+  "description": "Live-Quiz, Multitouch und Beamer-Präsentation für Lernfeld 14",
+  "lang": "de",
+  "start_url": "/#join",
+  "scope": "/",
+  "display": "fullscreen",
+  "background_color": "#071827",
+  "theme_color": "#071827",
+  "icons": [
+    {
+      "src": "/touch-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
