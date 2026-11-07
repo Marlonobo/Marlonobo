@@ -432,7 +432,7 @@ function tvRemoteKeydown(e){
 window.addEventListener('keydown',tvRemoteKeydown);
 function tvView(){
  if(!tvKey){app.innerHTML='<div class="wrap page"><h1>Beamer verbinden</h1><p>Bitte den Beamerlink aus der Admin-Ansicht öffnen.</p><label>Beamer-Zugangsschlüssel</label><input type="password" id="tvInput"><p></p><button class="primary" id="tvSubmit">Verbinden</button></div>';el('tvSubmit').onclick=()=>{tvKey=el('tvInput').value;sessionStorage.setItem('touch_tv_key',tvKey);localStorage.setItem('touch_tv_key',tvKey);tvView();};return;}
- app.innerHTML='<div id="tvApp"><div id="tvScene" class="tvScene"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><iframe id="cloudFrame" title="Google Drive Filmvorschau" allow="autoplay; fullscreen; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><div id="cloudPlaybackInfo" class="cloudPlaybackInfo" hidden></div><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvFullscreen" type="button" tabindex="0">⛶ Vollbild</button><button id="tvCloudOpen" type="button" tabindex="0" hidden>☁ iCloud-Datei öffnen</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
+ app.innerHTML='<div id="tvApp"><div id="tvScene" class="tvScene"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><iframe id="cloudFrame" title="Google Drive Filmvorschau" allow="autoplay; fullscreen; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvFullscreen" type="button" tabindex="0">⛶ Vollbild</button><button id="tvCloudOpen" type="button" tabindex="0" hidden>☁ iCloud-Datei öffnen</button><button id="tvCaptionSync" type="button" tabindex="0" hidden>⏱ Untertitel synchronisieren</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
  videoEl=el('tvVideo');
  // Never intentionally start the TV movie muted.
  videoEl.muted=false;videoEl.defaultMuted=false;videoEl.volume=1;
@@ -440,6 +440,14 @@ function tvView(){
  el('tvFullscreen').onclick=()=>tvRemoteFullscreen(false);
  el('tvHideControls').onclick=()=>tvControlsVisible(false);
  el('tvCloudOpen').onclick=()=>{if(state?.video?.type==='icloud'){const url=state.video.shareUrl||state.video.url;if(url)window.open(url,'_blank','noopener');}};
+ el('tvCaptionSync').onclick=()=>{
+  if(state?.video?.type==='drive'&&el('cloudFrame')?.style.display==='block'){
+   fallbackCaptionsBase=Number(state.time)||0;
+   fallbackCaptionsAt=Date.now();
+   updateCaption();
+   tvControlsVisible(false);
+  }
+ };
  tvControlsVisible(true);
  // Start the browser-sized cinematic layout immediately; attempt native fullscreen.
  // TV firmware may reject native fullscreen without OK.
@@ -448,13 +456,14 @@ function tvView(){
  videoEl.addEventListener('loadedmetadata',()=>{videoEl.muted=false;videoEl.volume=1;});
  videoEl.addEventListener('error',()=>{
   if(role!=='tv'||state?.video?.type!=='drive'||state.phase!=='film'||videoEl.getAttribute('src')!==state.video.url)return;
-  const iframe=el('cloudFrame'),notice=el('cloudPlaybackInfo');
+  const iframe=el('cloudFrame');
   videoEl.style.display='none';
   if(iframe){iframe.src=state.video.previewUrl||state.video.shareUrl;iframe.style.display='block';}
-  if(notice){notice.hidden=false;notice.textContent='Google Drive zeigt jetzt die Dateivorschau. Starte das Video darin mit der Fernbedienung. Automatisches Pausieren und die exakte Quiz-Synchronisierung sind in diesem Vorschau-Modus nicht möglich.';}
+  const sync=el('tvCaptionSync');if(sync)sync.hidden=false;
+  if(state?.playing){fallbackCaptionsAt=Date.now();fallbackCaptionsBase=Number(state.time)||0;}
   tvControlsVisible(false);
  });
- videoEl.addEventListener('canplay',()=>{if(state?.video?.type==='drive'){const notice=el('cloudPlaybackInfo');if(notice){notice.hidden=true;notice.textContent='';}}});
+ videoEl.addEventListener('canplay',()=>{if(state?.video?.type==='drive'){const sync=el('tvCaptionSync');if(sync)sync.hidden=true;fallbackCaptionsAt=0;}});
 
  videoEl.addEventListener('timeupdate',()=>{updateCaption();});
  videoEl.addEventListener('ended',()=>{if(state?.phase==='film')sendTick(false,true);});
@@ -481,18 +490,19 @@ function ensureMedia(){
  const video=state.video,ref=video.type+':'+video.url;
  if(state.captionsAvailable&&lastCaptionRevision!==state.captionsRevision){lastCaptionRevision=state.captionsRevision;fetchCaptions();}
  if(ref!==mediaType){mediaType=ref;subtitles=[];lastRevision=-1;tvSoundBlocked=false;
-  const iframe=el('cloudFrame'),notice=el('cloudPlaybackInfo'),external=el('tvCloudOpen');
+  const iframe=el('cloudFrame'),external=el('tvCloudOpen'),sync=el('tvCaptionSync');
+  fallbackCaptionsAt=0;fallbackCaptionsBase=0;
+  if(sync){sync.hidden=true;sync.textContent='⏱ Untertitel synchronisieren';}
   if(iframe){iframe.style.display='none';iframe.removeAttribute('src');}
-  if(notice){notice.hidden=true;notice.textContent='';}
   if(external)external.hidden=video.type!=='icloud';
  if(ytPlayer){try{ytPlayer.destroy();}catch{}ytPlayer=null;}el('youtubeTarget').style.display='none';videoEl.style.display='none';videoEl.pause();
  if(video.type==='youtube'){el('youtubeTarget').style.display='block';loadYouTube(video.id);}
  else if(video.type==='drive'||video.type==='upload'||video.type==='url'){
   videoEl.style.display='block';videoEl.muted=false;videoEl.volume=1;videoEl.src=video.url;videoEl.load();fetchCaptions();
-  if(video.type==='drive'){const notice=el('cloudPlaybackInfo');if(notice){notice.hidden=false;notice.textContent='Google Drive: Direktstream wird geprüft …';}}
+  // Drive direct MP4 behaves like a normal HTML5 video; no on-screen warnings.
  }
  else if(video.type==='icloud'){
-  const notice=el('cloudPlaybackInfo');if(notice){notice.hidden=false;notice.textContent='iCloud Drive bietet hier keinen sicher steuerbaren MP4-Stream. Wähle „iCloud-Datei öffnen“ per Fernbedienung. Für automatische Quiz-Zeitmarken nutze einen direkten MP4-Link oder YouTube.';}
+  // iCloud share links are opened separately; do not cover the film with warnings.
   tvControlsVisible(true);
  }
  }
@@ -541,10 +551,18 @@ function makeYouTube(id){
 async function sendTick(playing,ended=false){if(role!=='tv'||!tvKey||state?.phase!=='film')return;
  if(state.video.type==='icloud'||(state.video.type==='drive'&&el('cloudFrame')?.style.display==='block'))return;
  try{const t=state.video.type==='youtube'&&ytPlayer?ytPlayer.getCurrentTime():videoEl?.currentTime||0;await api('/api/tick','POST',{time:t,playing,ended},tvKey);}catch{}}
+let fallbackCaptionsAt=0,fallbackCaptionsBase=0;
 function updateCaption(){
  const node=el('captionLayer');if(!node)return;
  if(!state?.subtitles||!state?.captionsAvailable){node.style.display='none';return;}
- const pos=state.video.type==='youtube'&&ytPlayer?Number(ytPlayer.getCurrentTime())||0:videoEl?.currentTime||0;
+ let pos=state.video.type==='youtube'&&ytPlayer?Number(ytPlayer.getCurrentTime())||0:videoEl?.currentTime||0;
+ if(state.video.type==='drive'&&el('cloudFrame')?.style.display==='block'){
+  // Drive's cross-origin preview does not expose its playback clock. Approximate only;
+  // press the TV sync button at the actual beginning for better alignment.
+  if(!fallbackCaptionsAt||!state.playing){node.style.display='none';return;}
+  pos=fallbackCaptionsBase+(Date.now()-fallbackCaptionsAt)/1000;
+ } else if(state.video.type==='icloud'){node.style.display='none';return;}
+
  const now=pos-(state.subtitleOffset||0),c=subtitles.find(v=>now>=v.start&&now<=v.end);
  node.textContent=c?.text||'';node.style.display=c?'block':'none';
  node.style.bottom=(state.captionPosition||11)+'%';
@@ -586,7 +604,18 @@ function router(){
  document.body.classList.toggle('studentEntry',role==='join');
  if(role!=='join'&&role!=='teacher')document.body.classList.remove('touchStudent');
  renderSignature='';state=null;mediaType='';if(role==='admin'){showAdmin();loadAdminInfo();}else if(role==='remote')remotePage();else if(role==='tv')tvView();else if(role==='handout')handout();else if(role==='join'||role==='teacher')userPage();else home();poll();}
-async function loadAdminInfo(){if(!adminKey)return;try{adminInfo=await api('/api/admin-info','GET',undefined,adminKey);if(role==='admin'){showAdmin();recoverSharedMedia();}}catch(e){if(role==='admin'){const x=el('adminStatus');if(x)x.textContent='Admin-Verbindung fehlgeschlagen: '+e.message;}}}
+async function loadAdminInfo(){if(!adminKey)return;try{
+  adminInfo=await api('/api/admin-info','GET',undefined,adminKey);
+  if(role==='admin'){showAdmin();recoverSharedMedia();}
+ }catch(e){
+  if(role!=='admin')return;
+  if(/403|Zugang nicht erlaubt/i.test(e.message||'')){
+   adminKey='';adminInfo=null;sessionStorage.removeItem('touch_admin_key');
+   showAdmin();
+   const input=el('adminPassword');if(input)input.placeholder='Neues Admin-Passwort eingeben';
+  }else{const x=el('adminStatus');if(x)x.textContent='Admin-Verbindung fehlgeschlagen: '+e.message;}
+ }
+}
 async function poll(force=false){
  if(role==='home'||role==='handout')return;
  try{
