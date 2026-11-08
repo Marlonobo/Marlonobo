@@ -166,3 +166,44 @@
  .partyTapHint{max-width:90%;white-space:normal;text-align:center}
  .partyScreen .partyTapFeedback{font-size:13px;padding:10px 15px}
 }
+
+/* Same animated quiz/timer treatment in /watch and private /host. */
+@keyframes partyQuizOpen{from{opacity:0;transform:translateY(17px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes partyAnswerReveal{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+@keyframes partyTimerAlarm{0%,100%{box-shadow:0 0 0 #ff8a6b00;transform:scale(1)}50%{box-shadow:0 0 20px #ff8a6b77;transform:scale(1.07)}}
+@keyframes partySceneFloat{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-12px) rotate(1deg)}}
+@keyframes partyGlow{0%,100%{filter:drop-shadow(0 0 12px #5cead766)}50%{filter:drop-shadow(0 0 32px #5cead7aa)}}
+@keyframes partyCelebration{0%{opacity:0;transform:translateY(22px)}100%{opacity:1;transform:translateY(0)}}
+#partyInteraction .partyQuestion{animation:partyQuizOpen .48s cubic-bezier(.2,.74,.25,1) both}
+#partyInteraction .partyAnswer{animation:partyAnswerReveal .29s ease both;transition:transform .18s,border-color .2s,box-shadow .2s}
+#partyInteraction .partyAnswer:nth-child(1){animation-delay:.09s}
+#partyInteraction .partyAnswer:nth-child(2){animation-delay:.15s}
+#partyInteraction .partyAnswer:nth-child(3){animation-delay:.21s}
+#partyInteraction .partyAnswer:nth-child(4){animation-delay:.27s}
+#partyInteraction .partyAnswer:not(:disabled):active{transform:scale(.97)}
+#partyInteraction .partyAnswer.selected{border-color:#7af2ca;box-shadow:0 0 0 2px #4de9ba63;background:#155052}
+#partyInteraction .partyQuizTimerHud{display:grid;min-width:100px;justify-items:center;gap:6px}
+#partyInteraction .partyQuizTimerHud .timer{min-width:90px;text-align:center;font-variant-numeric:tabular-nums}
+#partyInteraction .partyQuizTimeTrack{height:7px;width:100%;border-radius:99px;background:#18394b;overflow:hidden;border:1px solid #497e8c}
+#partyInteraction .partyQuizTimeTrack i{height:100%;width:100%;display:block;transition:width .36s linear;background:linear-gradient(90deg,#31c6b1,#84ffe0)}
+#partyInteraction .quizUrgent .partyQuizTimeTrack i{background:linear-gradient(90deg,#e45d5b,#ffc37d)}
+#partyInteraction .quizUrgent .timer{color:#ffddb0;animation:partyTimerAlarm .8s ease-in-out infinite}
+#partyInteraction .partyFinal{animation:partyCelebration .75s ease both}
+#partyInteraction .partyFinal .partyScore{font-variant-numeric:tabular-nums}
+#partyScreen .partySceneInner{position:relative;isolation:isolate;animation:partyCelebration .8s ease both}
+#partyScreen .partySceneInner>img{animation:partySceneFloat 5.6s ease-in-out infinite;filter:drop-shadow(0 0 30px #64e3da6b)}
+#partyScreen .partySceneInner h2{animation:partyCelebration .9s ease both}
+#partyScreen .partyWinners .partyPodium{animation:partyCelebration .75s ease .22s both}
+#partyScreen .partyWinners::before{content:"✦  ✧  ★  ✦";position:absolute;top:3%;left:8%;font-size:22px;color:#fae5a7;letter-spacing:5vw;text-shadow:0 0 18px #efd384;pointer-events:none}
+.partyHostRoster .partyRosterBulk{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:7px 0 12px}
+.partyHostRoster .partyRosterBulk button{min-height:37px;padding:7px 10px;font-size:12px}
+.partyHostRoster .partyRosterActions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.partyHostRoster .partyRosterActions button{padding:5px 8px;min-height:32px;font-size:11px;white-space:nowrap}
+.partyHostRoster .partyRosterActions .danger,.partyHostRoster .partyRosterBulk .danger{color:#ffcfca;border-color:#f29d93}
+.partyHostRoster .partyRosterTable td{vertical-align:middle}
+@media(max-width:670px){#partyInteraction .partyQuizTimerHud{min-width:81px}.partyHostRoster .partyRosterActions{min-width:110px}}
+@media(prefers-reduced-motion:reduce){
+ #partyInteraction .partyQuestion,#partyInteraction .partyAnswer,#partyInteraction .quizUrgent .timer,
+ #partyScreen .partySceneInner,#partyScreen .partySceneInner>img,#partyScreen .partySceneInner h2,
+ #partyScreen .partyWinners .partyPodium,#partyInteraction .partyFinal{animation:none!important;transition:none!important}
+}
