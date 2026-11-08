@@ -93,7 +93,7 @@ function initEaster(){
   onFind:async ({x,y,zoom})=>{
    if(!userId)throw Error('Bitte erst einen Namen eingeben.');
    const result=await api('/api/easter/find','POST',{id:userId,x,y,zoom});
-   setTimeout(()=>{renderSignature='';poll(true);},1800);
+   setTimeout(()=>{poll();},600);
    return result;
   }
  });
@@ -1078,7 +1078,7 @@ async function poll(force=false){
  if((role==='admin'||role==='control')&&old?.phase!=='film'&&next.phase==='film'&&next.playing&&window.SpotifyConnect?.connected?.()){
   window.SpotifyConnect.pauseForFilm().catch(()=>{});
  }
- if(role==='join'||role==='teacher'){const player=state.player||{};const q=state.quiz;const sig=[role,state.phase,q?.id||'',q?.accepting||false,player.choice,player.score,state.revision,state.participants,JSON.stringify(player.jokers||{}),(player.hide||[]).join(),player.hint||'',JSON.stringify(state.zoomResult||'')].join('|');if(force||renderSignature!==sig){renderSignature=sig;userPage();participantMode();}else if(q){if(el('liveTimer'))el('liveTimer').textContent=q.remaining+' s';if(q?.type==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!state.player?.zoomFound});}}
+ if(role==='join'||role==='teacher'){const player=state.player||{};const q=state.quiz;const missionActive=q?.type==='zoom';const sig=[role,state.phase,q?.id||'',q?.accepting||false,missionActive?'mission-stable':player.choice,player.score,missionActive?'no-rerender':state.revision,missionActive?'no-participants-rerender':state.participants,JSON.stringify(player.jokers||{}),(player.hide||[]).join(),player.hint||'',missionActive?'no-results-rerender':JSON.stringify(state.zoomResult||'')].join('|');if(force||renderSignature!==sig){renderSignature=sig;userPage();participantMode();}else if(q){if(el('liveTimer'))el('liveTimer').textContent=q.remaining+' s';if(q?.type==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!state.player?.zoomFound,disabled:!q.accepting});}}
  if(role==='join')refreshStudentScoreBadge();
  if(role==='tv'){tvDisplay();
    const signal=Number(state.tvReloadRequest||0);
