@@ -3,9 +3,9 @@
    This uses public Spotify Web API with user authorization and requires a registered Spotify developer Client ID. */
 (function(w){
 'use strict';
-const KEY='touch_spotify_pkce_tokens_v1',CLIENT='touch_spotify_public_client_id_v1',FLOW='touch_spotify_pkce_flow_v1';
+const KEY='touch_spotify_pkce_tokens_v1',CLIENT='touch_spotify_public_client_id_v1',FLOW='touch_spotify_pkce_flow_v1',DEVICE='touch_spotify_device_v2',SELECTION='touch_spotify_music_v2';
 const CALLBACK='/spotify-callback';
-let root=null,selectFn=null,playlists=[],devices=[],lastSelected='',busy=false,searchResults=[];
+let root=null,selectFn=null,playlists=[],devices=[],lastSelected=localStorage.getItem(SELECTION)||'',busy=false,searchResults=[];
 const $=id=>document.getElementById(id);
 const escape=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const callbackUrl=()=>location.origin+CALLBACK;
@@ -89,7 +89,7 @@ function renderPlaylists(){
  }).join('');
  list.querySelectorAll('[data-sp-save]').forEach(btn=>btn.onclick=async()=>{
   const item=playlists.find(x=>x.id===btn.dataset.spSave);if(!item||!selectFn)return;
-  try{await selectFn('https://open.spotify.com/playlist/'+item.id);status('✓ „'+item.name+'“ als Willkommensplaylist gespeichert.')}catch(e){status('Playlist konnte nicht übernommen werden: '+e.message,true);}
+  try{const url='https://open.spotify.com/playlist/'+item.id;rememberSelection(url);await selectFn(url);status('✓ „'+item.name+'“ als Willkommensplaylist gespeichert.')}catch(e){status('Playlist konnte nicht übernommen werden: '+e.message,true);}
  });
  list.querySelectorAll('[data-sp-play]').forEach(btn=>btn.onclick=async()=>{
   const id=btn.dataset.spPlay;
@@ -120,7 +120,7 @@ async function searchMusic(){
   }).join(''):'<p class="small">Keine passenden Titel oder Playlists gefunden.</p>';
   box.querySelectorAll('[data-search-save]').forEach(b=>b.onclick=async()=>{
    const x=searchResults[Number(b.dataset.searchSave)];if(!x||!selectFn)return;
-   try{await selectFn('https://open.spotify.com/'+x._kind+'/'+x.id);status('✓ '+x.name+' für die Willkommensmusik ausgewählt.');}
+   try{const url='https://open.spotify.com/'+x._kind+'/'+x.id;rememberSelection(url);await selectFn(url);status('✓ '+x.name+' für die Willkommensmusik ausgewählt.');}
    catch(e){status(e.message,true);}
   });
   box.querySelectorAll('[data-search-play]').forEach(b=>b.onclick=async()=>{
@@ -140,15 +140,21 @@ async function devicesFetch(){
   const out=await spotify('/me/player/devices');devices=(out.devices||[]).filter(x=>x.id);
   const sel=$('spotifyDevice');
   if(sel){sel.innerHTML='<option value="">Aktives Spotify-Gerät</option>'+devices.map(d=>'<option value="'+escape(d.id)+'">'+escape(d.name)+' ('+escape(d.type)+')'+(d.is_active?' – aktiv':'')+'</option>').join('');
-   const active=devices.find(d=>d.is_active);if(active)sel.value=active.id;}
+   const preferred=localStorage.getItem(DEVICE)||'';const found=devices.find(d=>d.id===preferred)||devices.find(d=>d.is_active);if(found){sel.value=found.id;localStorage.setItem(DEVICE,found.id);}sel.onchange=()=>{localStorage.setItem(DEVICE,sel.value);status(sel.value?'✓ Spotify-Ausgabegerät: '+(devices.find(d=>d.id===sel.value)?.name||'Gerät'):'Bitte Ausgabegerät auswählen.');};}
   status(devices.length?devices.length+' Spotify-Geräte gefunden.':'Kein Spotify-Gerät aktiv. Öffne zunächst die Spotify-App auf dem gewünschten Gerät.');
  }catch(e){status('Geräte konnten nicht geladen werden: '+e.message,true);}
 }
-function deviceQuery(){const id=$('spotifyDevice')?.value||'';return id?'?device_id='+encodeURIComponent(id):'';}
+function chosenDevice(){return $('spotifyDevice')?.value||'';}
+function deviceQuery(){const id=chosenDevice();return id?'?device_id='+encodeURIComponent(id):'';}
+function rememberSelection(url){lastSelected=url;try{localStorage.setItem(SELECTION,url);}catch{}const input=$('spotifyInput');if(input)input.value=url;}
+function spotifyMusicUri(){const link=String($('spotifyInput')?.value||lastSelected||'').trim();const m=link.match(/^https:\/\/open\.spotify\.com\/(?:intl-[a-z]{2}\/)?(playlist|album|track)\/([A-Za-z0-9]{22})(?:[/?#]|$)/);if(!m)throw Error('Zuerst einen Spotify-Song oder eine Playlist auswählen.');rememberSelection(link);return 'spotify:'+m[1]+':'+m[2];}
 async function startPlaylist(uri){
  if(!/^spotify:(playlist|album|track):[A-Za-z0-9]{22}$/.test(uri))throw Error('Ungültiger Spotify-Inhalt.');
  const body=uri.startsWith('spotify:track:')?{uris:[uri]}:{context_uri:uri};
- await spotify('/me/player/play'+deviceQuery(),'PUT',body);
+ const id=chosenDevice();if(!id)throw Error('Bitte erst „Geräte suchen“ und dann LG-TV oder HDMI-PC auswählen.');
+ const deviceInfo=devices.find(d=>d.id===id);if(deviceInfo?.is_restricted)throw Error('Dieses Spotify-Gerät verweigert die Fernsteuerung.');
+ if(!deviceInfo?.is_active)await spotify('/me/player','PUT',{device_ids:[id],play:false});
+ await spotify('/me/player/play?device_id='+encodeURIComponent(id),'PUT',body);
  // User requested to keep the SAME song; otherwise Spotify advances through playlist tracks.
  // Repeat is a distinct Spotify Web API request and may be blocked for non-Premium accounts.
  const selected=$('spotifyRepeat')?.value||'track';
@@ -170,8 +176,9 @@ async function setVolume(value){
 }
 async function resume(){return spotify('/me/player/play'+deviceQuery(),'PUT');}
 async function transfer(){
- const id=$('spotifyDevice')?.value;
- if(!id)throw Error('Bitte zuerst unter „Geräte suchen“ den LG-TV oder PC auswählen.');
+ const id=chosenDevice();
+ if(!id)throw Error('Bitte zuerst unter „Geräte suchen“ den LG-TV oder HDMI-PC auswählen.');
+ localStorage.setItem(DEVICE,id);
  return spotify('/me/player','PUT',{device_ids:[id],play:true});
 }
 async function setRepeat(){
@@ -216,10 +223,8 @@ function accountButtons(){
  const refreshButton=$('spotifyNowRefresh');if(refreshButton)refreshButton.onclick=currentPlayback;
  const devicesButton=$('spotifyDevicesLoad');if(devicesButton)devicesButton.onclick=devicesFetch;
  const play=$('spotifyAccountPlay');if(play)play.onclick=async()=>{
-  const music=String($('spotifyInput')?.value||'').trim(),m=music.match(/open\.spotify\.com\/(playlist|album|track)\/([A-Za-z0-9]{22})/);
-  if(!m){status('Wähle zuerst einen Song oder eine Playlist aus.',true);return;}
   try{
-   const r=await startPlaylist('spotify:'+m[1]+':'+m[2]);
+   const r=await startPlaylist(spotifyMusicUri());
    status(r.configured
     ?'♫ Spotify läuft. Wiederholung: '+(r.repeat==='track'?'IMMER DERSELBE TITEL – kein Weitergehen zum nächsten Song.':r.repeat==='context'?'ganze Playlist':'AUS')+'.'
     :'Spotify läuft, aber die Wiederholung konnte nicht aktiviert werden: '+r.reason,true);
@@ -263,8 +268,9 @@ function mount(container,options={}){
  root=container;selectFn=typeof options.onSelect==='function'?options.onSelect:null;
  if(!root)return;
  renderAccount();
+ const input=$('spotifyInput');if(input){if(!input.value&&lastSelected)input.value=lastSelected;input.addEventListener('change',()=>rememberSelection(input.value.trim()));}
 }
-w.SpotifyConnect={mount,login,connected:userAuthorized,pauseForFilm,refresh:renderAccount,getSelectedClientId:registeredClient,setVolume};
+w.SpotifyConnect={mount,login,connected:userAuthorized,pauseForFilm,refresh:renderAccount,getSelectedClientId:registeredClient,setVolume,devicesFetch,currentPlayback};
 if(location.pathname===CALLBACK){
  document.addEventListener('DOMContentLoaded',()=>{document.body.innerHTML='<main style="max-width:540px;margin:12vh auto;padding:24px;font-family:system-ui;background:#0b2233;color:white;border-radius:15px"><h1>Spotify wird verbunden …</h1><p>Du wirst danach zur TOUCH-LIVE-Regie zurückgeleitet.</p></main>';});
  callback().catch(err=>{document.body.textContent='Spotify-Anmeldung fehlgeschlagen: '+err.message;});
