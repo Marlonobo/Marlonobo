@@ -284,17 +284,42 @@ async function handler(req,res){
  }
 
  if(m==='GET'&&p==='/api/host/participants'){
-  if(!isCohost(req))return unauthorized(res);
+  if(!isCohost(req)&&!isAdmin(req))return unauthorized(res);
   const questions=Q.map(q=>({id:q.id,type:q.type||'quiz',chapter:q.chapter,text:q.q,open:q.open,close:q.close}));
-  const players=[...users.values()].map(u=>{
+  const players=[...users.entries()].map(([playerId,u])=>{
    const answers=Q.map(q=>{
     const has=Object.hasOwn(u.answers||{},q.id),choice=has?u.answers[q.id]:null;
     return {id:q.id,status:!has?'unanswered':choice===q.correct?'correct':'wrong',choice,isZoom:q.type==='zoom'};
    });
-   return {name:u.name,role:u.role,online:Number.isFinite(u.lastSeen)&&Date.now()-u.lastSeen<30000,score:u.score||0,answered:answers.filter(a=>a.status!=='unanswered').length,
+   return {id:playerId,name:u.name,role:u.role,online:Number.isFinite(u.lastSeen)&&Date.now()-u.lastSeen<30000,score:u.score||0,answered:answers.filter(a=>a.status!=='unanswered').length,
     correct:answers.filter(a=>a.status==='correct').length,wrong:answers.filter(a=>a.status==='wrong').length,answers};
   }).sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name,'de'));
   return send(res,200,{ok:true,players,questions,participantCount:players.length,phase:s.phase,time:s.time});
+ }
+ if(m==='POST'&&p==='/api/host/participants/manage'){
+  if(!isAdmin(req)&&!isCohost(req))return unauthorized(res);
+  const b=await read(req,2000),action=String(b.action||'');
+  if(!['rename','reset','delete','resetAll','clearAll'].includes(action))
+   return send(res,400,{error:'Aktion nicht erlaubt.'});
+  if(action==='resetAll'||action==='clearAll'){
+   if(action==='clearAll')users.clear();
+   else for(const u of users.values()){
+    u.answers={};u.score=0;u.jokers={};u.zoomPoints=0;
+   }
+  }else{
+   const id=String(b.id||'');
+   if(!/^[a-f0-9]{32}$/.test(id)||!users.has(id))return send(res,404,{error:'Teilnehmer nicht gefunden. Liste aktualisieren.'});
+   if(action==='delete')users.delete(id);
+   else if(action==='reset'){
+    const u=users.get(id);u.answers={};u.score=0;u.jokers={};u.zoomPoints=0;
+   }else if(action==='rename'){
+    const name=String(b.name||'').trim().replace(/\s+/g,' ').slice(0,26);
+    if(name.length<2||name.length>26||/[<>\x00-\x1f]/.test(name))return send(res,400,{error:'Bitte einen Namen mit 2–26 gültigen Zeichen eingeben.'});
+    const u=users.get(id);u.name=name;u.adminRenamed=true;
+   }
+  }
+  saveUsers();s.revision++;await persist();
+  return send(res,200,{ok:true,action,participants:users.size});
  }
  if(m==='GET'&&p==='/api/admin-info'){if(!isAdmin(req))return unauthorized(res);return send(res,200,{tvKey:TV,cohostKey:COHOST,questions:Q.map(q=>({id:q.id,type:q.type||'quiz',open:q.open,close:q.close,duration:q.duration,q:q.q,a:q.a,correct:q.correct,chapter:q.chapter,hint:q.hint,fifty:q.fifty})),ranking:[...users.values()].map(x=>({name:x.name,role:x.role,score:x.score,answers:x.answers,jokers:x.jokers||{}})).sort((a,b)=>b.score-a.score),feedback});}
  if(m==='GET'&&p==='/captions.vtt'){
@@ -307,7 +332,7 @@ async function handler(req,res){
  if(!name)return send(res,400,{error:'Bitte einen Namen eingeben.'});
  const id=/^[a-f0-9]{32}$/.test(String(b.id||''))?b.id:crypto.randomBytes(16).toString('hex');
  if(!users.has(id))users.set(id,{name,role,answers:{},score:0,jokers:{},lastSeen:Date.now()});
- else {users.get(id).name=name;users.get(id).role=role;users.get(id).lastSeen=Date.now();}
+ else {const u=users.get(id);if(!u.adminRenamed)u.name=name;u.role=role;u.lastSeen=Date.now();}
  saveUsers();
  return send(res,200,{ok:true,id});
  }
