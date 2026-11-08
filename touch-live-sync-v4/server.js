@@ -53,6 +53,7 @@ let s=def(), users=new Map(), upload=null,feedback=[],cloudManifest=null;
 // This is intentionally volatile: choosing a file on a Windows PC never uploads its bytes.
 // Readiness expires when the HDMI browser disconnects; it is not persisted in storage.
 let localMedia={name:'',size:0,duration:0,lastSeen:0};
+let tvAudioReport={playing:false,blocked:false,error:'',updated:0};
 try{s=Object.assign(def(),JSON.parse(fs.readFileSync(STATE_FILE,'utf8')));}catch{}
 if(migratedFilmCues){s.quizOffset=0;try{fs.writeFileSync(STATE_FILE,JSON.stringify(s),'utf8');}catch(e){console.error('Quiz-Offset nicht gesichert:',e.message);}}
 
@@ -181,7 +182,7 @@ function publicState(id){
   ?Math.max(0,Math.ceil(GESTURE_MISSION_SECONDS-(s.time-(s.gestureOverlayStartTime||0))))
   :s.phase==='gesture'?Math.max(0,Math.ceil(GESTURE_MISSION_SECONDS-(Date.now()-(s.gestureStartTime||Date.now()))/1000)):0;
  const gestureActive=gestureSeconds>0&&(s.phase==='gesture'||(s.phase==='film'&&s.gestureOverlay));
- return {homeUnlocked:!!s.homeUnlocked,trailerAvailable:fs.existsSync(TRAILER_FILE),trailerPlaying:!!s.trailerPlaying,trailerSerial:s.trailerSerial||0,trailerRevision:s.trailerRevision||0,phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
+ return {homeUnlocked:!!s.homeUnlocked,trailerAvailable:fs.existsSync(TRAILER_FILE),trailerPlaying:!!s.trailerPlaying,trailerSerial:s.trailerSerial||0,trailerRevision:s.trailerRevision||0,tvAudio:Date.now()-tvAudioReport.updated<25000?{connected:true,playing:tvAudioReport.playing,blocked:tvAudioReport.blocked,error:tvAudioReport.error}:{connected:false,playing:false,blocked:false,error:''},phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
   quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,a:q.a,duration:q.type==='zoom'?ZOOM_MISSION_SECONDS:((s.phase==='demo'||s.demoOverlay)?45:30),remaining:a.remaining,accepting:a.accepting,foundCount:q.type==='zoom'?[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length:0,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
   player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)};
 }
@@ -482,7 +483,13 @@ async function handler(req,res){
    localMedia={name,size,duration:Number.isFinite(duration)&&duration>0?duration:0,lastSeen:Date.now()};
    return send(res,200,{ok:true,ready:true});
   }
-  if(m==='POST'&&p==='/api/tv/welcome-music'){
+  if(m==='POST'&&p==='/api/tv/audio-status'){
+  if(!isTv(req))return unauthorized(res);
+  const b=await read(req,1200);
+  tvAudioReport={playing:b.playing===true,blocked:b.blocked===true,error:String(b.error||'').slice(0,140),updated:Date.now()};
+  return send(res,200,{ok:true});
+ }
+ if(m==='POST'&&p==='/api/tv/welcome-music'){
   if(!isTv(req))return unauthorized(res);
   const body=await read(req,2000);
   if(s.phase!=='welcome')return send(res,409,{error:'Willkommensmusik ist nur auf der Willkommensfolie verfügbar.'});
