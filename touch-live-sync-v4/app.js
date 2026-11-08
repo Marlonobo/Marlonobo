@@ -7,6 +7,7 @@ let role='home',state=null,renderSignature='',userId='',userName='',adminKey=ses
 let easterInstance=null,cloudUploadReady=false,libraryRecoveryStarted=false;
 let tvAutoplayMuted=false;
 let spotifyApi=null,spotifyController=null,spotifyUri='',spotifyWanted=false,spotifyScriptLoading=false;
+let fingerMissionInstance=null;
 let welcomeAudioPending=false,welcomeAudioBlocked=false,welcomeAudioError='';
 let adminInfo=null,videoEl=null,ytPlayer=null,mediaType='',youtubeReady=false,playerReady=false,subtitles=[],lastFilmPhase='',lastRevision=-1,lastCaptionRevision=-1,gesturePointers=new Map(),gestureTransform={x:0,y:0,scale:1,rotate:0},gestureSnapshot=null;
 const CH=['Geschichte der Touchscreens','Wie Touchscreens funktionieren','Fünf Touchscreen-Arten','Multitouch und Display','Touchscreens im Alltag','Probleme und Zukunft','Fazit und Abschlussquiz'];
@@ -67,7 +68,7 @@ function userPage(){
  const q=state.quiz,p=state.player||{},answered=q&&p.choice!==null&&p.choice!==undefined;
  let body='';
  if(state.phase==='welcome')body=waiting('Willkommen, '+esc(userName)+'!','Wir beginnen gleich. Bitte schaut auf den Beamer.','✦');
- else if(state.phase==='gesture'||state.sideGame==='gesture')body='<div class="card"><div class="between"><span class="chip">KAPITEL 4 · SPIEL</span><div class="gestureNum" id="gestureValue">Zoom: 100 % · Drehung: 0°</div></div><h2>Gesten üben</h2><p>Zieh mich groß, dreh mich, schieb mich! Ein Finger verschiebt, zwei Finger zoomen und drehen.</p><div class="gestureBox" id="gestureBox"><div class="gesturePic" id="gesturePic">'+landscape()+'</div></div><div class="flex" style="margin-top:14px"><button id="gestureReset">Bild zurücksetzen</button></div></div>';
+ else if(state.phase==='gesture'||state.sideGame==='gesture')body='<div class="card fingerMissionCard"><div id="fingerMissionMount"></div></div>';
  else if(q&&q.type==='zoom')body=zoomCard(q,p,answered);
  else if(q&&!q.accepting)body=waiting('Schau auf den Beamer.','Die Antwortzeit ist vorbei. Die Dokumentation läuft weiter.','◉');
   else if(q){const hide=p.hide||[],jk=p.jokers||{},canJ=q.jokers&&q.accepting&&!answered;
@@ -103,6 +104,11 @@ function prizeCard(){const r=state?.ranking||[];const w=r.length?r.filter(x=>x.s
 function zoomSolution(){const z=state?.zoomResult;if(!z)return '';return '<div class="zoomsol"><div class="zoomsolPic">'+landscape()+'</div><div><span class="eyebrow">AUFLÖSUNG ZOOM-AUFGABE</span><h3>Im Fenster sitzt: '+esc(z.answer)+' 🐈</h3><p>'+z.found+' von '+z.total+' haben das Geheimnis gefunden.</p></div></div>';}
 function landscape(){return '<svg viewBox="0 0 560 370" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#65c8ed"/><stop offset="1" stop-color="#e0f2fa"/></linearGradient></defs><rect width="560" height="370" fill="url(#sky)"/><circle cx="432" cy="82" r="44" fill="#ffd36c"/><path d="M0 245L123 89 240 242 350 126 560 276V370H0" fill="#6395a0"/><path d="M0 274L152 164 270 291 408 196 560 281V370H0" fill="#326b76"/><path d="M0 301Q190 250 330 306T560 296V370H0" fill="#69ae7b"/><rect x="240" y="239" width="98" height="82" fill="#f3d2a3"/><path d="M223 239L288 192 354 239Z" fill="#995649"/><rect x="279" y="269" width="24" height="52" fill="#755547"/><rect x="311" y="251" width="17" height="19" fill="#7bbce0"/><g transform="translate(314.5 256.2) scale(.33)"><path d="M6 30C6 22 9 17 14 15L13 6 18 11H24L29 6 28 15C33 17 36 22 36 30Z" fill="#2b2b33"/><circle cx="17" cy="20" r="1.6" fill="#ffd36c"/><circle cx="25" cy="20" r="1.6" fill="#ffd36c"/><path d="M36 28Q42 26 40 20" stroke="#2b2b33" stroke-width="2.4" fill="none"/></g><text x="300" y="333" font-size="2.4" fill="#5d4a3a" font-family="sans-serif">psst … gefunden? TOUCH 2026</text><path d="M1 343Q310 308 560 355" stroke="#dbeaa6" stroke-width="6" fill="none"/></svg>';}
 function initGesture(){
+ const mountPoint=el('fingerMissionMount');
+ if(mountPoint&&window.FingerMission){
+  fingerMissionInstance=window.FingerMission.mount(mountPoint,{remaining:state?.gestureRemaining??30,disabled:(state?.gestureRemaining??30)<=0});
+  return;
+ }
  const area=el('gestureBox'),pic=el('gesturePic'),counter=el('gestureValue');
  if(!area)return;gesturePointers=new Map();gestureTransform={x:0,y:0,scale:1,rotate:0};gestureSnapshot=null;
  function update(){pic.style.transform='translate('+gestureTransform.x+'px,'+gestureTransform.y+'px) scale('+gestureTransform.scale+') rotate('+gestureTransform.rotate+'deg)';if(counter)counter.textContent='Zoom: '+Math.round(gestureTransform.scale*100)+' %'+(state?.phase==='zoom'?'':' · Drehung: '+Math.round(gestureTransform.rotate)+'°');}
@@ -1078,7 +1084,7 @@ async function poll(force=false){
  if((role==='admin'||role==='control')&&old?.phase!=='film'&&next.phase==='film'&&next.playing&&window.SpotifyConnect?.connected?.()){
   window.SpotifyConnect.pauseForFilm().catch(()=>{});
  }
- if(role==='join'||role==='teacher'){const player=state.player||{};const q=state.quiz;const missionActive=q?.type==='zoom';const sig=[role,state.phase,q?.id||'',q?.accepting||false,missionActive?'mission-stable':player.choice,player.score,missionActive?'no-rerender':state.revision,missionActive?'no-participants-rerender':state.participants,JSON.stringify(player.jokers||{}),(player.hide||[]).join(),player.hint||'',missionActive?'no-results-rerender':JSON.stringify(state.zoomResult||'')].join('|');if(force||renderSignature!==sig){renderSignature=sig;userPage();participantMode();}else if(q){if(el('liveTimer'))el('liveTimer').textContent=q.remaining+' s';if(q?.type==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!state.player?.zoomFound,disabled:!q.accepting});}}
+ if(role==='join'||role==='teacher'){const player=state.player||{};const q=state.quiz;const missionActive=q?.type==='zoom'||state.phase==='gesture'||state.sideGame==='gesture';const sig=[role,state.phase,state.sideGame||'',q?.id||'',q?.accepting||false,missionActive?'mission-stable':player.choice,player.score,missionActive?'no-rerender':state.revision,missionActive?'no-participants-rerender':state.participants,JSON.stringify(player.jokers||{}),(player.hide||[]).join(),player.hint||'',missionActive?'no-results-rerender':JSON.stringify(state.zoomResult||'')].join('|');if(force||renderSignature!==sig){renderSignature=sig;userPage();participantMode();}else if(q){if(el('liveTimer'))el('liveTimer').textContent=q.remaining+' s';if(q?.type==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!state.player?.zoomFound,disabled:!q.accepting});}if((state.phase==='gesture'||state.sideGame==='gesture')&&fingerMissionInstance)fingerMissionInstance.update({remaining:state.gestureRemaining,disabled:state.gestureRemaining<=0});}
  if(role==='join')refreshStudentScoreBadge();
  if(role==='tv'){tvDisplay();
    const signal=Number(state.tvReloadRequest||0);
