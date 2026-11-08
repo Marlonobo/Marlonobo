@@ -811,8 +811,16 @@ function tvRemoteKeydown(e){
 window.addEventListener('keydown',tvRemoteKeydown,true);
 function tvView(){
  if(!tvKey){app.innerHTML='<div class="wrap page"><h1>Beamer verbinden</h1><p>Bitte den Beamerlink aus der Admin-Ansicht öffnen.</p><label>Beamer-Zugangsschlüssel</label><input type="password" id="tvInput"><p></p><button class="primary" id="tvSubmit">Verbinden</button></div>';el('tvSubmit').onclick=()=>{tvKey=el('tvInput').value;sessionStorage.setItem('touch_tv_key',tvKey);localStorage.setItem('touch_tv_key',tvKey);tvView();};return;}
- app.innerHTML='<div id="tvApp"><audio id="tvWelcomeAudio" src="/welcome-music.wav" preload="auto" loop playsinline style="display:none"></audio><div id="tvScene" class="tvScene"></div><video id="tvTrailer" playsinline preload="metadata" controls style="display:none;position:fixed;inset:0;width:100vw;height:100vh;background:#000;object-fit:contain;z-index:50"></video><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><iframe id="cloudFrame" title="Google Drive Filmvorschau" allow="autoplay; fullscreen; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvLocalChoose" type="button" tabindex="0" hidden>📁 MP4 vom Windows-PC wählen</button><input id="tvLocalFile" type="file" accept=".mp4,video/mp4" hidden><span id="tvLocalStatus" role="status" style="font-size:13px;max-width:400px" hidden>MP4 bitte lokal auswählen.</span><button id="tvFullscreen" type="button" tabindex="0" autofocus>⛶ Vollbild – OK</button><button id="tvSoundtrackUnlock" type="button" tabindex="0">♫ Musik-Ton aktivieren</button><button id="tvSpotifyPlay" type="button" tabindex="0" hidden>♫ Willkommensmusik ▶</button><button id="tvCloudOpen" type="button" tabindex="0" hidden>☁ iCloud-Datei öffnen</button><button id="tvCaptionSync" type="button" tabindex="0" hidden>⏱ Untertitel synchronisieren</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><button id="tvFilmUnlock" class="tvFilmUnlock" type="button" hidden>🔊 Filmton mit OK einschalten</button><div id="tvWelcomeMusicStatus" class="tvWelcomeMusicStatus" hidden aria-live="polite"></div><div id="tvSpotifyDock" class="tvSpotifyDock" hidden aria-label="Spotify-Vorschau auf LG deaktiviert"></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
+ app.innerHTML='<div id="tvApp"><audio id="tvWelcomeAudio" src="/welcome-music.wav" preload="auto" loop playsinline style="display:none"></audio><div id="tvScene" class="tvScene"></div><video id="tvTrailer" playsinline preload="auto" controls style="display:none;position:fixed;inset:0;width:100vw;height:100vh;background:#000;object-fit:contain;z-index:50"></video><button id="tvTrailerUnlock" type="button" hidden style="position:fixed;bottom:8%;left:50%;transform:translateX(-50%);z-index:60;max-width:90%;padding:17px 25px;background:#59d8d2;color:#07222b;border-radius:14px;font-size:18px;font-weight:700">▶ Trailer mit Ton starten (OK)</button><div id="tvTrailerMessage" hidden style="position:fixed;top:4%;left:10%;right:10%;z-index:60;padding:12px;background:#07222bcc;color:white;border-radius:12px;text-align:center"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><iframe id="cloudFrame" title="Google Drive Filmvorschau" allow="autoplay; fullscreen; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvLocalChoose" type="button" tabindex="0" hidden>📁 MP4 vom Windows-PC wählen</button><input id="tvLocalFile" type="file" accept=".mp4,video/mp4" hidden><span id="tvLocalStatus" role="status" style="font-size:13px;max-width:400px" hidden>MP4 bitte lokal auswählen.</span><button id="tvFullscreen" type="button" tabindex="0" autofocus>⛶ Vollbild – OK</button><button id="tvSoundtrackUnlock" type="button" tabindex="0">♫ Musik-Ton aktivieren</button><button id="tvSpotifyPlay" type="button" tabindex="0" hidden>♫ Willkommensmusik ▶</button><button id="tvCloudOpen" type="button" tabindex="0" hidden>☁ iCloud-Datei öffnen</button><button id="tvCaptionSync" type="button" tabindex="0" hidden>⏱ Untertitel synchronisieren</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><button id="tvFilmUnlock" class="tvFilmUnlock" type="button" hidden>🔊 Filmton mit OK einschalten</button><div id="tvWelcomeMusicStatus" class="tvWelcomeMusicStatus" hidden aria-live="polite"></div><div id="tvSpotifyDock" class="tvSpotifyDock" hidden aria-label="Spotify-Vorschau auf LG deaktiviert"></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
  videoEl=el('tvVideo');
+ const trailerVideo=el('tvTrailer'),trailerUnlock=el('tvTrailerUnlock'),trailerMessage=el('tvTrailerMessage');
+ if(trailerVideo&&trailerUnlock){
+  trailerUnlock.onclick=()=>{trailerVideo.dataset.playBlocked='';trailerVideo.muted=false;trailerVideo.volume=1;const play=trailerVideo.play();if(play?.then)play.then(()=>{trailerUnlock.hidden=true;if(trailerMessage)trailerMessage.hidden=true;}).catch(()=>{trailerUnlock.hidden=false;if(trailerMessage){trailerMessage.textContent='TV blockiert die Wiedergabe. Drücke OK auf den Trailer-Startbutton.';trailerMessage.hidden=false;}});};
+  trailerVideo.addEventListener('playing',()=>{trailerUnlock.hidden=true;if(trailerMessage)trailerMessage.hidden=true;});
+  trailerVideo.addEventListener('waiting',()=>{if(trailerMessage){trailerMessage.textContent='Trailer wird gepuffert … Für flüssige Wiedergabe die TV-optimierte MP4 verwenden.';trailerMessage.hidden=false;}});
+  trailerVideo.addEventListener('error',()=>{if(trailerMessage){trailerMessage.textContent='Trailer konnte nicht geladen werden. Bitte erneut hochladen oder Videoformat prüfen.';trailerMessage.hidden=false;}});
+  trailerVideo.addEventListener('ended',()=>{trailerUnlock.hidden=true;if(trailerMessage)trailerMessage.hidden=true;});
+ }
  const choose=el('tvLocalChoose'),picker=el('tvLocalFile');
  if(choose&&picker){
   choose.onclick=()=>picker.click();
@@ -986,17 +994,32 @@ function syncWelcomeMusic(){
 function tvDisplay(){
  if(!state||role!=='tv'||!el('tvScene'))return;
  const phase=state.phase;const videoMode=phase==='film';
- const trailer=el('tvTrailer');
+ const trailer=el('tvTrailer'),trailerUnlock=el('tvTrailerUnlock'),trailerMessage=el('tvTrailerMessage');
  if(trailer){
-  const isTrailer=phase==='trailer';
+  const isTrailer=phase==='trailer',serial=String(state.trailerSerial||0),rev=String(state.trailerRevision||0);
   trailer.style.display=isTrailer?'block':'none';
   if(isTrailer){
-   if(!trailer.getAttribute('src')){trailer.src='/api/trailer/video';trailer.load();}
+   if(!trailer.getAttribute('src')||trailer.dataset.revision!==rev){
+    trailer.src='/api/trailer/video?v='+encodeURIComponent(rev);trailer.dataset.revision=rev;trailer.dataset.playBlocked='';trailer.load();
+   }
+   if(trailer.dataset.serial!==serial){trailer.dataset.serial=serial;trailer.dataset.playBlocked='';try{trailer.currentTime=0;}catch{}if(trailerUnlock)trailerUnlock.hidden=true;}
    const targetPlay=!!state.trailerPlaying;
-   if(targetPlay&&trailer.paused)trailer.play().catch(()=>{trailer.controls=true;});
-   else if(!targetPlay&&!trailer.paused)trailer.pause();
-  }else if(!trailer.paused){trailer.pause();trailer.removeAttribute('src');trailer.load();}
-  else if(!isTrailer&&trailer.getAttribute('src')){trailer.removeAttribute('src');trailer.load();}
+   if(targetPlay&&trailer.paused&&!trailer.ended&&!trailer.dataset.playBlocked){
+    trailer.dataset.playBlocked='pending';
+    const attempt=trailer.play();
+    if(attempt?.then)attempt.then(()=>{trailer.dataset.playBlocked='';if(trailerUnlock)trailerUnlock.hidden=true;}).catch(()=>{
+     trailer.dataset.playBlocked='blocked';if(trailerUnlock)trailerUnlock.hidden=false;
+     if(trailerMessage){trailerMessage.textContent='Ton oder Autostart gesperrt: Mit der LG-Fernbedienung unten OK drücken.';trailerMessage.hidden=false;}
+    });
+   }else if(!targetPlay&&!trailer.paused)trailer.pause();
+   if(!targetPlay&&trailer.dataset.playBlocked==='pending')trailer.dataset.playBlocked='';
+  }else{
+   if(!trailer.paused)trailer.pause();
+   if(trailer.getAttribute('src')){trailer.removeAttribute('src');trailer.load();}
+   trailer.dataset.playBlocked='';trailer.dataset.serial='';
+   if(trailerUnlock)trailerUnlock.hidden=true;
+   if(trailerMessage)trailerMessage.hidden=true;
+  }
  }
 
  const local=state.video?.type==='local',localPick=el('tvLocalChoose'),localStatus=el('tvLocalStatus');
