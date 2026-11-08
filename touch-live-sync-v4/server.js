@@ -32,6 +32,21 @@ if(!fs.existsSync(FILM_CUES_MARKER)){
  }catch(e){console.error('Film-Zeitmarken nicht dauerhaft gesichert:',e.message);}
 }
 
+// TOUCH_FINAL_v4: apply the supplied 08.11. question list once even on existing Render instances.
+const V4_CUES_MARKER=path.join(DIR,'film-cues-2026-11-08-v4.applied');
+if(!fs.existsSync(V4_CUES_MARKER)){
+ try{
+  const latest=JSON.parse(fs.readFileSync(path.join(ROOT,'questions.json'),'utf8'));
+  for(const target of Q){const source=latest.find(x=>x.id===target.id);if(!source)continue;
+   for(const key of ['open','close','countdown','duration','q','a','correct']){
+    if(Object.hasOwn(source,key))target[key]=source[key];else delete target[key];
+   }
+  }
+  fs.writeFileSync(QUESTIONS_FILE,JSON.stringify(Q,null,2),'utf8');
+  fs.writeFileSync(V4_CUES_MARKER,new Date().toISOString(),'utf8');
+ }catch(e){console.error('V4-Zeitmarken konnten nicht aktualisiert werden:',e.message);}
+}
+
 const def=()=>({phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,videoVolume:1,videoTitle:'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{url:'',type:'',id:'',on:false},soundtrack:{pause:true,results:true,volume:.25},captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},remoteVideo:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,continuousWatch:false,zoomDismissed:false,zoomOverlay:false,zoomOverlayStartTime:0,demoOverlay:false,gestureOverlay:false,gestureOverlayStartTime:0,gestureStartTime:0,gestureReturnPhase:'welcome',resultsAt:0,clockSource:'tv',lastHostTick:0,seekSerial:0,removedUserIds:[],revision:0});
 let s=def(), users=new Map(), upload=null,feedback=[],cloudManifest=null;
 // This is intentionally volatile: choosing a file on a Windows PC never uploads its bytes.
@@ -44,7 +59,7 @@ try{users=new Map(Object.entries(JSON.parse(fs.readFileSync(USERS_FILE,'utf8')))
 let usersTimer=null;function saveUsers(){clearTimeout(usersTimer);usersTimer=setTimeout(()=>fsp.writeFile(USERS_FILE,JSON.stringify(Object.fromEntries(users))).catch(console.error),400);}
 // One 30-second mission, independent from the 22:18–23:20 film passage.
 const GESTURE_MISSION_SECONDS=30;
-const ZOOM_MISSION_SECONDS=30;
+const ZOOM_MISSION_SECONDS=51;
 for(const q of Q)if(q.type==='zoom'){q.duration=ZOOM_MISSION_SECONDS;q.close=q.open+ZOOM_MISSION_SECONDS;}
 const ZOOM=()=>Q.find(q=>q.type==='zoom');
 async function hydrateCloudMedia(){
@@ -145,7 +160,7 @@ function active(){
  else if(s.phase==='demo')i=Math.max(0,Math.min(Q.length-1,s.demoIndex));
  if(i<0)return {index:-1,remaining:0,accepting:false};
  const q=Q[i];
- const left=(s.phase==='demo'||isDemoOverlay)?45-(Date.now()-s.demoStart)/1000:q.type==='zoom'?(isManualZoomOverlay?ZOOM_MISSION_SECONDS-(s.time-s.zoomOverlayStartTime):s.phase==='film'?ZOOM_MISSION_SECONDS-(s.time-(q.open+s.quizOffset)):ZOOM_MISSION_SECONDS-(Date.now()-s.zoomStart)/1000):Math.min(45-(s.time-(q.open+s.quizOffset)),q.close+s.quizOffset-s.time);
+ const left=(s.phase==='demo'||isDemoOverlay)?45-(Date.now()-s.demoStart)/1000:q.type==='zoom'?(isManualZoomOverlay?ZOOM_MISSION_SECONDS-(s.time-s.zoomOverlayStartTime):s.phase==='film'?ZOOM_MISSION_SECONDS-(s.time-(q.open+s.quizOffset)):ZOOM_MISSION_SECONDS-(Date.now()-s.zoomStart)/1000):Math.min(30-(s.time-((q.countdown??q.open)+s.quizOffset)),q.close+s.quizOffset-s.time);
  remaining=Math.max(0,Math.ceil(left));
  return {index:i,remaining,accepting:left>0};
 }
@@ -166,7 +181,7 @@ function publicState(id){
   :s.phase==='gesture'?Math.max(0,Math.ceil(GESTURE_MISSION_SECONDS-(Date.now()-(s.gestureStartTime||Date.now()))/1000)):0;
  const gestureActive=gestureSeconds>0&&(s.phase==='gesture'||(s.phase==='film'&&s.gestureOverlay));
  return {phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
-  quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,a:q.a,duration:q.type==='zoom'?ZOOM_MISSION_SECONDS:((s.phase==='demo'||s.demoOverlay)?45:Math.max(1,Math.min(45,q.close-q.open))),remaining:a.remaining,accepting:a.accepting,foundCount:q.type==='zoom'?[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length:0,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
+  quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,a:q.a,duration:q.type==='zoom'?ZOOM_MISSION_SECONDS:((s.phase==='demo'||s.demoOverlay)?45:30),remaining:a.remaining,accepting:a.accepting,foundCount:q.type==='zoom'?[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length:0,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
   player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)};
 }
 function startZoom(){const z=ZOOM();if(!z)return false;
