@@ -1178,7 +1178,11 @@ async function loadAdminInfo(){if(!adminKey)return;try{
  }
 }
 async function poll(force=false){
- if(role==='home'||role==='handout')return;
+ if(role==='home'){
+  try{const next=await api('/api/state');const changed=!state||state.homeUnlocked!==next.homeUnlocked||state.trailerAvailable!==next.trailerAvailable;state=next;if(changed||force)home();}catch(e){if(!state){const node=el('app');if(node&&node.querySelector('.loader'))home();}}
+  return;
+ }
+ if(role==='handout')return;
  try{
  const rp=role==='join'?'student':role==='teacher'?'teacher':role;
  const id=(rp==='student'||rp==='teacher')?(localStorage.getItem('touch_'+rp+'_id')||''):'';
