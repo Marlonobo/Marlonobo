@@ -42,6 +42,9 @@ if(migratedFilmCues){s.quizOffset=0;try{fs.writeFileSync(STATE_FILE,JSON.stringi
 
 try{users=new Map(Object.entries(JSON.parse(fs.readFileSync(USERS_FILE,'utf8'))));}catch{}
 let usersTimer=null;function saveUsers(){clearTimeout(usersTimer);usersTimer=setTimeout(()=>fsp.writeFile(USERS_FILE,JSON.stringify(Object.fromEntries(users))).catch(console.error),400);}
+// One 30-second mission, independent from the 22:18–23:20 film passage.
+const ZOOM_MISSION_SECONDS=30;
+for(const q of Q)if(q.type==='zoom')q.duration=ZOOM_MISSION_SECONDS;
 const ZOOM=()=>Q.find(q=>q.type==='zoom');
 async function hydrateCloudMedia(){
  if(!S3.enabled)return;
@@ -129,10 +132,10 @@ function active(){
   }
   const z=ZOOM();
   if(!isDemoOverlay){
-   if(s.continuousWatch&&s.zoomOverlay&&z&&s.time>=s.zoomOverlayStartTime&&s.time<s.zoomOverlayStartTime+(z.duration||62)){
+   if(s.zoomOverlay&&z&&s.time>=s.zoomOverlayStartTime&&s.time<s.zoomOverlayStartTime+ZOOM_MISSION_SECONDS){
     i=Q.findIndex(q=>q.id===z.id);isManualZoomOverlay=true;
    }
-   else if(s.continuousWatch&&z&&!s.zoomDismissed&&s.time>=z.open+s.quizOffset&&s.time<z.close+s.quizOffset)
+   else if(z&&!s.zoomDismissed&&s.time>=z.open+s.quizOffset&&s.time<z.open+s.quizOffset+ZOOM_MISSION_SECONDS)
     i=Q.findIndex(q=>q.id===z.id);
    else i=Q.findIndex(q=>q.type!=='zoom'&&s.time>=q.open+s.quizOffset&&s.time<q.close+s.quizOffset);
   }
@@ -141,7 +144,7 @@ function active(){
  else if(s.phase==='demo')i=Math.max(0,Math.min(Q.length-1,s.demoIndex));
  if(i<0)return {index:-1,remaining:0,accepting:false};
  const q=Q[i];
- const left=(s.phase==='demo'||isDemoOverlay)?45-(Date.now()-s.demoStart)/1000:q.type==='zoom'?(isManualZoomOverlay?(q.duration||62)-(s.time-s.zoomOverlayStartTime):s.continuousWatch&&s.phase==='film'?q.close+s.quizOffset-s.time:(q.duration||75)-(Date.now()-s.zoomStart)/1000):Math.min(45-(s.time-(q.open+s.quizOffset)),q.close+s.quizOffset-s.time);
+ const left=(s.phase==='demo'||isDemoOverlay)?45-(Date.now()-s.demoStart)/1000:q.type==='zoom'?(isManualZoomOverlay?ZOOM_MISSION_SECONDS-(s.time-s.zoomOverlayStartTime):s.phase==='film'?ZOOM_MISSION_SECONDS-(s.time-(q.open+s.quizOffset)):ZOOM_MISSION_SECONDS-(Date.now()-s.zoomStart)/1000):Math.min(45-(s.time-(q.open+s.quizOffset)),q.close+s.quizOffset-s.time);
  remaining=Math.max(0,Math.ceil(left));
  return {index:i,remaining,accepting:left>0};
 }
@@ -162,13 +165,17 @@ function publicState(id){
   player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)};
 }
 function startZoom(){const z=ZOOM();if(!z)return false;
- if(s.continuousWatch&&s.phase==='film'){
+ if(s.phase==='film'){
   s.zoomDone=true;s.zoomDismissed=false;s.revision++;persist();return true;
  }
- s.phase='zoom';s.playing=false;s.time=z.open;s.zoomStart=Date.now();s.zoomDone=true;s.revision++;persist();return true;}
+ s.phase='zoom';s.playing=false;s.zoomStart=Date.now();s.zoomDone=true;s.revision++;persist();return true;}
 function endZoom(){
- if(s.continuousWatch&&s.phase==='film'){s.zoomDismissed=true;s.zoomOverlay=false;s.revision++;persist();return;}
- if(s.phase!=='zoom')return;const z=ZOOM();s.phase='film';s.time=z?.close??s.time;s.playing=true;s.revision++;persist();
+ if(s.phase==='film'){
+  if(!s.zoomOverlay)s.zoomDismissed=true;
+  s.zoomOverlay=false;s.revision++;persist();return;
+ }
+ if(s.phase!=='zoom')return;
+ s.phase='film';s.playing=true;s.revision++;persist();
 }
 setInterval(()=>{const z=ZOOM();if(s.phase==='zoom'&&z&&Date.now()-s.zoomStart>=(z.duration||30)*1000+250)endZoom();},1000);
 setInterval(()=>{if(s.phase==='results'&&s.resultsAt&&Date.now()-s.resultsAt>=28000){s.phase='end';s.playing=false;s.revision++;persist();}},1000);
@@ -297,14 +304,14 @@ async function handler(req,res){
  if(m==='POST'&&p==='/api/easter/find'){
  const b=await read(req,1000),x=users.get(String(b.id||'')),a=active(),z=ZOOM();
  if(!x)return send(res,403,{error:'Bitte zuerst mit deinem Namen teilnehmen.'});
- if(!z||!(s.phase==='zoom'||(s.continuousWatch&&s.phase==='film'&&Q[a.index]?.id===z.id))||a.index<0||!a.accepting)return send(res,409,{error:'Die Easter-Egg-Suche läuft gerade nicht mehr.'});
+ if(!z||!(s.phase==='zoom'||(s.phase==='film'&&Q[a.index]?.id===z.id))||a.index<0||!a.accepting)return send(res,409,{error:'Die Easter-Egg-Suche läuft gerade nicht mehr.'});
  if(Object.hasOwn(x.answers,z.id))return send(res,409,{error:'Easter Egg wurde bereits gefunden.'});
  const px=Number(b.x),py=Number(b.y),zoom=Number(b.zoom);
  if(!Number.isFinite(px)||!Number.isFinite(py)||!Number.isFinite(zoom)||px<0||px>1000||py<0||py>620||zoom<1.7||zoom>7.05)return send(res,400,{error:'Zoome ins Bild und tippe das versteckte Objekt an.'});
  if(Math.abs(px-746)>27||Math.abs(py-332)>25)return send(res,400,{error:'FALSCH – versuch es nochmal! Kein Punktabzug.'});
- const bonus=Math.min(130,Math.max(0,Math.round(a.remaining/(z.duration||30)*130/10)*10)),points=170+bonus;
+ const bonus=Math.min(130,Math.max(0,Math.round(a.remaining/ZOOM_MISSION_SECONDS*130/10)*10)),points=170+bonus;
  x.answers[z.id]=z.correct;x.zoomPoints=points;x.score+=points;saveUsers();
- return send(res,200,{ok:true,correct:true,message:'RICHTIG! Easter Egg gefunden! Punkte werden erst bei den Ergebnissen angezeigt.'});
+ return send(res,200,{ok:true,correct:true,points,message:'Mission erfüllt! Die Katze wurde entdeckt und deine Punkte wurden gespeichert.'});
  }
  if(m==='POST'&&p==='/api/answer'){
  const b=await read(req,1000),x=users.get(String(b.id||'')),a=active();
@@ -439,7 +446,7 @@ async function handler(req,res){
  else if(cmd==='gestureStart'){if(s.continuousWatch&&s.phase==='film')s.gestureOverlay=true;else{s.phase='gesture';s.playing=false;}}
  else if(cmd==='gestureEnd'){if(s.continuousWatch&&s.phase==='film')s.gestureOverlay=false;else{s.phase='film';s.playing=true;}}
  else if(cmd==='zoomStart'){
-  if(s.continuousWatch&&s.phase==='film'){
+  if(s.phase==='film'){
    const z=ZOOM();if(!z)return send(res,400,{error:'Keine Zoom-Aufgabe vorhanden'});
    s.zoomOverlay=true;s.zoomOverlayStartTime=s.time;s.zoomDismissed=false; // Keep automatic Chapter 4 Zoom cue eligible later
   }else if(!startZoom())return send(res,400,{error:'Keine Zoom-Aufgabe vorhanden'});
@@ -541,7 +548,7 @@ async function handler(req,res){
  const open=Number(q.open),close=Number(q.close),correct=Number(q.correct);
  if(!Number.isFinite(open)||!Number.isFinite(close)||open<0||close<=open||close>20000||!Number.isInteger(correct)||correct<0||correct>3||!Array.isArray(q.a)||q.a.length!==4||!String(q.q||'').trim()||String(q.q).length>500||q.a.some(a=>!String(a).trim()||String(a).length>250))return send(res,400,{error:'Frage '+(i+1)+' hat ungueltige Werte.'});
  const item={id:/^[A-Za-z0-9_-]{1,32}$/.test(q.id||'')?q.id:'Q'+(i+1),open,close,q:String(q.q).trim(),a:q.a.map(x=>String(x).trim()),correct,chapter:Math.min(7,Math.max(1,Number(q.chapter)||1))};
- if(q.type==='zoom'){item.type='zoom';item.duration=Math.min(300,Math.max(20,Number(q.duration)||75));}
+ if(q.type==='zoom'){item.type='zoom';item.duration=ZOOM_MISSION_SECONDS;}
  if(q.hint)item.hint=String(q.hint).slice(0,200);if(Number.isInteger(Number(q.fifty))&&q.fifty!==null&&q.fifty!==''&&Number(q.fifty)!==correct&&Number(q.fifty)>=0&&Number(q.fifty)<=3)item.fifty=Number(q.fifty);
  next.push(item);}
  if(new Set(next.map(x=>x.id)).size!==next.length)return send(res,400,{error:'Fragen-IDs muessen eindeutig sein.'});
