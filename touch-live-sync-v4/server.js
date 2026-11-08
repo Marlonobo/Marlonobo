@@ -12,6 +12,7 @@ const BUILD_VERSION=process.env.RENDER_GIT_COMMIT||process.env.RENDER_DEPLOY_ID|
 if(!process.env.ADMIN_KEY)console.log('TOUCH LIVE ADMIN_KEY: '+ADMIN);
 if(!process.env.TV_KEY)console.log('TOUCH LIVE TV_KEY: '+TV);
 fs.mkdirSync(DIR,{recursive:true});
+const TRAILER_FILE=path.join(DIR,'touchscreen-trailer.mp4');
 const USERS_FILE=path.join(DIR,'users.json'),STATE_FILE=path.join(DIR,'live-state.json'), VIDEO_FILE=path.join(DIR,'touchscreen.mp4'), SUB_FILE=path.join(DIR,'untertitel.vtt'), QUESTIONS_FILE=path.join(DIR,'custom-questions.json');
 try{const saved=JSON.parse(fs.readFileSync(QUESTIONS_FILE,'utf8'));if(Array.isArray(saved)&&saved.length>=1&&saved.length<=50)Q.splice(0,Q.length,...saved);}catch{}
 
@@ -47,7 +48,7 @@ if(!fs.existsSync(V4_CUES_MARKER)){
  }catch(e){console.error('V4-Zeitmarken konnten nicht aktualisiert werden:',e.message);}
 }
 
-const def=()=>({phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,videoVolume:1,videoTitle:'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{url:'',type:'',id:'',on:false},soundtrack:{pause:true,results:true,volume:.25},captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},remoteVideo:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,continuousWatch:false,zoomDismissed:false,zoomOverlay:false,zoomOverlayStartTime:0,demoOverlay:false,gestureOverlay:false,gestureOverlayStartTime:0,gestureStartTime:0,gestureReturnPhase:'welcome',resultsAt:0,clockSource:'tv',lastHostTick:0,seekSerial:0,removedUserIds:[],revision:0});
+const def=()=>({homeUnlocked:false,phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,videoVolume:1,videoTitle:'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{url:'',type:'',id:'',on:false},soundtrack:{pause:true,results:true,volume:.25},captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},remoteVideo:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,continuousWatch:false,zoomDismissed:false,zoomOverlay:false,zoomOverlayStartTime:0,demoOverlay:false,gestureOverlay:false,gestureOverlayStartTime:0,gestureStartTime:0,gestureReturnPhase:'welcome',resultsAt:0,clockSource:'tv',lastHostTick:0,seekSerial:0,removedUserIds:[],revision:0});
 let s=def(), users=new Map(), upload=null,feedback=[],cloudManifest=null;
 // This is intentionally volatile: choosing a file on a Windows PC never uploads its bytes.
 // Readiness expires when the HDMI browser disconnects; it is not persisted in storage.
@@ -180,7 +181,7 @@ function publicState(id){
   ?Math.max(0,Math.ceil(GESTURE_MISSION_SECONDS-(s.time-(s.gestureOverlayStartTime||0))))
   :s.phase==='gesture'?Math.max(0,Math.ceil(GESTURE_MISSION_SECONDS-(Date.now()-(s.gestureStartTime||Date.now()))/1000)):0;
  const gestureActive=gestureSeconds>0&&(s.phase==='gesture'||(s.phase==='film'&&s.gestureOverlay));
- return {phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
+ return {homeUnlocked:!!s.homeUnlocked,trailerAvailable:fs.existsSync(TRAILER_FILE),phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
   quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,a:q.a,duration:q.type==='zoom'?ZOOM_MISSION_SECONDS:((s.phase==='demo'||s.demoOverlay)?45:30),remaining:a.remaining,accepting:a.accepting,foundCount:q.type==='zoom'?[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length:0,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
   player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)};
 }
@@ -258,6 +259,45 @@ async function handler(req,res){
  if(m==='GET'&&(p==='/watch'||p==='/host'))return serve(res,path.join(ROOT,'party.html'),'text/html; charset=utf-8');
  if(m==='GET'&&(p==='/party.js'||p==='/party.css'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
   if(m==='GET'&&p==='/host-upload.js')return serve(res,path.join(ROOT,'host-upload.js'),'application/javascript; charset=utf-8');
+ if(m==='GET'&&p==='/api/trailer/status')return send(res,200,{available:fs.existsSync(TRAILER_FILE),homeUnlocked:!!s.homeUnlocked,temporary:true});
+ if(m==='POST'&&p==='/api/trailer/access'){
+  if(!isAdmin(req))return unauthorized(res);
+  const b=await read(req,1000);if(typeof b.unlocked!=='boolean')return send(res,400,{error:'Freigabe muss true oder false sein'});
+  s.homeUnlocked=b.unlocked;s.revision++;await persist();return send(res,200,{ok:true,homeUnlocked:s.homeUnlocked});
+ }
+ if(m==='POST'&&p==='/api/trailer/upload'){
+  if(!isAdmin(req))return unauthorized(res);
+  if(!['welcome','end','handout'].includes(s.phase))return send(res,409,{error:'Trailer nur vor oder nach dem Film austauschen'});
+  const max=110*1024*1024,declared=Number(req.headers['content-length']||0);
+  if(declared>max)return send(res,413,{error:'Trailer zu groß (max. 110 MB)'});
+  const tmp=TRAILER_FILE+'.part-'+crypto.randomBytes(6).toString('hex');
+  let n=0,failed=false;
+  try{
+   const out=fs.createWriteStream(tmp,{flags:'wx'});
+   await new Promise((resolve,reject)=>{
+    req.on('data',chunk=>{n+=chunk.length;if(n>max){failed=true;req.destroy(Error('Maximale Größe überschritten'));return;}if(!out.write(chunk))req.pause();});
+    out.on('drain',()=>req.resume());
+    req.on('end',()=>out.end());req.on('error',reject);out.on('error',reject);out.on('finish',resolve);
+   });
+   const fd=await fsp.open(tmp,'r'),header=Buffer.alloc(12);
+   try{await fd.read(header,0,12,0);}finally{await fd.close();}
+   if(n<1024||header.toString('ascii',4,8)!=='ftyp')throw Error('Keine gültige MP4-Datei');
+   await fsp.rename(tmp,TRAILER_FILE);
+   return send(res,200,{ok:true,bytes:n,temporary:true});
+  }catch(e){await fsp.unlink(tmp).catch(()=>{});if(!res.headersSent&&!res.destroyed)return send(res,400,{error:e.message});return;}
+ }
+ if((m==='GET'||m==='HEAD')&&p==='/api/trailer/video'){
+  let st;try{st=await fsp.stat(TRAILER_FILE);}catch{return send(res,404,{error:'Noch kein Trailer hochgeladen'});}
+  let first=0,last=st.size-1,status=200;const range=req.headers.range;
+  if(range){const match=/^bytes=(\\d+)-(\\d*)$/.exec(range);if(!match)return send(res,416,{error:'Ungültiger Bereich'});
+   first=Number(match[1]);last=match[2]?Math.min(last,Number(match[2])):last;
+   if(first>last||first>=st.size){res.writeHead(416,{'Content-Range':'bytes */'+st.size});return res.end();}status=206;
+  }
+  const h={'Content-Type':'video/mp4','Accept-Ranges':'bytes','Content-Length':last-first+1,'Cache-Control':'no-store'};
+  if(status===206)h['Content-Range']='bytes '+first+'-'+last+'/'+st.size;
+  res.writeHead(status,h);if(m==='HEAD')return res.end();
+  return fs.createReadStream(TRAILER_FILE,{start:first,end:last}).pipe(res);
+ }
  if(m==='GET'&&p==='/api/state')return send(res,200,publicState(u.searchParams.get('id')));
  if(m==='GET'&&p==='/api/version')return send(res,200,{version:BUILD_VERSION});
  if(m==='GET'&&p==='/api/health')return send(res,200,{ok:true,questionCount:Q.length,now:Date.now(),cloudStorageConfigured:S3.enabled});
