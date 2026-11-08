@@ -66,7 +66,7 @@ function updateStudentQuizTimer(q){
  const timer=el('liveTimer'),progress=el('quizProgressFill'),bar=el('quizProgress'),notice=el('quizTimerNotice');
  if(timer){timer.textContent=remain+' s';timer.classList.toggle('warning',remain<=15&&remain>8);timer.classList.toggle('urgent',remain<=8);}
  if(progress)progress.style.width=percent.toFixed(1)+'%';
- if(bar){bar.classList.toggle('is-warning',remain<=15&&remain>8);bar.classList.toggle('is-urgent',remain<=8);}
+ if(bar){bar.classList.toggle('is-warning',remain<=15&&remain>8);bar.classList.toggle('is-urgent',remain<=8);bar.setAttribute('aria-valuenow',String(remain));bar.setAttribute('aria-valuemax',String(duration));}
  if(notice)notice.textContent=remain<=0?'Zeit abgelaufen – schau wieder zum Film.':remain<=8?'⏳ Endspurt! Noch '+remain+' Sekunden.':'Wähle eine Antwort, bevor der Balken abläuft.';
 }
 function participantMode(){
