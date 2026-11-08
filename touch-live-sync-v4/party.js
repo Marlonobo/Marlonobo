@@ -141,8 +141,8 @@ function renderScene(html){
  screenSignature=html;
  screen.innerHTML=html;
 }
-function slide(title,subtitle,extra=''){
- return '<div class="partySceneInner"><img src="/touchscreen-motiv.svg" alt="Touchscreen-Motiv"><h2>'+title+'</h2><p>'+subtitle+'</p>'+extra+'</div>';
+function slide(title,subtitle,extra='',sceneType=''){
+ return '<div class="partySceneInner '+sceneType+'">'+(sceneType?'<div class="partyAmbientLights" aria-hidden="true"><i></i><i></i><i></i></div>':'')+'<img src="/touchscreen-motiv.svg" alt="Touchscreen-Motiv"><h2>'+title+'</h2><p>'+subtitle+'</p>'+extra+'</div>';
 }
 function podium(){
  const people=state?.ranking||[];
@@ -228,7 +228,7 @@ function updateScene(){
  const resyncButton=$('partyResync');if(resyncButton)resyncButton.hidden=!(film&&!host&&['youtube','url','upload'].includes(source.type));
  if(film){screenSignature='';return;}
  let html='';
- if(phase==='welcome')html=slide('Willkommen bei TOUCH LIVE','Die Dokumentation startet, sobald die Moderatorin bereit ist.','<small>Gemeinsam schauen und mitspielen – egal von welchem Ort.</small>');
+ if(phase==='welcome')html=slide('Willkommen bei TOUCH LIVE','Berühren · Verstehen · Mitmachen','<span class="partyIntroTag">✦ INTERAKTIVE TOUCHSCREEN-DOKUMENTATION · 2026</span><p>Die Dokumentation startet in Kürze. Öffnet den Quiz-Link auf dem Handy oder iPad.</p>','partyWelcomeCinematic');
  else if(phase==='film'&&state.video?.type==='local')html=slide('Film läuft am HDMI-PC','Die lokale MP4 wird nicht ins Internet übertragen. Die Regie kann eine nicht gelistete YouTube-Version oder eine direkte Online-MP4 für Zuschauer in anderen Städten eintragen.','<small>Quiz und Spiele funktionieren hier weiterhin · oder auf /join.</small>');
  else if(phase==='film')html=slide('Noch keine Online-Filmquelle','Die Regie kann einen nicht gelisteten YouTube-Link oder eine direkt erreichbare MP4 eintragen.','<small>Die Bildübertragung erfordert eine Online-Videoquelle.</small>');
  else if(phase==='gesture')html=slide('Multitouch trainieren!','Verschieben, Vergrößern und Drehen – das Spiel läuft rechts.');
@@ -236,7 +236,7 @@ function updateScene(){
  else if(phase==='demo')html=slide('Quiz-Probelauf','Die Frage erscheint auf beiden Geräten.','<small>Testet jetzt gleichzeitig eure Antworten.</small>');
  else if(phase==='results')html=podium();
  else if(phase==='handout')html=slide('Handout · Lernfeld 14','Tragt eure Bewertungen und kurzen Notizen nur in die Tabelle ein. Keine Rechnungen!');
- else if(phase==='end')html=slide('Vielen Dank für eure Aufmerksamkeit!','Das war meine interaktive Dokumentation über Touchscreens.','<small>Ich hoffe, es hat euch gefallen.</small>');
+ else if(phase==='end')html=slide('Vielen Dank für eure Aufmerksamkeit!','7 Kapitel · 17 Quizfragen · 2 Touch-Missionen','<span class="partyOutroTag">✦ TOUCH LIVE 2026 ✦</span><p>Jetzt ist Zeit für eure Fragen. Danke fürs Mitmachen!</p>','partyEndingCinematic');
  else html=slide('TOUCH LIVE','Gemeinsam lernen und spielen.');
  renderScene(html);
  stopPlayback();
@@ -362,7 +362,9 @@ function paintPartyQuizTimer(q){
  const remaining=Math.max(0,Math.ceil(Number(q.remaining)||0));
  if(node){node.textContent=remaining+' s';node.classList.toggle('timerUrgent',remaining<=10);node.setAttribute('aria-label',remaining+' Sekunden verbleiben');}
  if(fill)fill.style.width=(Math.min(100,remaining/Math.max(1,Number(q.duration)||45)*100))+'%';
- if(card)card.classList.toggle('quizUrgent',remaining<=10);
+ if(card){card.classList.toggle('quizUrgent',remaining<=10&&state?.playing!==false);card.classList.toggle('quizPaused',state?.phase==='film'&&state?.playing===false);}
+ const label=$('partyQuizTimeCaption');
+ if(label)label.textContent=state?.phase==='film'&&state?.playing===false?'Ⅱ Film & Quiz pausiert':remaining<=10?'⚡ Letzte 10 Sekunden':'⏱ Zeit für deine Antwort';
 }
 function ownWatchScoreHtml(p){
  if(!participantId||!p)return '';
@@ -409,9 +411,16 @@ function interaction(){
   if(!q.accepting){part.innerHTML='<div class="centerstage partyWait"><div><h2>Schau wieder auf den Film.</h2><p>Die Antwortzeit ist vorbei. Die nächste Frage erscheint automatisch.</p></div></div>';return;}
   const answered=p?.choice!==null&&p?.choice!==undefined;
   const allow=!!participantId&&q.accepting&&!answered;
-  part.innerHTML='<div class="partyQuestion quizCinematic">'+ownWatchScoreHtml(p)+'<div class="between"><span class="chip">'+(q.type==='zoom'?'ZOOM-SPIEL':'QUIZFRAGE '+(Number(q.index)+1)+' / '+q.total)+'</span><div class="partyQuizTimerHud"><span class="timer" id="partyTimer">'+q.remaining+' s</span><div class="partyQuizTimeTrack" aria-hidden="true"><i id="partyQuizTimeFill"></i></div></div></div><h3>'+safe(q.q)+'</h3>'+(q.type==='zoom'?'<div class="partyGesture" id="partyGesture"><div class="partyGesturePic" id="partyGestureImage">'+landscape()+'</div></div><p class="small" id="partyGestureValues">Zoome, um die Katze zu entdecken.</p><button id="partyGestureReset" style="margin-bottom:14px">Bild zurücksetzen</button>':'')+'<div class="partyAnswerGrid">'+q.a.map((answer,i)=>'<button class="partyAnswer'+(answered&&p.choice===i?' selected':'')+'" style="--answer-index:'+i+'" data-choice="'+i+'" '+(allow?'':'disabled')+'><b>'+String.fromCharCode(65+i)+'</b><span>'+safe(answer)+'</span></button>').join('')+'</div><p class="partyHint" style="margin-top:15px">'+(!participantId?'Gib oben deinen Namen ein, um mitzumachen.':answered?'Antwort gespeichert! Du kannst weiter auf den Film schauen.':!q.accepting?'Die Antwortzeit ist vorbei.':'Wähle jetzt eine Antwort – das Quiz wird automatisch ausgewertet.')+'</p></div>';
+  part.innerHTML='<div class="partyQuestion quizCinematic">'+ownWatchScoreHtml(p)+'<div class="between"><span class="chip">'+(q.type==='zoom'?'ZOOM-SPIEL':'QUIZFRAGE '+(Number(q.index)+1)+' / '+q.total)+'</span><div class="partyQuizTimerHud"><span class="timer" id="partyTimer">'+q.remaining+' s</span><div class="partyQuizTimeTrack" aria-hidden="true"><i id="partyQuizTimeFill"></i></div><small class="partyQuizTimeCaption" id="partyQuizTimeCaption">⏱ Zeit für deine Antwort</small></div></div><h3>'+safe(q.q)+'</h3>'+(q.type==='zoom'?'<div class="partyGesture" id="partyGesture"><div class="partyGesturePic" id="partyGestureImage">'+landscape()+'</div></div><p class="small" id="partyGestureValues">Zoome, um die Katze zu entdecken.</p><button id="partyGestureReset" style="margin-bottom:14px">Bild zurücksetzen</button>':'')+'<div class="partyAnswerGrid">'+q.a.map((answer,i)=>'<button class="partyAnswer'+(answered&&p.choice===i?' selected':'')+'" style="--answer-index:'+i+'" data-choice="'+i+'" '+(allow?'':'disabled')+'><b>'+String.fromCharCode(65+i)+'</b><span>'+safe(answer)+'</span></button>').join('')+'</div><p class="partyHint" style="margin-top:15px">'+(!participantId?'Gib oben deinen Namen ein, um mitzumachen.':answered?'Antwort gespeichert! Du kannst weiter auf den Film schauen.':!q.accepting?'Die Antwortzeit ist vorbei.':'Wähle jetzt eine Antwort – das Quiz wird automatisch ausgewertet.')+'</p></div>';
   if(q.type==='zoom')bindGesture();else paintPartyQuizTimer(q);refreshOwnWatchScore(p);
-  part.querySelectorAll('[data-choice]').forEach(btn=>btn.onclick=async()=>{btn.disabled=true;try{await api('/api/answer',{id:participantId,choice:Number(btn.dataset.choice)});quizSignature='';await poll();}catch(e){showError(e.message);quizSignature='';await poll();}});
+  part.querySelectorAll('[data-choice]').forEach(btn=>btn.onclick=async()=>{
+   if(btn.disabled)return;
+   const choice=Number(btn.dataset.choice);
+   part.querySelectorAll('[data-choice]').forEach(button=>{button.disabled=true;button.classList.toggle('answerSubmitting',button===btn);});
+   btn.setAttribute('aria-pressed','true');
+   try{await api('/api/answer',{id:participantId,choice});quizSignature='';await poll();}
+   catch(e){showError(e.message);quizSignature='';await poll();}
+  });
   return;
  }
  if(['results','end','handout'].includes(phase)){
