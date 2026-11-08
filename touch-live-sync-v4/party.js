@@ -355,13 +355,21 @@ function bindGesture(){
  const stop=e=>{gesturePoints.delete(e.pointerId);snapshot();};box.addEventListener('pointerup',stop);box.addEventListener('pointercancel',stop);
  $('partyGestureReset').onclick=()=>{gestureState={x:0,y:0,scale:1,rotation:0};snapshot();draw();};draw();
 }
+function paintPartyQuizTimer(q){
+ if(!q||q.type==='zoom')return;
+ const node=$('partyTimer'),fill=$('partyQuizTimeFill'),card=node?.closest('.partyQuestion');
+ const remaining=Math.max(0,Math.ceil(Number(q.remaining)||0));
+ if(node){node.textContent=remaining+' s';node.classList.toggle('timerUrgent',remaining<=10);node.setAttribute('aria-label',remaining+' Sekunden verbleiben');}
+ if(fill)fill.style.width=(Math.min(100,remaining/45*100))+'%';
+ if(card)card.classList.toggle('quizUrgent',remaining<=10);
+}
 function interaction(){
  if(!state)return;
  const q=state.quiz,p=state.player,part=$('partyInteraction'),status=$('joinStatus');
  const phase=state.phase;
  if(status&&participantId&&participantName)status.textContent=participantName+' · angemeldet und mit der Live-Sitzung verbunden.';
  const missionActive=q?.type==='zoom'||phase==='gesture'||state.sideGame==='gesture';const sig=[phase,state.sideGame||'',q?.id||'',q?.type||'',q?.accepting||false,missionActive?'mission-stable':p?.choice??'unanswered',missionActive?'mission-score-stable':p?.score??'unknown',missionActive?'mission-revision-stable':state.revision,participantId,missionActive?'mission-rank-stable':(state.ranking||[]).length].join('|');
- if(sig===quizSignature){const timer=$('partyTimer');if(timer&&q)timer.textContent=q.remaining+' s';if(q?.type==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!p?.zoomFound,disabled:!q.accepting});if((phase==='gesture'||state.sideGame==='gesture')&&fingerMissionInstance)fingerMissionInstance.update({remaining:state.gestureRemaining,disabled:state.gestureRemaining<=0});return;}
+ if(sig===quizSignature){const timer=$('partyTimer');if(timer&&q)paintPartyQuizTimer(q);if(q?.type==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!p?.zoomFound,disabled:!q.accepting});if((phase==='gesture'||state.sideGame==='gesture')&&fingerMissionInstance)fingerMissionInstance.update({remaining:state.gestureRemaining,disabled:state.gestureRemaining<=0});return;}
  quizSignature=sig;
  if(phase==='gesture'||state.sideGame==='gesture'){
   part.innerHTML=gestureHtml();bindGesture();return;
@@ -375,8 +383,8 @@ function interaction(){
   if(!q.accepting){part.innerHTML='<div class="centerstage partyWait"><div><h2>Schau wieder auf den Film.</h2><p>Die Antwortzeit ist vorbei. Die nächste Frage erscheint automatisch.</p></div></div>';return;}
   const answered=p?.choice!==null&&p?.choice!==undefined;
   const allow=!!participantId&&q.accepting&&!answered;
-  part.innerHTML='<div class="partyQuestion"><div class="between"><span class="chip">'+(q.type==='zoom'?'ZOOM-SPIEL':'QUIZFRAGE '+(Number(q.index)+1)+' / '+q.total)+'</span><span class="timer" id="partyTimer">'+q.remaining+' s</span></div><h3>'+safe(q.q)+'</h3>'+(q.type==='zoom'?'<div class="partyGesture" id="partyGesture"><div class="partyGesturePic" id="partyGestureImage">'+landscape()+'</div></div><p class="small" id="partyGestureValues">Zoome, um die Katze zu entdecken.</p><button id="partyGestureReset" style="margin-bottom:14px">Bild zurücksetzen</button>':'')+'<div class="partyAnswerGrid">'+q.a.map((answer,i)=>'<button class="partyAnswer'+(answered&&p.choice===i?' selected':'')+'" data-choice="'+i+'" '+(allow?'':'disabled')+'><b>'+String.fromCharCode(65+i)+'</b><span>'+safe(answer)+'</span></button>').join('')+'</div><p class="partyHint" style="margin-top:15px">'+(!participantId?'Gib oben deinen Namen ein, um mitzumachen.':answered?'Antwort gespeichert! Du kannst weiter auf den Film schauen.':!q.accepting?'Die Antwortzeit ist vorbei.':'Wähle jetzt eine Antwort – das Quiz wird automatisch ausgewertet.')+'</p></div>';
-  if(q.type==='zoom')bindGesture();
+  part.innerHTML='<div class="partyQuestion"><div class="between"><span class="chip">'+(q.type==='zoom'?'ZOOM-SPIEL':'QUIZFRAGE '+(Number(q.index)+1)+' / '+q.total)+'</span><div class="partyQuizTimerHud"><span class="timer" id="partyTimer">'+q.remaining+' s</span><div class="partyQuizTimeTrack" aria-hidden="true"><i id="partyQuizTimeFill"></i></div></div></div><h3>'+safe(q.q)+'</h3>'+(q.type==='zoom'?'<div class="partyGesture" id="partyGesture"><div class="partyGesturePic" id="partyGestureImage">'+landscape()+'</div></div><p class="small" id="partyGestureValues">Zoome, um die Katze zu entdecken.</p><button id="partyGestureReset" style="margin-bottom:14px">Bild zurücksetzen</button>':'')+'<div class="partyAnswerGrid">'+q.a.map((answer,i)=>'<button class="partyAnswer'+(answered&&p.choice===i?' selected':'')+'" data-choice="'+i+'" '+(allow?'':'disabled')+'><b>'+String.fromCharCode(65+i)+'</b><span>'+safe(answer)+'</span></button>').join('')+'</div><p class="partyHint" style="margin-top:15px">'+(!participantId?'Gib oben deinen Namen ein, um mitzumachen.':answered?'Antwort gespeichert! Du kannst weiter auf den Film schauen.':!q.accepting?'Die Antwortzeit ist vorbei.':'Wähle jetzt eine Antwort – das Quiz wird automatisch ausgewertet.')+'</p></div>';
+  if(q.type==='zoom')bindGesture();else paintPartyQuizTimer(q);
   part.querySelectorAll('[data-choice]').forEach(btn=>btn.onclick=async()=>{btn.disabled=true;try{await api('/api/answer',{id:participantId,choice:Number(btn.dataset.choice)});quizSignature='';await poll();}catch(e){showError(e.message);quizSignature='';await poll();}});
   return;
  }
