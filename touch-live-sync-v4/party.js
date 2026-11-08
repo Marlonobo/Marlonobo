@@ -313,12 +313,13 @@ function landscape(){
  return '<svg viewBox="0 0 560 370" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="bs" x2="0" y2="1"><stop stop-color="#74cbed"/><stop offset="1" stop-color="#d6f7fc"/></linearGradient></defs><rect width="560" height="370" rx="17" fill="url(#bs)"/><circle cx="448" cy="86" r="43" fill="#ffe17b"/><path d="M0 255L100 124 221 264 360 110 560 275V370H0" fill="#75a9a8"/><path d="M0 302L160 191 282 307 390 202 560 305V370H0" fill="#4a887f"/><path d="M0 320Q240 260 560 334V370H0" fill="#8ac477"/><path d="M240 244L295 202 350 244Z" fill="#975949"/><rect x="253" y="244" width="85" height="78" fill="#f0ca9e"/><rect x="284" y="275" width="23" height="47" fill="#704f42"/><rect x="314" y="258" width="16" height="16" fill="#81cfef"/><g transform="translate(446 316)"><ellipse rx="15" ry="12" fill="#cf7749"/><circle cx="-7" cy="-9" r="9" fill="#df925e"/><path d="M-13 -15l-4 -8 9 5 8 -5 -1 11" fill="#df925e"/><circle cx="-11" cy="-9" r="1.6" fill="#213845"/><circle cx="-5" cy="-9" r="1.6" fill="#213845"/><path d="M13 1Q33 -11 26 -26" stroke="#cf7749" stroke-width="5" fill="none"/></g></svg>';
 }
 function gestureHtml(){
- return '<div class="partyQuestion"><span class="chip">🖐️ KAPITEL 4 · FINGER-MISSION · 30 SEKUNDEN</span><h3>Zieh mich groß, dreh mich, schieb mich!</h3><p class="partyGestureHelp">Ein Finger = verschieben · zwei Finger = zoomen und drehen.</p><div class="partyGesture" id="partyGesture"><div class="partyGesturePic" id="partyGestureImage">'+landscape()+'</div></div><div class="between"><span id="partyGestureValues" class="small">Zoom: 100 % · Drehung: 0°</span><button id="partyGestureReset">Zurücksetzen</button></div></div>';
+ return '<div class="partyQuestion fingerMissionPanel"><div id="partyGesture" class="fingerMissionMount"></div></div>';
 }
 function bindGesture(){
  const mountPoint=$('partyGesture');
- if(mountPoint&&window.FingerMission){
-  fingerMissionInstance=window.FingerMission.mount(mountPoint,{remaining:state?.gestureRemaining??30,disabled:(state?.gestureRemaining??30)<=0});
+ if(mountPoint){
+  if(window.FingerMission)fingerMissionInstance=window.FingerMission.mount(mountPoint,{remaining:state?.gestureRemaining??30,disabled:(state?.gestureRemaining??30)<=0});
+  else mountPoint.textContent='Finger-Mission konnte nicht geladen werden. Bitte die Seite aktualisieren.';
   return;
  }
  const box=$('partyGesture'),pic=$('partyGestureImage'),value=$('partyGestureValues');
