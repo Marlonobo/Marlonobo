@@ -161,7 +161,7 @@ function active(){
  else if(s.phase==='demo')i=Math.max(0,Math.min(Q.length-1,s.demoIndex));
  if(i<0)return {index:-1,remaining:0,accepting:false};
  const q=Q[i];
- const left=(s.phase==='demo'||isDemoOverlay)?45-(Date.now()-s.demoStart)/1000:q.type==='zoom'?(isManualZoomOverlay?ZOOM_MISSION_SECONDS-(s.time-s.zoomOverlayStartTime):s.phase==='film'?ZOOM_MISSION_SECONDS-(s.time-(q.open+s.quizOffset)):ZOOM_MISSION_SECONDS-(Date.now()-s.zoomStart)/1000):Math.min(30-(s.time-((q.countdown??q.open)+s.quizOffset)),q.close+s.quizOffset-s.time);
+ const left=(s.phase==='demo'||isDemoOverlay)?45-(Date.now()-s.demoStart)/1000:q.type==='zoom'?(isManualZoomOverlay?ZOOM_MISSION_SECONDS-(s.time-s.zoomOverlayStartTime):s.phase==='film'?ZOOM_MISSION_SECONDS-(s.time-(q.open+s.quizOffset)):ZOOM_MISSION_SECONDS-(Date.now()-s.zoomStart)/1000):Math.min(30,30-(s.time-((q.countdown??q.open)+s.quizOffset)),q.close+s.quizOffset-s.time);
  remaining=Math.max(0,Math.ceil(left));
  return {index:i,remaining,accepting:left>0};
 }
