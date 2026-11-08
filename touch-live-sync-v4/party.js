@@ -331,14 +331,14 @@ function interaction(){
  const phase=state.phase;
  if(status&&participantId&&participantName)status.textContent=participantName+' · angemeldet und mit der Live-Sitzung verbunden.';
  const sig=[phase,q?.id||'',q?.type||'',q?.accepting||false,p?.choice??'unanswered',p?.score??'unknown',state.revision,participantId,(state.ranking||[]).length].join('|');
- if(sig===quizSignature){const timer=$('partyTimer');if(timer&&q)timer.textContent=q.remaining+' s';if(phase==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!p?.zoomFound});return;}
+ if(sig===quizSignature){const timer=$('partyTimer');if(timer&&q)timer.textContent=q.remaining+' s';if(q?.type==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!p?.zoomFound,disabled:!q.accepting});return;}
  quizSignature=sig;
  if(phase==='gesture'||state.sideGame==='gesture'){
   part.innerHTML=gestureHtml();bindGesture();return;
  }
  if(q?.type==='zoom'&&(phase==='zoom'||phase==='film')){
-  part.innerHTML='<div class="partyQuestion"><div class="between"><span class="chip">🔎 MULTITOUCH · EASTER-EGG-SUCHE</span><span class="small">'+(q.foundCount||0)+' gefunden</span></div><div id="partyEaster"></div><p class="small">'+(participantId?'Wende die Touchscreen-Gesten aus Kapitel 4 an: zwei Finger zum Zoomen, ein Finger zum Verschieben und dann gezielt tippen. Punkte für den Fund werden erst nach dem Abschlussquiz gezeigt.':'Bitte oben mit deinem Namen teilnehmen, damit dein Fund zählt.')+'</p></div>';
-  easterInstance=window.EasterGame?.mount($('partyEaster'),{remaining:q.remaining,found:!!p?.zoomFound,disabled:!q.accepting,onFind:async({x,y,zoom})=>{if(!participantId)throw Error('Bitte oben zuerst deinen Namen eingeben.');const r=await api('/api/easter/find',{id:participantId,x,y,zoom});setTimeout(()=>{quizSignature='';poll();},1500);return r;}});
+  part.innerHTML='<div class="partyQuestion"><div class="between"><span class="chip">🎯 30-SEKUNDEN-MISSION · MULTITOUCH</span><span class="small">'+(q.foundCount||0)+' gefunden</span></div><div id="partyEaster"></div><p class="small">'+(participantId?'Wende die Touchscreen-Gesten aus Kapitel 4 an: zwei Finger zum Zoomen, ein Finger zum Verschieben und dann gezielt tippen. Deine Mission: 170 % zoomen, zur Berghütte wischen und die Katze im Dachfenster antippen. Du hast 30 Sekunden!':'Bitte oben mit deinem Namen teilnehmen, damit dein Fund zählt.')+'</p></div>';
+  easterInstance=window.EasterGame?.mount($('partyEaster'),{remaining:q.remaining,duration:30,found:!!p?.zoomFound,disabled:!q.accepting,onFind:async({x,y,zoom})=>{if(!participantId)throw Error('Bitte oben zuerst deinen Namen eingeben.');const r=await api('/api/easter/find',{id:participantId,x,y,zoom});setTimeout(()=>{quizSignature='';poll();},1500);return r;}});
   return;
  }
  if(q){
