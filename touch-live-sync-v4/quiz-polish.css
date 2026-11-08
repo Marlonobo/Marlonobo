@@ -1,0 +1,102 @@
+/* TOUCH LIVE – lightweight quiz entrance, private score gain and remote welcome/outro.
+   Timer progress itself is controlled by the shared server clock, not CSS time. */
+.quizCinematic{
+ position:relative;isolation:isolate;
+ animation:qlQuestionEnter .46s cubic-bezier(.19,.9,.25,1) both
+}
+.quizCinematic::before{
+ content:"";position:absolute;pointer-events:none;top:0;left:0;right:0;height:3px;
+ background:linear-gradient(90deg,transparent,#6ce9d4 43%,#ffda99 70%,transparent);
+ opacity:.85
+}
+.quizCinematic h2,.quizCinematic h3{animation:qlQuestionTitle .44s .1s ease-out both}
+.quizCinematic .answer,.quizCinematic .partyAnswer{
+ animation:qlAnswerEnter .48s cubic-bezier(.2,.78,.22,1) both;
+ animation-delay:calc(.09s + var(--answer-index,0)*.07s);
+ transition:transform .16s,border-color .2s,box-shadow .2s
+}
+.quizCinematic .answer:not(:disabled):hover,.quizCinematic .partyAnswer:not(:disabled):hover{
+ border-color:#84f1e2;box-shadow:0 6px 20px #5ae8d222;transform:translateY(-2px)
+}
+.quizCinematic .answer:not(:disabled):active,.quizCinematic .partyAnswer:not(:disabled):active{
+ transform:scale(.982)
+}
+.quizCinematic .answer.chosen,.quizCinematic .partyAnswer.selected{
+ border-color:#7affd8!important;
+ background:linear-gradient(110deg,#154a47,#153f56)!important;
+ box-shadow:inset 0 0 0 1px #9bffe725,0 0 18px #63e0c63c
+}
+.quizCinematic .answer.chosen::after,.quizCinematic .partyAnswer.selected::after{
+ content:"✓";margin-left:auto;color:#b4ffe0;font-size:18px;font-weight:900
+}
+@keyframes qlQuestionEnter{from{opacity:0;transform:translateY(18px) scale(.988)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes qlQuestionTitle{from{opacity:0;transform:translateY(11px)}to{opacity:1;transform:translateY(0)}}
+@keyframes qlAnswerEnter{from{opacity:0;transform:translateY(11px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+/* Only the logged-in participant can see this value. */
+.partyOwnScore{
+ display:flex;align-items:center;justify-content:space-between;gap:8px;
+ margin:0 0 14px;padding:10px 12px;position:relative;
+ background:linear-gradient(130deg,#0d3b3d,#133548);
+ border:1px solid #60c9b5;border-radius:11px;color:#def9f3;font-size:13px;
+ font-weight:750
+}
+.partyOwnScore strong{color:#a7ffe2;font-size:clamp(20px,3vw,28px);font-variant-numeric:tabular-nums}
+.partyOwnScore small{font-size:10px;color:#a8ddd0}
+.partyOwnGain{
+ position:absolute;z-index:5;right:8px;bottom:89%;
+ border:1px solid #8af9df;border-radius:10px;
+ background:#184b41;color:#e7ffc6;font-size:17px;font-weight:900;
+ padding:5px 11px;pointer-events:none;animation:qlGainFloat 1.4s ease-out both
+}
+@keyframes qlGainFloat{0%{opacity:0;transform:translateY(11px)}25%{opacity:1}86%{opacity:1}100%{opacity:0;transform:translateY(-32px)}}
+
+/* The TV welcome/closing scene already has its own animation. Add the
+   same calm cinematic effect to the shared /watch and /host welcome cards. */
+.partyScene.is-welcome,.partyScene.is-ending{
+ position:absolute;overflow:hidden;
+ background:radial-gradient(ellipse at 60% 30%,#1c566e,#071727 75%)
+}
+.partyScene.is-ending{background:radial-gradient(ellipse at 60% 30%,#42436c,#091627 73%)}
+.partyScene.is-welcome::before,.partyScene.is-ending::before{
+ content:"";pointer-events:none;position:absolute;left:50%;top:49%;
+ width:min(70%,350px);aspect-ratio:1;border-radius:50%;
+ border:1px solid #76f0e0a3;transform:translate(-50%,-50%);
+ box-shadow:0 0 0 34px #72ecdb16,0 0 0 90px #54d9dd0d;
+ animation:qlSceneHalo 7s ease-in-out infinite alternate
+}
+.partyScene.is-ending::before{
+ border-color:#ffdda6a6;box-shadow:0 0 0 35px #ffe2a31c,0 0 0 90px #d0c6ff12
+}
+.partyScene.is-welcome .partySceneInner,.partyScene.is-ending .partySceneInner{
+ position:relative;animation:qlSceneText .7s ease-out both
+}
+.partyScene.is-welcome .partySceneInner img,.partyScene.is-ending .partySceneInner img{
+ filter:drop-shadow(0 0 18px #83efd5a0);
+ animation:qlSceneArt 5s ease-in-out infinite alternate
+}
+@keyframes qlSceneHalo{from{opacity:.4;scale:.88}to{opacity:1;scale:1.09}}
+@keyframes qlSceneText{from{opacity:0;transform:translateY(21px)}to{opacity:1;transform:none}}
+@keyframes qlSceneArt{from{translate:0 5px}to{translate:0 -9px}}
+
+/* Elegant one-page handout polish, without touching its save/print mechanics. */
+#paper.lf14SimpleSheet{box-shadow:0 13px 44px #0002;border-color:#bed3dd}
+#paper.lf14SimpleSheet .lf14SimpleHeader{border-color:#52bfb6}
+#paper.lf14SimpleSheet .lf14SimpleTable tbody tr{transition:background-color .2s}
+#paper.lf14SimpleSheet .lf14SimpleTable tbody tr:focus-within{background:#e7faf6}
+#paper.lf14SimpleSheet textarea:focus,#paper.lf14SimpleSheet select:focus{
+ outline:2px solid #2caaa6;outline-offset:1px
+}
+@media(max-width:580px){
+ .quizCinematic .answer,.quizCinematic .partyAnswer{animation-delay:calc(.06s + var(--answer-index,0)*.05s)}
+ .partyOwnScore{padding:8px;font-size:12px}
+ .partyOwnScore strong{font-size:22px}
+}
+@media(prefers-reduced-motion:reduce){
+ .quizCinematic,.quizCinematic *, .partyOwnGain,
+ .partyScene.is-welcome::before,.partyScene.is-ending::before,
+ .partyScene.is-welcome .partySceneInner,.partyScene.is-ending .partySceneInner,
+ .partyScene.is-welcome .partySceneInner img,.partyScene.is-ending .partySceneInner img{
+  animation:none!important;transition:none!important
+ }
+}
