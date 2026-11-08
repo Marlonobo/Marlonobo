@@ -32,7 +32,7 @@ if(!fs.existsSync(FILM_CUES_MARKER)){
  }catch(e){console.error('Film-Zeitmarken nicht dauerhaft gesichert:',e.message);}
 }
 
-const def=()=>({phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,videoVolume:1,videoTitle:'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{url:'',type:'',id:'',on:false},soundtrack:{pause:true,results:true,volume:.25},captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},remoteVideo:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,continuousWatch:false,zoomDismissed:false,zoomOverlay:false,zoomOverlayStartTime:0,demoOverlay:false,gestureOverlay:false,gestureOverlayStartTime:0,gestureStartTime:0,gestureReturnPhase:'welcome',resultsAt:0,clockSource:'tv',lastHostTick:0,seekSerial:0,revision:0});
+const def=()=>({phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,videoVolume:1,videoTitle:'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{url:'',type:'',id:'',on:false},soundtrack:{pause:true,results:true,volume:.25},captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},remoteVideo:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,continuousWatch:false,zoomDismissed:false,zoomOverlay:false,zoomOverlayStartTime:0,demoOverlay:false,gestureOverlay:false,gestureOverlayStartTime:0,gestureStartTime:0,gestureReturnPhase:'welcome',resultsAt:0,clockSource:'tv',lastHostTick:0,seekSerial:0,removedUserIds:[],revision:0});
 let s=def(), users=new Map(), upload=null,feedback=[],cloudManifest=null;
 // This is intentionally volatile: choosing a file on a Windows PC never uploads its bytes.
 // Readiness expires when the HDMI browser disconnects; it is not persisted in storage.
@@ -302,14 +302,17 @@ async function handler(req,res){
   if(!['rename','reset','delete','resetAll','clearAll'].includes(action))
    return send(res,400,{error:'Aktion nicht erlaubt.'});
   if(action==='resetAll'||action==='clearAll'){
-   if(action==='clearAll')users.clear();
+   if(action==='clearAll'){
+    s.removedUserIds=[...new Set([...(s.removedUserIds||[]),...users.keys()])].slice(-500);
+    users.clear();
+   }
    else for(const u of users.values()){
     u.answers={};u.score=0;u.jokers={};u.zoomPoints=0;
    }
   }else{
    const id=String(b.id||'');
    if(!/^[a-f0-9]{32}$/.test(id)||!users.has(id))return send(res,404,{error:'Teilnehmer nicht gefunden. Liste aktualisieren.'});
-   if(action==='delete')users.delete(id);
+   if(action==='delete'){users.delete(id);s.removedUserIds=[...new Set([...(s.removedUserIds||[]),id])].slice(-500);}
    else if(action==='reset'){
     const u=users.get(id);u.answers={};u.score=0;u.jokers={};u.zoomPoints=0;
    }else if(action==='rename'){
@@ -331,6 +334,7 @@ async function handler(req,res){
  const b=await read(req,2000),name=String(b.name||'').trim().slice(0,26),role=b.role==='teacher'?'teacher':'student';
  if(!name)return send(res,400,{error:'Bitte einen Namen eingeben.'});
  const id=/^[a-f0-9]{32}$/.test(String(b.id||''))?b.id:crypto.randomBytes(16).toString('hex');
+ if((s.removedUserIds||[]).includes(id))return send(res,410,{error:'Diese Teilnahme wurde von der Regie entfernt. Bitte erneut mit einem neuen Teilnahmeplatz anmelden.'});
  if(!users.has(id))users.set(id,{name,role,answers:{},score:0,jokers:{},lastSeen:Date.now()});
  else {const u=users.get(id);if(!u.adminRenamed)u.name=name;u.role=role;u.lastSeen=Date.now();}
  saveUsers();
