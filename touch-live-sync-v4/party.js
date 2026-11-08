@@ -526,13 +526,26 @@ async function poll(){
  try{
   const path='/api/state'+(participantId?'?id='+encodeURIComponent(participantId):'');
   state=await api(path);
+  if(participantId&&state.player?.name&&participantName!==state.player.name){
+   participantName=state.player.name;localStorage.setItem(nameStore,participantName);
+   const title=$('participantTitle');if(title)title.textContent='Hallo, '+participantName+'!';
+  }
   // Rejoin only when the server has forgotten this browser after a restart.
   if(participantId&&participantName&&!state.player&&!rejoinBusy&&Date.now()-lastRejoinAt>12000){
    rejoinBusy=true;lastRejoinAt=Date.now();
    try{
     const joined=await api('/api/join',{id:participantId,name:participantName,role:'student'});
     if(joined?.id===participantId){state=await api('/api/state?id='+encodeURIComponent(participantId));quizSignature='';}
-   }catch(e){showError('Quiz-Anmeldung wird erneut verbunden: '+e.message);}
+   }catch(e){
+    if(/entfernt/i.test(e.message||'')){
+     participantId='';participantName='';
+     localStorage.removeItem(idStore);localStorage.removeItem(nameStore);
+     $('partyJoinForm').hidden=false;
+     $('participantTitle').textContent='Teilnahme beendet · neu anmelden';
+     $('joinStatus').textContent='Die Regie hat diese Teilnahme entfernt. Für eine neue Teilnahme bitte Namen eingeben.';
+     quizSignature='';
+    }else showError('Quiz-Anmeldung wird erneut verbunden: '+e.message);
+   }
    finally{rejoinBusy=false;}
   }
   const p=$('partyStatus');p.textContent=({'welcome':'Wartet auf Start','film':'Film läuft','demo':'Testquiz','zoom':'Zoom-Spiel','gesture':'Gesten-Spiel','results':'Siegerehrung','handout':'Handout','end':'Abschluss'})[state.phase]||state.phase;
