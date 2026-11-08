@@ -674,3 +674,94 @@ body.studentEntry .studentLiveScore strong.scoreBump{animation:touchScoreBump .8
  #tvApp .welcomeArtwork::before,#tvApp .endArtwork::before,#tvApp .podiumScene,
  #tvApp .podiumScene::before,#tvApp .podiumScene::after{animation:none!important;transition:none!important}
 }
+
+
+/* TOUCH LIVE 2026: quiz feedback, countdown, cinematic presentation, one-table LF14. */
+@keyframes touchAnswerConfirm{0%{transform:scale(1)}35%{transform:scale(.955);box-shadow:0 0 0 5px #93ffe535}70%{transform:scale(1.035);box-shadow:0 0 22px #77f3d861}100%{transform:scale(1)}}
+@keyframes touchPointFloat{0%{opacity:0;transform:translateY(16px) scale(.8)}15%{opacity:1;transform:translateY(-3px) scale(1.06)}80%{opacity:1;transform:translateY(-30px)}100%{opacity:0;transform:translateY(-45px)}}
+@keyframes touchBokehDrift{0%,100%{opacity:.2;transform:translate3d(0,15px,0) scale(.85)}45%{opacity:.7;transform:translate3d(22px,-26px,0) scale(1.15)}}
+@keyframes touchIntroReady{0%,100%{opacity:.55;box-shadow:0 0 0 0 #3ee3c944}50%{opacity:1;box-shadow:0 0 18px 6px #3ee3c933}}
+@keyframes touchOutroShimmer{0%,100%{text-shadow:0 0 8px #82fff28a}50%{text-shadow:0 0 28px #82fff2db}}
+body.studentEntry .quiz .answer.answerSubmitting{animation:touchAnswerConfirm .57s ease both!important;border-color:#8cffe7!important;background:linear-gradient(125deg,#136357,#11485c)!important}
+body.studentEntry .quizTimerHud{gap:4px;min-width:110px}
+body.studentEntry .quizTimerCaption{color:#a6dbdc;font-size:10px;line-height:1.2;font-weight:750;text-align:center;max-width:135px}
+body.studentEntry .quizUrgent .quizTimerCaption{color:#ffc88e}
+body.studentEntry .quizPaused #liveTimer{color:#c6d8ef;animation:none!important}
+body.studentEntry .quizPaused .quizTimeTrack i{background:linear-gradient(90deg,#7a9faf,#bad1de)}
+body.studentEntry .quizPaused .quizTimerCaption{color:#b9cfe3}
+.studentLiveScore{position:relative}
+body.studentEntry .studentScoreGain{
+ pointer-events:none;position:absolute;top:100%;right:4px;z-index:50;
+ border:1px solid #d4ffe0;background:linear-gradient(115deg,#207756,#0c4d60);
+ border-radius:999px;padding:5px 10px;color:#eaffee;font-size:12px;font-weight:900;
+ white-space:nowrap;box-shadow:0 7px 25px #0006;
+ animation:touchPointFloat 1.9s ease-out forwards
+}
+/* Presentational animation stays inside the welcome/end scenes; it never touches
+   the YouTube or MP4 element, and pauses in reduced-motion mode. */
+#tvApp .tvGrandWelcome,#tvApp .tvGrandEnding{isolation:isolate;overflow:visible}
+#tvApp .tvIntroCopy,#tvApp .tvEndCopy{position:relative;z-index:2}
+#tvApp .tvCinematicLights{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:-1}
+#tvApp .tvCinematicLights i{
+ position:absolute;width:clamp(60px,10vw,180px);aspect-ratio:1;border-radius:50%;
+ background:radial-gradient(circle,#65f2df55,#2b9bc91a 42%,transparent 71%);
+ border:1px solid #7efdeb28;filter:blur(2px);
+ animation:touchBokehDrift 8s ease-in-out infinite
+}
+#tvApp .tvCinematicLights i:nth-child(1){left:6%;top:4%;animation-delay:-1s}
+#tvApp .tvCinematicLights i:nth-child(2){left:72%;top:10%;width:220px;animation-delay:-5.2s}
+#tvApp .tvCinematicLights i:nth-child(3){left:42%;top:63%;width:140px;animation-delay:-2.8s}
+#tvApp .tvCinematicLights i:nth-child(4){left:83%;top:64%;width:120px;animation-delay:-4.2s}
+#tvApp .tvCinematicLights i:nth-child(5){left:23%;top:84%;width:88px;animation-delay:-6s}
+#tvApp .tvIntroLine,#tvApp .tvOutroLine{
+ display:block;margin:8px 0 20px;letter-spacing:.19em;
+ color:#85e7d7;font-weight:900;font-size:clamp(11px,1.3vw,20px);
+ animation:touchHeroAppear .7s .2s both
+}
+#tvApp .tvGrandWelcome h1{font-size:clamp(48px,7vw,128px);line-height:.96;text-shadow:0 0 28px #62f9eb20}
+#tvApp .tvGrandEnding h1{font-size:clamp(42px,5.8vw,104px);line-height:1.05}
+#tvApp .tvIntroReady{
+ display:inline-flex;align-items:center;gap:10px;margin-top:22px;
+ color:#b4ffeb;border:1px solid #7befc06e;border-radius:999px;
+ padding:10px 17px;background:#12463a88;font-weight:800;font-size:clamp(11px,1vw,17px);
+ animation:touchHeroAppear .85s .85s both
+}
+#tvApp .tvIntroReady i{display:inline-block;width:10px;height:10px;border-radius:50%;background:#8dffd2;animation:touchIntroReady 2.4s infinite}
+#tvApp .tvEndSignature{display:inline-block;margin-top:25px;letter-spacing:.22em;color:#a1ffe9;font-weight:900;animation:touchOutroShimmer 3s ease-in-out infinite}
+/* A clean single table on screen and in the printed PDF. */
+.lf14SimpleActions{align-items:center;flex-wrap:wrap;gap:10px}
+.lf14SavedState{display:inline-flex;align-items:center;min-height:36px;padding:6px 10px;color:#b6fbe5;font-weight:750;font-size:12px}
+.lf14SimpleSheet{box-shadow:0 18px 45px #0004;padding:24px!important}
+.lf14SimpleHeader{position:relative;background:linear-gradient(120deg,#e2fcf1,#eaf6ff);box-shadow:inset 0 1px 0 #fff;overflow:hidden}
+.lf14SimpleHeader::after{content:"✦ TOUCH LIVE";position:absolute;right:12px;top:11px;color:#17796c37;font-size:13px;font-weight:900;letter-spacing:.11em}
+.lf14SimpleTable tbody tr{transition:background .17s ease}
+.lf14SimpleTable tbody tr:focus-within{background:#e4fbf5!important}
+.lf14SimpleTable select,.lf14SimpleTable textarea{min-height:43px}
+.lf14SimpleTable select:valid{accent-color:#1f9d86}
+@media(max-width:620px){
+ .lf14SimpleSheet{padding:10px!important;border-radius:12px}
+ .lf14SimpleHeader::after{display:none}
+ .lf14SimpleTable tbody th small{font-size:9px}
+ .lf14SimpleTable select,.lf14SimpleTable textarea{font-size:12px;min-height:48px}
+ .lf14SimpleActions button{flex:1 1 100%}
+ .lf14SavedState{width:100%;justify-content:center}
+}
+@media print{
+ @page{size:A4 portrait;margin:10mm}
+ body{background:#fff!important;color:#102a39!important}
+ .lf14SimpleSheet{box-shadow:none!important;border:none!important;padding:0!important;max-width:none!important}
+ .lf14SimpleHeader{padding:9px 11px!important;background:#eaf9f4!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ .lf14SimpleHeader h2{font-size:22px!important}
+ .lf14SimpleTable{width:100%!important;border-collapse:collapse!important;table-layout:fixed!important}
+ .lf14SimpleTable thead th{background:#17495c!important;color:#fff!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ .lf14SimpleTable tbody th,.lf14SimpleTable tbody td{padding:5px 6px!important;border:1px solid #c9d8dd!important}
+ .lf14SimpleTable tbody th small{font-size:9px!important}
+ .lf14SimpleTable select,.lf14SimpleTable textarea{border:1px solid #d2dde2!important;color:#112b36!important;background:#fff!important;padding:5px!important;min-height:30px!important;font-size:10px!important}
+ .lf14SimpleTable textarea{height:34px!important;overflow:hidden!important}
+ .lf14SimpleFooter{margin-top:8px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ body.studentEntry .quiz .answer.answerSubmitting,body.studentEntry .studentScoreGain,
+ #tvApp .tvCinematicLights i,#tvApp .tvIntroLine,#tvApp .tvOutroLine,
+ #tvApp .tvIntroReady,#tvApp .tvIntroReady i,#tvApp .tvEndSignature{animation:none!important;transition:none!important}
+}
