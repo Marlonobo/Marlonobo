@@ -48,7 +48,7 @@ if(!fs.existsSync(V4_CUES_MARKER)){
  }catch(e){console.error('V4-Zeitmarken konnten nicht aktualisiert werden:',e.message);}
 }
 
-const def=()=>({homeUnlocked:false,phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,videoVolume:1,videoTitle:'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{url:'',type:'',id:'',on:false},soundtrack:{pause:true,results:true,volume:.25},captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},remoteVideo:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,continuousWatch:false,zoomDismissed:false,zoomOverlay:false,zoomOverlayStartTime:0,demoOverlay:false,gestureOverlay:false,gestureOverlayStartTime:0,gestureStartTime:0,gestureReturnPhase:'welcome',resultsAt:0,clockSource:'tv',lastHostTick:0,seekSerial:0,removedUserIds:[],revision:0});
+const def=()=>({homeUnlocked:false,trailerPlaying:false,phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,videoVolume:1,videoTitle:'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{url:'',type:'',id:'',on:false},soundtrack:{pause:true,results:true,volume:.25},captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},remoteVideo:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,continuousWatch:false,zoomDismissed:false,zoomOverlay:false,zoomOverlayStartTime:0,demoOverlay:false,gestureOverlay:false,gestureOverlayStartTime:0,gestureStartTime:0,gestureReturnPhase:'welcome',resultsAt:0,clockSource:'tv',lastHostTick:0,seekSerial:0,removedUserIds:[],revision:0});
 let s=def(), users=new Map(), upload=null,feedback=[],cloudManifest=null;
 // This is intentionally volatile: choosing a file on a Windows PC never uploads its bytes.
 // Readiness expires when the HDMI browser disconnects; it is not persisted in storage.
@@ -181,7 +181,7 @@ function publicState(id){
   ?Math.max(0,Math.ceil(GESTURE_MISSION_SECONDS-(s.time-(s.gestureOverlayStartTime||0))))
   :s.phase==='gesture'?Math.max(0,Math.ceil(GESTURE_MISSION_SECONDS-(Date.now()-(s.gestureStartTime||Date.now()))/1000)):0;
  const gestureActive=gestureSeconds>0&&(s.phase==='gesture'||(s.phase==='film'&&s.gestureOverlay));
- return {homeUnlocked:!!s.homeUnlocked,trailerAvailable:fs.existsSync(TRAILER_FILE),phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
+ return {homeUnlocked:!!s.homeUnlocked,trailerAvailable:fs.existsSync(TRAILER_FILE),trailerPlaying:!!s.trailerPlaying,phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
   quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,a:q.a,duration:q.type==='zoom'?ZOOM_MISSION_SECONDS:((s.phase==='demo'||s.demoOverlay)?45:30),remaining:a.remaining,accepting:a.accepting,foundCount:q.type==='zoom'?[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length:0,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
   player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)};
 }
@@ -491,8 +491,19 @@ async function handler(req,res){
  if(p==='/api/admin'&&new Set(['welcome','start','pause','play','seek','restartVideo']).has(cmd)){s.clockSource='tv';s.lastHostTick=0;}
  if(p==='/api/remote'&&!new Set(['welcome','start','pause','play','seek','restartVideo','demo','demoNext','results','handout','end','gestureStart','gestureEnd','zoomStart','zoomEnd','videoYoutube','videoLink','startOnline','remoteVideoYoutube','remoteVideoLink','videoStored','musicOn','musicOff']).has(cmd))return unauthorized(res);
  if(cmd==='start'&&s.video?.type==='local'&&(!localMedia.lastSeen||Date.now()-localMedia.lastSeen>25000))return send(res,409,{error:'Lokale MP4 am HDMI-PC noch nicht bereit. Öffne den Beamerlink auf dem Windows-PC und wähle dort die MP4-Datei.'});
- if(cmd==='reloadPresentation'){if(!['welcome','end','handout'].includes(s.phase))return send(res,409,{error:'Fernseher nur vor oder nach der Vorführung neu laden.'});s.tvReloadRequest=(s.tvReloadRequest||0)+1;}
- else if(cmd==='welcome'){s.phase='welcome';s.time=0;s.playing=false;s.continuousWatch=false;s.zoomDismissed=false;s.zoomOverlay=false;s.demoOverlay=false;s.gestureOverlay=false;s.gestureStartTime=0;if(s.welcomeMusic)s.welcomeMusic.on=false;}
+ if(['trailerStart','trailerPause','trailerResume','trailerStop'].includes(cmd)){
+  if(p!=='/api/admin')return unauthorized(res);
+  if(cmd==='trailerStart'){
+   if(!fs.existsSync(TRAILER_FILE))return send(res,404,{error:'Bitte zuerst den Trailer im Admin hochladen.'});
+   if(!['welcome','end','handout','trailer'].includes(s.phase))return send(res,409,{error:'Trailer nur vor oder nach dem Hauptfilm starten.'});
+   s.phase='trailer';s.trailerPlaying=true;s.playing=false;
+   if(s.welcomeMusic)s.welcomeMusic.on=false;
+  }else if(s.phase==='trailer'&&cmd==='trailerPause')s.trailerPlaying=false;
+  else if(s.phase==='trailer'&&cmd==='trailerResume')s.trailerPlaying=true;
+  else if(cmd==='trailerStop'&&s.phase==='trailer'){s.phase='welcome';s.trailerPlaying=false;s.playing=false;}
+ }
+ else if(cmd==='reloadPresentation'){if(!['welcome','end','handout'].includes(s.phase))return send(res,409,{error:'Fernseher nur vor oder nach der Vorführung neu laden.'});s.tvReloadRequest=(s.tvReloadRequest||0)+1;}
+ else if(cmd==='welcome'){s.trailerPlaying=false;s.phase='welcome';s.time=0;s.playing=false;s.continuousWatch=false;s.zoomDismissed=false;s.zoomOverlay=false;s.demoOverlay=false;s.gestureOverlay=false;s.gestureStartTime=0;if(s.welcomeMusic)s.welcomeMusic.on=false;}
  else if(cmd==='startOnline'){
    // Shared online watch is distinct from an HDMI-only screening. Without a
    // browser-readable source, do not fake a stream or ask for a TV file.
@@ -509,7 +520,7 @@ async function handler(req,res){
    if(s.welcomeMusic)s.welcomeMusic.on=false;
    if(promoted&&S3.enabled)await saveDurableMediaSettings();
   }
-  else if(cmd==='start'){s.phase='film';s.time=0;s.playing=true;s.zoomDone=false;s.continuousWatch=false;s.zoomDismissed=false;s.zoomOverlay=false;s.demoOverlay=false;s.gestureOverlay=false;s.gestureStartTime=0;s.resultsAt=0;s.seekSerial=(s.seekSerial||0)+1;if(s.welcomeMusic)s.welcomeMusic.on=false;}
+  else if(cmd==='start'){s.trailerPlaying=false;s.phase='film';s.time=0;s.playing=true;s.zoomDone=false;s.continuousWatch=false;s.zoomDismissed=false;s.zoomOverlay=false;s.demoOverlay=false;s.gestureOverlay=false;s.gestureStartTime=0;s.resultsAt=0;s.seekSerial=(s.seekSerial||0)+1;if(s.welcomeMusic)s.welcomeMusic.on=false;}
  else if(cmd==='restartVideo'){s.phase='film';s.time=0;s.playing=false;s.zoomDone=false;s.zoomDismissed=false;s.zoomOverlay=false;s.resultsAt=0;s.zoomStart=0;s.seekSerial=(s.seekSerial||0)+1;if(s.welcomeMusic)s.welcomeMusic.on=false;}
  else if(cmd==='pause'){
   // A click on /host supplies the actual player position, not the previous
