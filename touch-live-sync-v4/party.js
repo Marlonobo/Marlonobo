@@ -9,7 +9,7 @@ let key=fromUrl||sessionStorage.getItem(keyStore)||'';
 if(fromUrl){sessionStorage.setItem(keyStore,key);history.replaceState({},'',location.pathname);}
 let state=null,participantId=localStorage.getItem(idStore)||'',participantName=localStorage.getItem(nameStore)||'';
 let screenSignature='',quizSignature='',sourceRef='',activated=false,ytPlayer=null,ytReady=false,ytVideoId='',ytApiLoading=false,localRevision=-1,lastCaptionRevision=-1,initialMediaSyncPending=false,lastAppliedSeekSerial=null,seekCommandBusy=false;
-let easterInstance=null,cloudFallback=false;
+let easterInstance=null,fingerMissionInstance=null,cloudFallback=false;
 const partyModeKey='touch_party_view_mode_'+(host?'host':'viewer');
 let partyViewMode=localStorage.getItem(partyModeKey)==='auto'?'auto':localStorage.getItem(partyModeKey)==='side'?'side':(host?'side':'auto');
 let lastFocusKey='',lastFocusTransition=0;
@@ -313,9 +313,14 @@ function landscape(){
  return '<svg viewBox="0 0 560 370" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="bs" x2="0" y2="1"><stop stop-color="#74cbed"/><stop offset="1" stop-color="#d6f7fc"/></linearGradient></defs><rect width="560" height="370" rx="17" fill="url(#bs)"/><circle cx="448" cy="86" r="43" fill="#ffe17b"/><path d="M0 255L100 124 221 264 360 110 560 275V370H0" fill="#75a9a8"/><path d="M0 302L160 191 282 307 390 202 560 305V370H0" fill="#4a887f"/><path d="M0 320Q240 260 560 334V370H0" fill="#8ac477"/><path d="M240 244L295 202 350 244Z" fill="#975949"/><rect x="253" y="244" width="85" height="78" fill="#f0ca9e"/><rect x="284" y="275" width="23" height="47" fill="#704f42"/><rect x="314" y="258" width="16" height="16" fill="#81cfef"/><g transform="translate(446 316)"><ellipse rx="15" ry="12" fill="#cf7749"/><circle cx="-7" cy="-9" r="9" fill="#df925e"/><path d="M-13 -15l-4 -8 9 5 8 -5 -1 11" fill="#df925e"/><circle cx="-11" cy="-9" r="1.6" fill="#213845"/><circle cx="-5" cy="-9" r="1.6" fill="#213845"/><path d="M13 1Q33 -11 26 -26" stroke="#cf7749" stroke-width="5" fill="none"/></g></svg>';
 }
 function gestureHtml(){
- return '<div class="partyQuestion"><span class="chip">KAPITEL 4 · GESTEN ÜBEN</span><h3>Zieh mich groß, dreh mich, schieb mich!</h3><p class="partyGestureHelp">Ein Finger = verschieben · zwei Finger = zoomen und drehen.</p><div class="partyGesture" id="partyGesture"><div class="partyGesturePic" id="partyGestureImage">'+landscape()+'</div></div><div class="between"><span id="partyGestureValues" class="small">Zoom: 100 % · Drehung: 0°</span><button id="partyGestureReset">Zurücksetzen</button></div></div>';
+ return '<div class="partyQuestion"><span class="chip">🖐️ KAPITEL 4 · FINGER-MISSION · 30 SEKUNDEN</span><h3>Zieh mich groß, dreh mich, schieb mich!</h3><p class="partyGestureHelp">Ein Finger = verschieben · zwei Finger = zoomen und drehen.</p><div class="partyGesture" id="partyGesture"><div class="partyGesturePic" id="partyGestureImage">'+landscape()+'</div></div><div class="between"><span id="partyGestureValues" class="small">Zoom: 100 % · Drehung: 0°</span><button id="partyGestureReset">Zurücksetzen</button></div></div>';
 }
 function bindGesture(){
+ const mountPoint=$('partyGesture');
+ if(mountPoint&&window.FingerMission){
+  fingerMissionInstance=window.FingerMission.mount(mountPoint,{remaining:state?.gestureRemaining??30,disabled:(state?.gestureRemaining??30)<=0});
+  return;
+ }
  const box=$('partyGesture'),pic=$('partyGestureImage'),value=$('partyGestureValues');
  if(!box)return;gesturePoints=new Map();gestureState={x:0,y:0,scale:1,rotation:0};gestureOrigin=null;
  function draw(){pic.style.transform='translate('+gestureState.x+'px,'+gestureState.y+'px) rotate('+gestureState.rotation+'deg) scale('+gestureState.scale+')';value.textContent='Zoom: '+Math.round(gestureState.scale*100)+' % · Drehung: '+Math.round(gestureState.rotation)+'°';}
@@ -330,8 +335,8 @@ function interaction(){
  const q=state.quiz,p=state.player,part=$('partyInteraction'),status=$('joinStatus');
  const phase=state.phase;
  if(status&&participantId&&participantName)status.textContent=participantName+' · angemeldet und mit der Live-Sitzung verbunden.';
- const missionActive=q?.type==='zoom';const sig=[phase,q?.id||'',q?.type||'',q?.accepting||false,missionActive?'mission-stable':p?.choice??'unanswered',missionActive?'mission-score-stable':p?.score??'unknown',missionActive?'mission-revision-stable':state.revision,participantId,missionActive?'mission-rank-stable':(state.ranking||[]).length].join('|');
- if(sig===quizSignature){const timer=$('partyTimer');if(timer&&q)timer.textContent=q.remaining+' s';if(q?.type==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!p?.zoomFound,disabled:!q.accepting});return;}
+ const missionActive=q?.type==='zoom'||phase==='gesture'||state.sideGame==='gesture';const sig=[phase,state.sideGame||'',q?.id||'',q?.type||'',q?.accepting||false,missionActive?'mission-stable':p?.choice??'unanswered',missionActive?'mission-score-stable':p?.score??'unknown',missionActive?'mission-revision-stable':state.revision,participantId,missionActive?'mission-rank-stable':(state.ranking||[]).length].join('|');
+ if(sig===quizSignature){const timer=$('partyTimer');if(timer&&q)timer.textContent=q.remaining+' s';if(q?.type==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!p?.zoomFound,disabled:!q.accepting});if((phase==='gesture'||state.sideGame==='gesture')&&fingerMissionInstance)fingerMissionInstance.update({remaining:state.gestureRemaining,disabled:state.gestureRemaining<=0});return;}
  quizSignature=sig;
  if(phase==='gesture'||state.sideGame==='gesture'){
   part.innerHTML=gestureHtml();bindGesture();return;
