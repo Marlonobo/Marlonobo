@@ -1,0 +1,48 @@
+
+/* TOUCH LIVE finger mission with live touchscreen telemetry */
+.fingerMission{color:#f1fbff;display:grid;gap:12px;background:linear-gradient(150deg,#092a3d,#071627 75%);padding:15px;border:1px solid #59d9c57d;border-radius:16px;box-shadow:0 14px 40px #0008;overflow:hidden}
+.fingerMissionHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.fingerMissionHead h3{font-size:clamp(19px,4vw,27px);margin:4px 0 5px;letter-spacing:-.03em}
+.fingerMissionHead p{color:#bed6df;margin:0;font-size:13px}
+.fingerMissionKicker{font:700 11px/1.2 system-ui,sans-serif;color:#83f0d3;letter-spacing:.11em}
+.fingerMissionTimer{min-width:82px;flex-shrink:0;padding:9px 11px;text-align:center;border-radius:12px;border:1px solid #75edd6;background:#123b4c}
+.fingerMissionTimer span{display:block;font-size:9px;letter-spacing:.1em;color:#ace9e1;font-weight:700}
+.fingerMissionTimer strong{font-size:clamp(24px,4vw,37px);font-variant-numeric:tabular-nums}
+.fingerMissionProgress{height:7px;border-radius:99px;overflow:hidden;background:#0c2535;border:1px solid #549b9f}
+#fingerMissionProgress{height:100%;width:100%;background:linear-gradient(90deg,#26bcac,#91ffdb);transition:width .3s linear}
+.fingerReadouts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+.fingerReadouts>div{padding:9px 6px;text-align:center;border-radius:10px;background:#123449;border:1px solid #3e7285;min-width:0}
+.fingerReadouts small{display:block;color:#bddeeb;font-size:10px;line-height:1.25}
+.fingerReadouts strong{display:block;color:#89fada;font-size:clamp(15px,2.9vw,24px);font-variant-numeric:tabular-nums;line-height:1.2;margin-top:4px}
+.fingerSteps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.fingerSteps span{border:1px solid #3a7884;background:#102c41;padding:8px;border-radius:10px;color:#ddf1fa;font-size:12px}
+.fingerSteps span b{display:block}.fingerSteps span small{display:block;color:#abc9d4;font-size:11px}
+.fingerSteps span.done{border-color:#63dfac;background:#125042;color:#dbffed}
+.fingerTouchArea{position:relative;border:2px solid #5499b1;border-radius:14px;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;height:clamp(220px,40vh,410px);background:radial-gradient(circle at 35% 15%,#205371,#071c2c);cursor:grab;display:grid;place-items:center;overscroll-behavior:contain}
+.fingerTouchArea:active{cursor:grabbing}
+.fingerScene{width:min(76%,480px);max-height:85%;aspect-ratio:1000/620;will-change:transform;pointer-events:none;transform-origin:center}
+.fingerScene img{width:100%;height:100%;object-fit:contain;border-radius:12px;box-shadow:0 10px 30px #0008;pointer-events:none}
+.fingerSceneHint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:max-content;max-width:95%;border:1px solid #5ac9b1;background:#061b2fe0;color:white;padding:7px 12px;border-radius:20px;font-size:12px;text-align:center;pointer-events:none}
+.fingerActions{display:flex;gap:8px;flex-wrap:wrap}
+.fingerActions button{font-weight:800;flex:1;min-height:44px;padding:10px;border-radius:11px;border:1px solid #62b0ba;background:#123e55;color:#ecffff;cursor:pointer}
+.fingerActions button:active{transform:scale(.98)}
+.fingerMissionResult{border:1px solid #5ec6b0;background:#0c3840;border-radius:10px;padding:11px 13px;font-size:13px;font-weight:800;color:#bffff0}
+.fingerMissionWon .fingerMissionResult{background:#145740;border-color:#88e9b0;color:#e1ffe8}
+.fingerMissionUrgent .fingerMissionTimer{border-color:#faad7b;color:#ffe2ad}
+.fingerMissionUrgent #fingerMissionProgress{background:linear-gradient(90deg,#ed705b,#ffc386)}
+.fingerMissionFoot{margin:0;color:#9bc4d5;font-size:10px;line-height:1.4}
+@media(max-width:650px){
+ .fingerMission{padding:10px;gap:8px}
+ .fingerMissionHead p{display:none}
+ .fingerMissionTimer{min-width:68px;padding:7px}
+ .fingerMissionKicker{font-size:9px}
+ .fingerReadouts{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+ .fingerReadouts>div{padding:7px 3px}
+ .fingerReadouts small{font-size:9px}
+ .fingerSteps span{padding:6px 4px;font-size:10px}
+ .fingerSteps span small{font-size:9px}
+ .fingerTouchArea{height:clamp(240px,38vh,350px)}
+ .fingerScene{width:85%}
+ .fingerSceneHint{font-size:10px;padding:6px 8px}
+}
+@media(prefers-reduced-motion:reduce){#fingerMissionProgress{transition:none}}
