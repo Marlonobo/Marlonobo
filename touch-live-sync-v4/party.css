@@ -207,3 +207,60 @@
  #partyScreen .partySceneInner,#partyScreen .partySceneInner>img,#partyScreen .partySceneInner h2,
  #partyScreen .partyWinners .partyPodium,#partyInteraction .partyFinal{animation:none!important;transition:none!important}
 }
+
+
+/* Cinematic presenter scenes + pause-aware quiz confirmation. */
+@keyframes partyQuizTapConfirm{0%{transform:scale(1)}35%{transform:scale(.96)}65%{transform:scale(1.04);box-shadow:0 0 0 3px #83ffe272,0 0 26px #6aecd67a}100%{transform:scale(1)}}
+@keyframes partySceneLightDrift{0%,100%{opacity:.22;transform:translateY(9px) scale(.9)}50%{opacity:.65;transform:translateY(-21px) scale(1.17)}}
+@keyframes partySceneTitle{from{opacity:0;transform:translateY(20px);filter:blur(9px)}to{opacity:1;transform:translateY(0);filter:blur(0)}}
+#partyInteraction .partyAnswer.answerSubmitting{
+ animation:partyQuizTapConfirm .6s ease both!important;
+ border-color:#a1ffdb!important;background:linear-gradient(120deg,#154e58,#145f50)!important;
+}
+#partyInteraction .partyQuizTimerHud{gap:4px;min-width:107px}
+#partyInteraction .partyQuizTimeCaption{
+ font-size:10px;color:#a5d8d9;font-weight:800;max-width:135px;
+ text-align:center;line-height:1.25
+}
+#partyInteraction .quizUrgent .partyQuizTimeCaption{color:#ffca8e}
+#partyInteraction .quizPaused .timer{animation:none!important;color:#c0d9ea}
+#partyInteraction .quizPaused .partyQuizTimeTrack i{background:linear-gradient(90deg,#6c91a4,#bdcdd6)}
+#partyInteraction .quizPaused .partyQuizTimeCaption{color:#afc3d9}
+#partyScreen .partyWelcomeCinematic,#partyScreen .partyEndingCinematic{
+ background:radial-gradient(ellipse at 70% 35%,#124c59 0%,#092435 48%,#071b2b 100%);
+ overflow:hidden;border-radius:15px;isolation:isolate;position:relative
+}
+#partyScreen .partyAmbientLights{position:absolute;inset:0;pointer-events:none;z-index:-1}
+#partyScreen .partyAmbientLights i{
+ display:block;position:absolute;left:10%;top:10%;width:clamp(55px,14vw,150px);
+ aspect-ratio:1;border-radius:50%;
+ background:radial-gradient(circle,#61ffe65b,#32b9c71a 40%,transparent 72%);
+ animation:partySceneLightDrift 6.8s ease-in-out infinite
+}
+#partyScreen .partyAmbientLights i:nth-child(2){left:66%;top:15%;animation-delay:-2s;width:125px}
+#partyScreen .partyAmbientLights i:nth-child(3){left:40%;top:68%;animation-delay:-4.5s;width:75px}
+#partyScreen .partyWelcomeCinematic h2,#partyScreen .partyEndingCinematic h2{
+ font-size:clamp(22px,3.8vw,42px);line-height:1.12;
+ animation:partySceneTitle .9s cubic-bezier(.16,.8,.27,1) both;
+ text-shadow:0 0 22px #55e6d642
+}
+#partyScreen .partyIntroTag,#partyScreen .partyOutroTag{
+ display:inline-flex;border:1px solid #70d7c28a;border-radius:999px;
+ color:#9bffe1;background:#0b50456b;letter-spacing:.09em;
+ font-size:clamp(9px,1vw,13px);font-weight:900;padding:7px 13px;
+ margin:13px auto
+}
+#partyScreen .partyEndingCinematic .partyOutroTag{color:#ffe9ae;border-color:#e6ce8e6a;background:#6a52273b}
+#partyScreen .partyWelcomeCinematic>img,#partyScreen .partyEndingCinematic>img{
+ max-height:clamp(120px,23vh,300px);
+}
+@media(max-width:600px){
+ #partyInteraction .partyQuizTimerHud{min-width:82px}
+ #partyInteraction .partyQuizTimeCaption{font-size:9px;max-width:90px}
+}
+@media(prefers-reduced-motion:reduce){
+ #partyInteraction .partyAnswer.answerSubmitting,
+ #partyScreen .partyAmbientLights i,
+ #partyScreen .partyWelcomeCinematic h2,
+ #partyScreen .partyEndingCinematic h2{animation:none!important;transition:none!important}
+}
