@@ -44,7 +44,7 @@ try{users=new Map(Object.entries(JSON.parse(fs.readFileSync(USERS_FILE,'utf8')))
 let usersTimer=null;function saveUsers(){clearTimeout(usersTimer);usersTimer=setTimeout(()=>fsp.writeFile(USERS_FILE,JSON.stringify(Object.fromEntries(users))).catch(console.error),400);}
 // One 30-second mission, independent from the 22:18–23:20 film passage.
 const ZOOM_MISSION_SECONDS=30;
-for(const q of Q)if(q.type==='zoom')q.duration=ZOOM_MISSION_SECONDS;
+for(const q of Q)if(q.type==='zoom'){q.duration=ZOOM_MISSION_SECONDS;q.close=q.open+ZOOM_MISSION_SECONDS;}
 const ZOOM=()=>Q.find(q=>q.type==='zoom');
 async function hydrateCloudMedia(){
  if(!S3.enabled)return;
@@ -548,7 +548,7 @@ async function handler(req,res){
  const open=Number(q.open),close=Number(q.close),correct=Number(q.correct);
  if(!Number.isFinite(open)||!Number.isFinite(close)||open<0||close<=open||close>20000||!Number.isInteger(correct)||correct<0||correct>3||!Array.isArray(q.a)||q.a.length!==4||!String(q.q||'').trim()||String(q.q).length>500||q.a.some(a=>!String(a).trim()||String(a).length>250))return send(res,400,{error:'Frage '+(i+1)+' hat ungueltige Werte.'});
  const item={id:/^[A-Za-z0-9_-]{1,32}$/.test(q.id||'')?q.id:'Q'+(i+1),open,close,q:String(q.q).trim(),a:q.a.map(x=>String(x).trim()),correct,chapter:Math.min(7,Math.max(1,Number(q.chapter)||1))};
- if(q.type==='zoom'){item.type='zoom';item.duration=ZOOM_MISSION_SECONDS;}
+ if(q.type==='zoom'){item.type='zoom';item.duration=ZOOM_MISSION_SECONDS;item.close=item.open+ZOOM_MISSION_SECONDS;}
  if(q.hint)item.hint=String(q.hint).slice(0,200);if(Number.isInteger(Number(q.fifty))&&q.fifty!==null&&q.fifty!==''&&Number(q.fifty)!==correct&&Number(q.fifty)>=0&&Number(q.fifty)<=3)item.fifty=Number(q.fifty);
  next.push(item);}
  if(new Set(next.map(x=>x.id)).size!==next.length)return send(res,400,{error:'Fragen-IDs muessen eindeutig sein.'});
