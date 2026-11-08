@@ -48,7 +48,7 @@ if(!fs.existsSync(V4_CUES_MARKER)){
  }catch(e){console.error('V4-Zeitmarken konnten nicht aktualisiert werden:',e.message);}
 }
 
-const def=()=>({homeUnlocked:false,trailerPlaying:false,phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,videoVolume:1,videoTitle:'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{url:'',type:'',id:'',on:false},soundtrack:{pause:true,results:true,volume:.25},captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},remoteVideo:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,continuousWatch:false,zoomDismissed:false,zoomOverlay:false,zoomOverlayStartTime:0,demoOverlay:false,gestureOverlay:false,gestureOverlayStartTime:0,gestureStartTime:0,gestureReturnPhase:'welcome',resultsAt:0,clockSource:'tv',lastHostTick:0,seekSerial:0,removedUserIds:[],revision:0});
+const def=()=>({homeUnlocked:false,trailerPlaying:false,trailerSerial:0,trailerRevision:0,phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,videoVolume:1,videoTitle:'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{url:'',type:'',id:'',on:false},soundtrack:{pause:true,results:true,volume:.25},captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},remoteVideo:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,continuousWatch:false,zoomDismissed:false,zoomOverlay:false,zoomOverlayStartTime:0,demoOverlay:false,gestureOverlay:false,gestureOverlayStartTime:0,gestureStartTime:0,gestureReturnPhase:'welcome',resultsAt:0,clockSource:'tv',lastHostTick:0,seekSerial:0,removedUserIds:[],revision:0});
 let s=def(), users=new Map(), upload=null,feedback=[],cloudManifest=null;
 // This is intentionally volatile: choosing a file on a Windows PC never uploads its bytes.
 // Readiness expires when the HDMI browser disconnects; it is not persisted in storage.
@@ -181,7 +181,7 @@ function publicState(id){
   ?Math.max(0,Math.ceil(GESTURE_MISSION_SECONDS-(s.time-(s.gestureOverlayStartTime||0))))
   :s.phase==='gesture'?Math.max(0,Math.ceil(GESTURE_MISSION_SECONDS-(Date.now()-(s.gestureStartTime||Date.now()))/1000)):0;
  const gestureActive=gestureSeconds>0&&(s.phase==='gesture'||(s.phase==='film'&&s.gestureOverlay));
- return {homeUnlocked:!!s.homeUnlocked,trailerAvailable:fs.existsSync(TRAILER_FILE),trailerPlaying:!!s.trailerPlaying,phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
+ return {homeUnlocked:!!s.homeUnlocked,trailerAvailable:fs.existsSync(TRAILER_FILE),trailerPlaying:!!s.trailerPlaying,trailerSerial:s.trailerSerial||0,trailerRevision:s.trailerRevision||0,phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
   quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,a:q.a,duration:q.type==='zoom'?ZOOM_MISSION_SECONDS:((s.phase==='demo'||s.demoOverlay)?45:30),remaining:a.remaining,accepting:a.accepting,foundCount:q.type==='zoom'?[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length:0,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
   player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)};
 }
@@ -283,19 +283,28 @@ async function handler(req,res){
    try{await fd.read(header,0,12,0);}finally{await fd.close();}
    if(n<1024||header.toString('ascii',4,8)!=='ftyp')throw Error('Keine gültige MP4-Datei');
    await fsp.rename(tmp,TRAILER_FILE);
+   s.trailerRevision=(s.trailerRevision||0)+1;s.revision++;await persist();
    return send(res,200,{ok:true,bytes:n,temporary:true});
   }catch(e){await fsp.unlink(tmp).catch(()=>{});if(!res.headersSent&&!res.destroyed)return send(res,400,{error:e.message});return;}
  }
  if((m==='GET'||m==='HEAD')&&p==='/api/trailer/video'){
-  let st;try{st=await fsp.stat(TRAILER_FILE);}catch{return send(res,404,{error:'Noch kein Trailer hochgeladen'});}
-  let first=0,last=st.size-1,status=200;const range=req.headers.range;
-  if(range){const match=/^bytes=(\d+)-(\d*)$/.exec(range);if(!match)return send(res,416,{error:'Ungültiger Bereich'});
-   first=Number(match[1]);last=match[2]?Math.min(last,Number(match[2])):last;
-   if(first>last||first>=st.size){res.writeHead(416,{'Content-Range':'bytes */'+st.size});return res.end();}status=206;
+  let st;try{st=await fsp.stat(TRAILER_FILE);}catch{return send(res,404,{error:'Kein Trailer auf dem Server. Bitte neu hochladen.'});}
+  const size=st.size,etag='"'+Math.round(st.mtimeMs).toString(36)+'-'+size.toString(36)+'"';
+  const headers={'Content-Type':'video/mp4','Accept-Ranges':'bytes','Cache-Control':'private, max-age=300','ETag':etag,'X-Content-Type-Options':'nosniff'};
+  if(req.headers['if-none-match']===etag&&!req.headers.range){res.writeHead(304,headers);return res.end();}
+  let first=0,last=size-1,status=200;
+  const requested=req.headers.range;
+  if(requested&&(!req.headers['if-range']||req.headers['if-range']===etag)){
+   const match=/^bytes=(\d*)-(\d*)$/.exec(requested);
+   if(!match||(!match[1]&&!match[2]))return send(res,416,{error:'Ungültiger Video-Bereich.'});
+   if(!match[1]){const suffix=Number(match[2]);first=Math.max(0,size-suffix);}
+   else{first=Number(match[1]);if(match[2])last=Math.min(last,Number(match[2]));}
+   if(first>=size||first>last){res.writeHead(416,{...headers,'Content-Range':'bytes */'+size});return res.end();}
+   status=206;headers['Content-Range']='bytes '+first+'-'+last+'/'+size;
   }
-  const h={'Content-Type':'video/mp4','Accept-Ranges':'bytes','Content-Length':last-first+1,'Cache-Control':'no-store'};
-  if(status===206)h['Content-Range']='bytes '+first+'-'+last+'/'+st.size;
-  res.writeHead(status,h);if(m==='HEAD')return res.end();
+  headers['Content-Length']=last-first+1;
+  res.writeHead(status,headers);
+  if(m==='HEAD')return res.end();
   return fs.createReadStream(TRAILER_FILE,{start:first,end:last}).pipe(res);
  }
  if(m==='GET'&&p==='/api/state')return send(res,200,publicState(u.searchParams.get('id')));
@@ -496,7 +505,7 @@ async function handler(req,res){
   if(cmd==='trailerStart'){
    if(!fs.existsSync(TRAILER_FILE))return send(res,404,{error:'Bitte zuerst den Trailer im Admin hochladen.'});
    if(!['welcome','end','handout','trailer'].includes(s.phase))return send(res,409,{error:'Trailer nur vor oder nach dem Hauptfilm starten.'});
-   s.phase='trailer';s.trailerPlaying=true;s.playing=false;
+   s.phase='trailer';s.trailerPlaying=true;s.trailerSerial=(s.trailerSerial||0)+1;s.playing=false;
    if(s.welcomeMusic)s.welcomeMusic.on=false;
   }else if(s.phase==='trailer'&&cmd==='trailerPause')s.trailerPlaying=false;
   else if(s.phase==='trailer'&&cmd==='trailerResume')s.trailerPlaying=true;
