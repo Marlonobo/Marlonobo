@@ -9,7 +9,7 @@ let key=fromUrl||sessionStorage.getItem(keyStore)||'';
 if(fromUrl){sessionStorage.setItem(keyStore,key);history.replaceState({},'',location.pathname);}
 let state=null,participantId=localStorage.getItem(idStore)||'',participantName=localStorage.getItem(nameStore)||'';
 let screenSignature='',quizSignature='',sourceRef='',activated=false,ytPlayer=null,ytReady=false,ytVideoId='',ytApiLoading=false,localRevision=-1,lastCaptionRevision=-1,initialMediaSyncPending=false,lastAppliedSeekSerial=null,seekCommandBusy=false;
-let easterInstance=null,fingerMissionInstance=null,cloudFallback=false;
+let easterInstance=null,fingerMissionInstance=null,cloudFallback=false,partyLastScore=null,partyLastScoreId='';
 const partyModeKey='touch_party_view_mode_'+(host?'host':'viewer');
 let partyViewMode=localStorage.getItem(partyModeKey)==='auto'?'auto':localStorage.getItem(partyModeKey)==='side'?'side':(host?'side':'auto');
 let lastFocusKey='',lastFocusTransition=0;
@@ -189,6 +189,7 @@ async function toggleHostFilmByClick(){
 function updateScene(){
  if(!state)return;
  const phase=state.phase,source=onlineVideo(),haveVideo=source.type!=='none';
+ screen.classList.toggle('is-welcome',phase==='welcome');screen.classList.toggle('is-ending',phase==='end'||phase==='handout');
  updateTapToggle();
  const film=phase==='film'&&haveVideo&&source.type!=='local';
  screen.hidden=film;
@@ -210,7 +211,7 @@ function updateScene(){
  else if(phase==='zoom')html='<div class="partySceneInner egg-broadcast"><span class="eyebrow">KAPITEL 4 · MULTITOUCH-PRAXIS</span><h2>Multitouch-Challenge!</h2><img src="/easter-scene.svg" alt="Berglandschaft mit versteckter Katze"><p>Genauso wie in der Doku: Vergrößern mit zwei Fingern, Bild verschieben und das versteckte Detail antippen.</p><strong>'+(state.quiz?.remaining||0)+' Sekunden · '+(state.quiz?.foundCount||0)+' gefunden</strong></div>';
  else if(phase==='demo')html=slide('Quiz-Probelauf','Die Frage erscheint auf beiden Geräten.','<small>Testet jetzt gleichzeitig eure Antworten.</small>');
  else if(phase==='results')html=podium();
- else if(phase==='handout')html=slide('Handout · Lernfeld 14','Jetzt das Handout ausfüllen und die Bewertung berechnen.');
+ else if(phase==='handout')html=slide('Handout · Lernfeld 14','Füllt nur die sieben Zeilen eurer Tabelle aus. Nichts berechnen.','<small>Öffnet /#handout auf dem iPad und speichert die Tabelle als PDF.</small>');
  else if(phase==='end')html=slide('Vielen Dank für eure Aufmerksamkeit!','Das war meine interaktive Dokumentation über Touchscreens.','<small>Ich hoffe, es hat euch gefallen.</small>');
  else html=slide('TOUCH LIVE','Gemeinsam lernen und spielen.');
  renderScene(html);
@@ -330,6 +331,39 @@ function bindGesture(){
  box.addEventListener('pointermove',e=>{if(!gesturePoints.has(e.pointerId))return;e.preventDefault();gesturePoints.set(e.pointerId,{x:e.clientX,y:e.clientY});const p=[...gesturePoints.values()],g=gestureOrigin;if(!g)return;if(p.length===1&&g.type===1){gestureState.x=g.bx+p[0].x-g.x;gestureState.y=g.by+p[0].y-g.y;}if(p.length>=2&&g.type===2){const dx=p[1].x-p[0].x,dy=p[1].y-p[0].y;gestureState.scale=Math.max(.35,Math.min(5,g.scale*Math.hypot(dx,dy)/g.distance));gestureState.rotation=g.rotation+(Math.atan2(dy,dx)-g.angle)*180/Math.PI;gestureState.x=g.bx+(p[0].x+p[1].x)/2-g.cx;gestureState.y=g.by+(p[0].y+p[1].y)/2-g.cy;}draw();});
  const stop=e=>{gesturePoints.delete(e.pointerId);snapshot();};box.addEventListener('pointerup',stop);box.addEventListener('pointercancel',stop);
  $('partyGestureReset').onclick=()=>{gestureState={x:0,y:0,scale:1,rotation:0};snapshot();draw();};draw();
+}
+function partyPersonalScoreHtml(p){
+ if(!participantId||!p)return '';
+ const value=Number(p.liveScore);
+ return '<div class="partyPersonalScore"><span>🏆 Deine Punkte <small>· nur für dich</small></span><strong id="partyScoreValue">'+(Number.isFinite(value)?Math.round(value).toLocaleString('de-DE'):'—')+'</strong></div>';
+}
+function refreshPartyScore(p){
+ if(!participantId||!p)return;
+ const id=String(p.id||participantId),raw=Number(p.liveScore);
+ if(id!==partyLastScoreId){partyLastScoreId=id;partyLastScore=null;}
+ const badge=$('partyScoreValue');if(badge)badge.textContent=Number.isFinite(raw)?Math.round(raw).toLocaleString('de-DE'):'—';
+ if(Number.isFinite(raw)){
+  if(partyLastScore!==null&&raw>partyLastScore&&badge){
+   const box=badge.closest('.partyPersonalScore');
+   if(box){
+    box.querySelector('.studentScoreGain')?.remove();
+    const gain=document.createElement('span');gain.className='studentScoreGain';
+    gain.textContent='+'+Math.round(raw-partyLastScore).toLocaleString('de-DE');
+    box.appendChild(gain);setTimeout(()=>gain.remove(),1450);
+   }
+  }
+  partyLastScore=raw;
+ }
+}
+function updatePartyQuizTimer(q){
+ if(!q||q.type==='zoom')return;
+ const remain=Math.max(0,Number(q.remaining)||0),duration=Math.max(1,Number(q.duration)||45);
+ const meter=$('partyQuizProgress'),fill=$('partyQuizProgressFill'),timer=$('partyTimer'),note=$('partyQuizNotice');
+ const pct=Math.max(0,Math.min(100,remain/duration*100));
+ if(timer){timer.textContent=remain+' s';timer.classList.toggle('warning',remain<=15&&remain>8);timer.classList.toggle('urgent',remain<=8);}
+ if(fill)fill.style.width=pct.toFixed(1)+'%';
+ if(meter){meter.classList.toggle('is-warning',remain<=15&&remain>8);meter.classList.toggle('is-urgent',remain<=8);meter.setAttribute('aria-valuenow',String(remain));meter.setAttribute('aria-valuemax',String(duration));}
+ if(note)note.textContent=remain<=8?'⏳ Endspurt – noch '+remain+' Sekunden.':'Antworten, bevor der Balken abläuft.';
 }
 function interaction(){
  if(!state)return;
