@@ -88,6 +88,26 @@ async function api(path,body,authenticated=false){
  if(!r.ok)throw Error(o.error||'Server antwortet mit '+r.status);
  return o;
 }
+async function hostManagePlayer(action,id,name){
+ if(!host||!key)return;
+ if(action==='rename'){
+  const typed=prompt('Neuer Name für '+name+':',name);
+  if(typed===null)return;
+  name=typed.trim();if(name.length<2||name.length>26)return showError('Namen mit 2–26 Zeichen eingeben.');
+ }else{
+  const question=action==='reset'?'Punkte und Antworten von '+name+' zurücksetzen?':
+   action==='delete'?name+' aus der Sitzung entfernen?':
+   action==='resetAll'?'Alle Quizpunkte und Antworten zurücksetzen? Die Namen bleiben.':
+   'Alle Teilnehmer entfernen?';
+  if(!confirm(question))return;
+  if(action==='clearAll'&&!confirm('Wirklich ALLE Teilnehmer entfernen?'))return;
+ }
+ try{
+  await api('/api/host/participants/manage',{action,id,name},true);
+  await refreshHostRoster(true);
+  await poll();
+ }catch(e){showError('Teilnehmerverwaltung: '+e.message);}
+}
 let rosterBusy=false,rosterLastAt=0;
 async function refreshHostRoster(force=false){
  if(!host||!key||rosterBusy||(!force&&Date.now()-rosterLastAt<3500))return;
@@ -96,13 +116,17 @@ async function refreshHostRoster(force=false){
   const data=await api('/api/host/participants',undefined,true);
   const box=$('partyRoster'),status=$('partyRosterStatus');
   if(!box||!data?.ok)return;
+  box.onclick=e=>{
+   const btn=e.target.closest?.('[data-player-action]');if(!btn)return;
+   hostManagePlayer(btn.dataset.playerAction,btn.dataset.playerId,btn.dataset.playerName);
+  };
   const people=data.players||[],questions=data.questions||[];
   if(status)status.textContent=people.length?
    people.filter(p=>p.online).length+' gerade verbunden · '+people.length+' insgesamt angemeldet · privat nur in deiner Regie':
    'Noch niemand angemeldet. Schicke deiner Freundin den Quiz-Link /join.';
   if(!people.length){box.innerHTML='<p class="small">Noch niemand angemeldet. Namen erscheinen hier automatisch.</p>';return;}
-  box.innerHTML='<div class="partyRosterScroll"><table class="partyRosterTable"><thead><tr><th>Teilnehmer</th><th>Richtig</th><th>Falsch</th><th>Antworten</th><th>Punkte</th></tr></thead><tbody>'+
-   people.map(p=>'<tr><td><span class="partyOnlineDot '+(p.online?'isOnline':'isOffline')+'" aria-hidden="true"></span><strong>'+safe(p.name)+'</strong><small>'+(p.online?' online':' offline')+'</small></td><td>'+p.correct+'</td><td>'+p.wrong+'</td><td>'+p.answered+' / '+questions.length+'</td><td><b>'+p.score+'</b></td></tr>').join('')+
+  box.innerHTML='<div class="partyRosterScroll"><table class="partyRosterTable"><thead><tr><th>Teilnehmer</th><th>Richtig</th><th>Falsch</th><th>Antworten</th><th>Punkte</th><th>Verwalten</th></tr></thead><tbody>'+
+   people.map(p=>'<tr><td><span class="partyOnlineDot '+(p.online?'isOnline':'isOffline')+'" aria-hidden="true"></span><strong>'+safe(p.name)+'</strong><small>'+(p.online?' online':' offline')+'</small></td><td>'+p.correct+'</td><td>'+p.wrong+'</td><td>'+p.answered+' / '+questions.length+'</td><td><b>'+p.score+'</b></td><td><div class="partyRosterActions"><button type="button" data-player-action="rename" data-player-id="'+p.id+'" data-player-name="'+safe(p.name)+'">Name</button><button type="button" data-player-action="reset" data-player-id="'+p.id+'" data-player-name="'+safe(p.name)+'">Reset</button><button type="button" class="danger" data-player-action="delete" data-player-id="'+p.id+'" data-player-name="'+safe(p.name)+'">✕</button></div></td></tr>').join('')+
    '</tbody></table></div><div class="partyRosterDetails">'+people.map(p=>
     '<details><summary>'+safe(p.name)+' · Einzelantworten ('+p.correct+' richtig / '+p.wrong+' falsch)</summary><div class="partyAnswerChips">'+
     questions.map(q=>{const a=(p.answers||[]).find(z=>z.id===q.id),v=a?.status||'unanswered';
@@ -414,6 +438,8 @@ function connectButtons(){
   };
  }
  const refreshRoster=$('partyRosterRefresh');if(refreshRoster)refreshRoster.onclick=()=>refreshHostRoster(true);
+ const resetAll=$('partyRosterResetAll');if(resetAll)resetAll.onclick=()=>hostManagePlayer('resetAll','','');
+ const clearAll=$('partyRosterClearAll');if(clearAll)clearAll.onclick=()=>hostManagePlayer('clearAll','','');
  const quizOnly=$('partyHostCopyQuiz');
  if(quizOnly)quizOnly.onclick=()=>{
   const link=location.origin+'/join';
