@@ -840,16 +840,16 @@ function tvView(){
  if(welcomeAudio){
   welcomeAudio.loop=true;welcomeAudio.volume=.8;welcomeAudio.muted=false;
   welcomeAudio.addEventListener('playing',()=>{
-   welcomeAudioPending=false;welcomeAudioBlocked=false;welcomeAudioError='';
+   welcomeAudioPending=false;welcomeAudioBlocked=false;welcomeAudioError='';reportWelcomeAudio();
    if(state?.phase==='welcome')syncWelcomeMusic();
   });
   welcomeAudio.addEventListener('error',()=>{
    welcomeAudioPending=false;welcomeAudioBlocked=true;
-   welcomeAudioError='Die Audio-Datei konnte vom LG-Browser nicht geladen werden.';
+   welcomeAudioError='Die Audio-Datei konnte vom LG-Browser nicht geladen werden.';reportWelcomeAudio();
    if(state?.phase==='welcome')syncWelcomeMusic();
   });
   welcomeAudio.addEventListener('pause',()=>{
-   welcomeAudioPending=false;
+   welcomeAudioPending=false;reportWelcomeAudio();
    if(state?.phase==='welcome')syncWelcomeMusic();
   });
  }
@@ -932,6 +932,11 @@ function tvView(){
  videoEl.addEventListener('ended',()=>{if(state?.phase==='film')sendTick(false,true);});
 }
 function tvScene(html){const node=el('tvScene');if(node&&node.__h!==html){node.innerHTML=html;node.__h=html;}}
+function reportWelcomeAudio(){
+ if(role!=='tv'||!tvKey)return;
+ const audio=el('tvWelcomeAudio'),playing=!!(audio&&!audio.paused&&audio.readyState>=2);
+ fetch('/api/tv/audio-status',{method:'POST',headers:{'Content-Type':'application/json','x-tv-key':tvKey},body:JSON.stringify({playing,blocked:!!welcomeAudioBlocked,error:welcomeAudioError||''})}).catch(()=>{});
+}
 function playWelcomeAudio(){
  const audio=el('tvWelcomeAudio');
  if(!audio)return false;
@@ -1247,7 +1252,7 @@ async function poll(force=false){
  if(role==='control'){
   if(el('controlTitle'))el('controlTitle').textContent=next.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation';
   if(el('controlStatus'))el('controlStatus').textContent=(next.playing?'▶ Film läuft':'Ⅱ Film pausiert')+' · '+secText(next.time)+' · '+next.phase.toUpperCase()+' · '+next.participants+' Zuschauer';
-  if(el('controlMusicTitle'))el('controlMusicTitle').textContent=next.welcomeMusic?.on?'♫ TOUCH-LIVE-Willkommensmusik AN – läuft auf LG in Dauerschleife.':'♫ LG-Willkommensmusik AUS. Du kannst sie ohne Spotify-Link starten.';
+  if(el('controlMusicTitle'))el('controlMusicTitle').textContent=next.welcomeMusic?.on?(next.tvAudio?.playing?'✓ LG-Browser bestätigt: Willkommensmusik läuft mit Ton.':next.tvAudio?.connected?'⚠ LG-Browser meldet noch keinen Ton. Am Fernseher „♫ LG-Musik starten“ mit OK drücken.':'⚠ Musik aktiviert, aber TV noch nicht verbunden oder Tonstatus fehlt. Beamerlink öffnen und dort OK drücken.'):'♫ LG-Musik AUS. Für Spotify wähle über Spotify Connect die Spotify-App auf LG-TV oder HDMI-PC.';
   document.querySelectorAll('[data-mobile-sound]').forEach(btn=>{const field=btn.dataset.mobileSound;const enabled=next.soundtrack?.[field]!==false;btn.dataset.enabled=String(enabled);btn.textContent=field==='pause'?(enabled?'♫ Pausenmusik AN':'♫ Pausenmusik AUS'):(enabled?'🏆 Ergebnismusik AN':'🏆 Ergebnismusik AUS');});
  }
  if(role==='remote'){const status=el('remoteStatus');if(status)status.textContent='Live: '+next.phase.toUpperCase()+' · '+secText(next.time)+' · '+next.participants+' Teilnehmende · '+(next.playing?'Video läuft':'Video pausiert');}
@@ -1285,5 +1290,6 @@ router();setInterval(()=>{poll();},900);
 setTimeout(refreshTvAppVersion,2000);
 setInterval(refreshTvAppVersion,20000);
 setInterval(()=>{if(role==='tv'&&state?.phase==='film'&&state.video.type!=='none')sendTick(state.playing);},1100);
+setInterval(()=>{if(role==='tv')reportWelcomeAudio();},9000);
 setInterval(()=>{if(role==='tv'&&state?.video?.type==='local'&&tvLocalLoaded)announceLocalHDMI();},6000);
 })();
