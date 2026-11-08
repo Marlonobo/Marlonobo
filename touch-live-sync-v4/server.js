@@ -289,7 +289,7 @@ async function handler(req,res){
  if((m==='GET'||m==='HEAD')&&p==='/api/trailer/video'){
   let st;try{st=await fsp.stat(TRAILER_FILE);}catch{return send(res,404,{error:'Noch kein Trailer hochgeladen'});}
   let first=0,last=st.size-1,status=200;const range=req.headers.range;
-  if(range){const match=/^bytes=(\\d+)-(\\d*)$/.exec(range);if(!match)return send(res,416,{error:'Ungültiger Bereich'});
+  if(range){const match=/^bytes=(\d+)-(\d*)$/.exec(range);if(!match)return send(res,416,{error:'Ungültiger Bereich'});
    first=Number(match[1]);last=match[2]?Math.min(last,Number(match[2])):last;
    if(first>last||first>=st.size){res.writeHead(416,{'Content-Range':'bytes */'+st.size});return res.end();}status=206;
   }
