@@ -83,12 +83,12 @@ function userPage(){
  if(isTeacher){el('teacherNotes').oninput=e=>localStorage.setItem('touch_teacher_notes',e.target.value);el('saveNotes').onclick=()=>saveText('TOUCH-LIVE-Lehrernotizen.txt',el('teacherNotes').value);}
  if(state.phase==='gesture'||state.sideGame==='gesture')initGesture();
 }
-function zoomCard(q,p,answered){return '<section class="easter-live"><div class="between" style="margin-bottom:10px"><span class="chip">🎮 KAPITEL 4 · MULTITOUCH-CHALLENGE</span><span class="small">Bereits gefunden: '+(q.foundCount||0)+' von '+state.participants+'</span></div><div id="easterMount"></div><p class="small" style="margin-top:12px">'+(p.zoomFound?'✅ RICHTIG! Du hast die Katze gefunden. Deine Punkte werden oben direkt aktualisiert.':!q.accepting?'Die Suche ist beendet. Wichtig: Pinch-to-Zoom, Pan und Tap sind echte Touchscreen-Gesten.':'Teste, was du in Kapitel 4 gelernt hast: mit zwei Fingern vergrößern, Bild verschieben und das versteckte Detail direkt antippen.')+'</p></section>';}
+function zoomCard(q,p,answered){return '<section class="easter-live"><div class="between" style="margin-bottom:10px"><span class="chip">🎯 KAPITEL 4 · 30-SEKUNDEN-MISSION</span><span class="small">Bereits gefunden: '+(q.foundCount||0)+' von '+state.participants+'</span></div><div id="easterMount"></div><p class="small" style="margin-top:12px">'+(p.zoomFound?'✅ RICHTIG! Du hast die Katze gefunden. Deine Punkte werden oben direkt aktualisiert.':!q.accepting?'Die Suche ist beendet. Wichtig: Pinch-to-Zoom, Pan und Tap sind echte Touchscreen-Gesten.':'30-SEKUNDEN-MISSION: Auf 170 % zoomen, die Berghütte finden und die Katze im Dachfenster antippen. Schnell sein gibt Bonuspunkte!')+'</p></section>';}
 function initEaster(){
  const host=el('easterMount'),q=state?.quiz,p=state?.player;
  if(!host||!q||!window.EasterGame)return;
  easterInstance=window.EasterGame.mount(host,{
-  remaining:q.remaining,found:!!p?.zoomFound,
+  remaining:q.remaining,duration:30,found:!!p?.zoomFound,
   showLiveScore:role==='join',disabled:!q.accepting,
   onFind:async ({x,y,zoom})=>{
    if(!userId)throw Error('Bitte erst einen Namen eingeben.');
@@ -283,7 +283,7 @@ function bindAdmin(){
  const cohost=adminInfo?.cohostKey;
  if(cohost){const panel=document.createElement('section');panel.className='card';panel.style.marginTop='18px';panel.innerHTML='<span class="label">ZWEITES GERÄT · CO-MODERATION</span><h2>Mit deiner Freundin gemeinsam steuern</h2><p>Dieser Link steuert die Sendung (Start, Pause, Ergebnisse), aber nicht die privaten Admin-Einstellungen.</p><div class="linkbox" id="friendLink"></div><button id="copyFriend">Mitsteuer-Link kopieren</button><p class="small">Privat weitergeben: Wer diesen Link besitzt, kann den Live-Ablauf steuern.</p>';el('adminRoot').appendChild(panel);const link=location.origin+'/host?key='+encodeURIComponent(cohost);el('friendLink').textContent=link;el('copyFriend').onclick=()=>copy(link);}
  const zc=document.createElement('section');zc.className='card';zc.style.marginTop='18px';
- zc.innerHTML='<span class="label">KAPITEL 4 / ZOOM-AUFGABE</span><h2>Zoom-Spiel im Quiz</h2><p>Startet automatisch im Filmabschnitt 22:18 bis 23:20 (62 Sekunden). Der Film pausiert, Schüler und Lehrer zoomen und antworten, danach geht der Film weiter.</p><div class="control"><button id="zoomGo" class="primary">Zoom-Aufgabe jetzt starten</button><button id="zoomStop">Weiter mit dem Film</button></div>';
+ zc.innerHTML='<span class="label">KAPITEL 4 / ZOOM-AUFGABE</span><h2>Zoom-Spiel im Quiz</h2><p>Startet automatisch bei 22:18 und dauert genau 30 Sekunden (bis 22:48). Die Mission: 170 % zoomen, das Bild zur Berghütte verschieben und die Katze im Dachfenster antippen. Der Film läuft dabei ohne Pause und ohne Sprung weiter. Alle folgenden Quiz-Zeitmarken bleiben erhalten.</p><div class="control"><button id="zoomGo" class="primary">Zoom-Aufgabe jetzt starten</button><button id="zoomStop">Weiter mit dem Film</button></div>';
  el('adminRoot').appendChild(zc);el('zoomGo').onclick=()=>adminAction('zoomStart');el('zoomStop').onclick=()=>adminAction('zoomEnd');
  const at=document.createElement('section');at.className='card';at.style.marginTop='18px';
  at.innerHTML='<span class="label">NUR FÜR DICH</span><h2>Antworten der Teilnehmenden</h2><p class="small">Lösungen, Punkte und Joker sieht nur der Admin. Aktualisiert sich alle 4 Sekunden.</p><div id="adminAnswers" style="overflow-x:auto"></div>';
