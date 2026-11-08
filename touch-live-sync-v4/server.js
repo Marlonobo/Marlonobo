@@ -32,7 +32,7 @@ if(!fs.existsSync(FILM_CUES_MARKER)){
  }catch(e){console.error('Film-Zeitmarken nicht dauerhaft gesichert:',e.message);}
 }
 
-const def=()=>({phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,videoVolume:1,videoTitle:'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{url:'',type:'',id:'',on:false},soundtrack:{pause:true,results:true,volume:.25},captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},remoteVideo:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,continuousWatch:false,zoomDismissed:false,zoomOverlay:false,zoomOverlayStartTime:0,demoOverlay:false,gestureOverlay:false,gestureOverlayStartTime:0,gestureStartTime:0,resultsAt:0,clockSource:'tv',lastHostTick:0,seekSerial:0,revision:0});
+const def=()=>({phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,videoVolume:1,videoTitle:'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{url:'',type:'',id:'',on:false},soundtrack:{pause:true,results:true,volume:.25},captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},remoteVideo:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,continuousWatch:false,zoomDismissed:false,zoomOverlay:false,zoomOverlayStartTime:0,demoOverlay:false,gestureOverlay:false,gestureOverlayStartTime:0,gestureStartTime:0,gestureReturnPhase:'welcome',resultsAt:0,clockSource:'tv',lastHostTick:0,seekSerial:0,revision:0});
 let s=def(), users=new Map(), upload=null,feedback=[],cloudManifest=null;
 // This is intentionally volatile: choosing a file on a Windows PC never uploads its bytes.
 // Readiness expires when the HDMI browser disconnects; it is not persisted in storage.
@@ -183,6 +183,11 @@ function endZoom(){
  s.phase='film';s.playing=true;s.revision++;persist();
 }
 setInterval(()=>{const z=ZOOM();if(s.phase==='zoom'&&z&&Date.now()-s.zoomStart>=(z.duration||30)*1000+250)endZoom();},1000);
+setInterval(()=>{
+ if(s.phase==='gesture'&&s.gestureStartTime&&Date.now()-s.gestureStartTime>=GESTURE_MISSION_SECONDS*1000){
+  s.phase=s.gestureReturnPhase||'welcome';s.playing=false;s.gestureStartTime=0;s.revision++;persist();
+ }
+},1000);
 setInterval(()=>{if(s.phase==='results'&&s.resultsAt&&Date.now()-s.resultsAt>=28000){s.phase='end';s.playing=false;s.revision++;persist();}},1000);
 function spotifySelection(value){
  let url;
@@ -452,10 +457,10 @@ async function handler(req,res){
   if(s.phase==='film'){
    s.gestureOverlay=true;s.gestureOverlayStartTime=s.time;s.gestureStartTime=0;
   }else{
-   s.phase='gesture';s.playing=false;s.gestureStartTime=Date.now();s.gestureOverlay=false;
+   s.gestureReturnPhase=s.phase;s.phase='gesture';s.playing=false;s.gestureStartTime=Date.now();s.gestureOverlay=false;
   }
  }
- else if(cmd==='gestureEnd'){if(s.phase==='film')s.gestureOverlay=false;else{s.phase='film';s.playing=true;}s.gestureStartTime=0;}
+ else if(cmd==='gestureEnd'){if(s.phase==='film')s.gestureOverlay=false;else{s.phase=s.gestureReturnPhase||'welcome';s.playing=false;}s.gestureStartTime=0;}
  else if(cmd==='zoomStart'){
   if(s.phase==='film'){
    const z=ZOOM();if(!z)return send(res,400,{error:'Keine Zoom-Aufgabe vorhanden'});
