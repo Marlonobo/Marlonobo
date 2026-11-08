@@ -62,3 +62,69 @@
 .egg-learned{font-size:clamp(11px,1.6vw,17px);line-height:1.45;background:#154050cc;border:1px solid #9de7dc66;border-radius:12px;padding:12px 15px;margin:14px auto 0;max-width:550px;color:#e1f6f6}
 .egg-learned b{color:#9afbea}
 @media(max-width:660px){.egg-lesson{gap:4px;margin:2px 0 7px}.egg-lesson span{padding:6px;font-size:9px;border-radius:8px}.egg-lesson span b{font-size:9px}.egg-lesson small{font-size:8px}.egg-hardware{padding:8px 8px 11px;border-radius:14px}.egg-hardware-top{font-size:8px;padding:0 3px 6px}}
+
+/* TOUCH LIVE – 30-second mission presentation, designed for both phone and iPad */
+.egg-mission30{
+ --egg-mint:#75fce0;--egg-gold:#ffd77c;
+ background:radial-gradient(ellipse at 88% 0%,rgba(13,116,150,.26),transparent 48%),
+            linear-gradient(155deg,#07172c,#102c49 62%,#081f32);
+ border:1px solid #50d9c566;box-shadow:0 18px 54px #0009,0 0 32px #58e5d617;
+ overflow:hidden
+}
+.egg-mission30::before{
+ content:"";position:absolute;inset:0 0 auto;height:130px;pointer-events:none;
+ background:linear-gradient(120deg,#ffffff04,transparent 45%,#55e6d00d)
+}
+.egg-mission-progress{height:7px;border-radius:99px;overflow:hidden;background:#062239;border:1px solid #519aa78a;margin:0 0 16px;box-shadow:inset 0 2px 6px #0008}
+.egg-mission-progress-fill{height:100%;width:100%;border-radius:99px;background:linear-gradient(90deg,#27d9b2,#8cffe6 65%,#b2fff1);box-shadow:0 0 12px #84f4e47a;transition:width .35s linear,background-color .3s}
+.egg-mission30 .egg-topline{position:relative;z-index:1}
+.egg-mission30 .egg-kicker{color:#9ffcf3;letter-spacing:.12em}
+.egg-mission30 .egg-topline h3{
+ font-weight:950;letter-spacing:-.05em;
+ background:linear-gradient(120deg,#fff,#b0fff1 75%);
+ -webkit-background-clip:text;background-clip:text;color:transparent
+}
+.egg-mission30 .egg-topline p{max-width:760px}
+.egg-mission30 .egg-topline p b{color:#ffdd87;font-weight:900}
+.egg-mission-chip{
+ display:inline-flex;align-items:center;margin-top:12px;padding:6px 12px;
+ color:#b7fff2;background:#0c504d75;border:1px solid #7debd27e;
+ border-radius:100px;font:800 10px/1.3 Consolas,monospace;
+ letter-spacing:.08em;box-shadow:0 2px 15px #56e5c41a
+}
+.egg-mission30 .egg-game-clock{
+ background:linear-gradient(155deg,#09384c,#091c32);
+ border:1px solid #70dec5;min-width:106px;
+ box-shadow:0 0 0 3px #3aeac214,0 10px 30px #0005
+}
+.egg-mission30 .egg-game-clock strong{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+.egg-mission30 .egg-game-clock small{display:block;font:750 9px/1.3 Consolas,monospace;letter-spacing:.1em;color:#b7f1e3}
+.egg-mission30 .egg-lesson span{border-color:#477996;background:#0e324c;box-shadow:inset 0 1px 0 #ffffff10}
+.egg-mission30 .egg-lesson span.egg-step-done{background:linear-gradient(140deg,#175a4a,#0c3944);border-color:#74f1c5}
+.egg-mission30 .egg-hardware{border-color:#66a8bd;box-shadow:inset 0 2px 12px #fff2,0 20px 44px #0006}
+.egg-mission30 .egg-stage{border-color:#8df4de}
+.egg-mission30 .egg-zoom-indicator{border:1px solid #8effecb7;color:#c5fff4;background:#05343be8}
+.egg-mission30 .egg-tap{border-color:#79ffe2ad;box-shadow:0 0 16px #27d7b123}
+.egg-mission30 .egg-hint{background:linear-gradient(90deg,#153f54,#0b3444);border-left:4px solid #9cffe9}
+.egg-mission30 .egg-celebration{background:radial-gradient(circle at center,#15495be6,#051725f9 70%)}
+.egg-mission30 .egg-celebration h4{color:#fff0b2;text-shadow:0 0 25px #ffcc7a68}
+.egg-clock-alert .egg-mission-progress-fill{background:linear-gradient(90deg,#ebba54,#ffe092)}
+.egg-clock-low .egg-mission-progress-fill{background:linear-gradient(90deg,#ea715c,#ffb187);box-shadow:0 0 16px #fa8e7f98}
+.egg-clock-low .egg-game-clock{border-color:#ffab7f;box-shadow:0 0 17px #ff7c6e53}
+.egg-mission30 .egg-tools button:focus-visible,.egg-mission30 .egg-svg:focus-visible{outline:3px solid #f9d47b;outline-offset:3px}
+@media(max-width:660px){
+ .egg-mission-progress{margin-bottom:10px;height:6px}
+ .egg-mission30 .egg-topline h3{font-size:clamp(19px,5vw,27px)}
+ .egg-mission30 .egg-topline p{font-size:12px}
+ .egg-mission30 .egg-game-clock{min-width:79px;padding:5px 7px}
+ .egg-mission30 .egg-game-clock strong{font-size:27px}
+ .egg-mission-chip{margin-top:7px;letter-spacing:.02em;font-size:9px}
+ .egg-mission30 .egg-lesson span b{font-size:8px}
+ .egg-mission30 .egg-lesson small{font-size:8px}
+ .egg-mission30 .egg-tools{gap:6px}
+ .egg-mission30 .egg-tools .egg-btn{min-height:43px}
+}
+@media(prefers-reduced-motion:reduce){
+ .egg-mission-progress-fill{transition:none}
+ .egg-mission30 .egg-topline h3{animation:none}
+}
