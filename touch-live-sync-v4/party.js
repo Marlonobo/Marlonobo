@@ -9,7 +9,7 @@ let key=fromUrl||sessionStorage.getItem(keyStore)||'';
 if(fromUrl){sessionStorage.setItem(keyStore,key);history.replaceState({},'',location.pathname);}
 let state=null,participantId=localStorage.getItem(idStore)||'',participantName=localStorage.getItem(nameStore)||'';
 let screenSignature='',quizSignature='',sourceRef='',activated=false,ytPlayer=null,ytReady=false,ytVideoId='',ytApiLoading=false,localRevision=-1,lastCaptionRevision=-1,initialMediaSyncPending=false,lastAppliedSeekSerial=null,seekCommandBusy=false;
-let easterInstance=null,fingerMissionInstance=null,cloudFallback=false;
+let easterInstance=null,fingerMissionInstance=null,cloudFallback=false,lastWatchScore=null,lastWatchScoreId='';
 const partyModeKey='touch_party_view_mode_'+(host?'host':'viewer');
 let partyViewMode=localStorage.getItem(partyModeKey)==='auto'?'auto':localStorage.getItem(partyModeKey)==='side'?'side':(host?'side':'auto');
 let lastFocusKey='',lastFocusTransition=0;
@@ -364,28 +364,53 @@ function paintPartyQuizTimer(q){
  if(fill)fill.style.width=(Math.min(100,remaining/Math.max(1,Number(q.duration)||45)*100))+'%';
  if(card)card.classList.toggle('quizUrgent',remaining<=10);
 }
+function ownWatchScoreHtml(p){
+ if(!participantId||!p)return '';
+ const points=Number.isFinite(p.liveScore)?Math.round(p.liveScore).toLocaleString('de-DE'):'—';
+ return '<div class="partyOwnScore"><span>🏆 Deine Punkte <small>· nur für dich</small></span><strong id="partyOwnScoreValue" aria-live="polite">'+points+'</strong></div>';
+}
+function refreshOwnWatchScore(p){
+ if(!participantId||!p)return;
+ const id=String(p.id||participantId),score=p.liveScore;
+ if(lastWatchScoreId!==id){lastWatchScoreId=id;lastWatchScore=null;}
+ const value=$('partyOwnScoreValue');
+ if(value)value.textContent=Number.isFinite(score)?Math.round(score).toLocaleString('de-DE'):'—';
+ if(Number.isFinite(score)){
+  if(lastWatchScore!==null&&score>lastWatchScore&&value){
+   const parent=value.closest('.partyOwnScore');
+   if(parent){
+    parent.querySelector('.partyOwnGain')?.remove();
+    const pop=document.createElement('span');pop.className='partyOwnGain';
+    pop.textContent='+'+Math.round(score-lastWatchScore).toLocaleString('de-DE');
+    parent.appendChild(pop);setTimeout(()=>pop.remove(),1450);
+   }
+  }
+  lastWatchScore=score;
+ }
+}
 function interaction(){
  if(!state)return;
  const q=state.quiz,p=state.player,part=$('partyInteraction'),status=$('joinStatus');
  const phase=state.phase;
  if(status&&participantId&&participantName)status.textContent=participantName+' · angemeldet und mit der Live-Sitzung verbunden.';
  const missionActive=q?.type==='zoom'||phase==='gesture'||state.sideGame==='gesture';const sig=[phase,state.sideGame||'',q?.id||'',q?.type||'',q?.accepting||false,missionActive?'mission-stable':p?.choice??'unanswered',missionActive?'mission-score-stable':p?.score??'unknown',missionActive?'mission-revision-stable':state.revision,participantId,missionActive?'mission-rank-stable':(state.ranking||[]).length].join('|');
- if(sig===quizSignature){const timer=$('partyTimer');if(timer&&q)paintPartyQuizTimer(q);if(q?.type==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!p?.zoomFound,disabled:!q.accepting});if((phase==='gesture'||state.sideGame==='gesture')&&fingerMissionInstance)fingerMissionInstance.update({remaining:state.gestureRemaining,disabled:state.gestureRemaining<=0});return;}
+ if(sig===quizSignature){refreshOwnWatchScore(p);const timer=$('partyTimer');if(timer&&q)paintPartyQuizTimer(q);if(q?.type==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!p?.zoomFound,disabled:!q.accepting});if((phase==='gesture'||state.sideGame==='gesture')&&fingerMissionInstance)fingerMissionInstance.update({remaining:state.gestureRemaining,disabled:state.gestureRemaining<=0});return;}
  quizSignature=sig;
  if(phase==='gesture'||state.sideGame==='gesture'){
   part.innerHTML=gestureHtml();bindGesture();return;
  }
  if(q?.type==='zoom'&&(phase==='zoom'||phase==='film')){
-  part.innerHTML='<div class="partyQuestion"><div class="between"><span class="chip">🎯 30-SEKUNDEN-MISSION · MULTITOUCH</span><span class="small">'+(q.foundCount||0)+' gefunden</span></div><div id="partyEaster"></div><p class="small">'+(participantId?'Wende die Touchscreen-Gesten aus Kapitel 4 an: zwei Finger zum Zoomen, ein Finger zum Verschieben und dann gezielt tippen. Deine Mission: 200 % zoomen, zur Berghütte wischen und die Katze im Dachfenster antippen. Du hast 30 Sekunden!':'Bitte oben mit deinem Namen teilnehmen, damit dein Fund zählt.')+'</p></div>';
+  part.innerHTML='<div class="partyQuestion">'+ownWatchScoreHtml(p)+'<div class="between"><span class="chip">🎯 30-SEKUNDEN-MISSION · MULTITOUCH</span><span class="small">'+(q.foundCount||0)+' gefunden</span></div><div id="partyEaster"></div><p class="small">'+(participantId?'Wende die Touchscreen-Gesten aus Kapitel 4 an: zwei Finger zum Zoomen, ein Finger zum Verschieben und dann gezielt tippen. Deine Mission: 200 % zoomen, zur Berghütte wischen und die Katze im Dachfenster antippen. Du hast 30 Sekunden!':'Bitte oben mit deinem Namen teilnehmen, damit dein Fund zählt.')+'</p></div>';
   easterInstance=window.EasterGame?.mount($('partyEaster'),{remaining:q.remaining,duration:30,found:!!p?.zoomFound,disabled:!q.accepting,onFind:async({x,y,zoom})=>{if(!participantId)throw Error('Bitte oben zuerst deinen Namen eingeben.');const r=await api('/api/easter/find',{id:participantId,x,y,zoom});setTimeout(()=>{poll();},600);return r;}});
+  refreshOwnWatchScore(p);
   return;
  }
  if(q){
   if(!q.accepting){part.innerHTML='<div class="centerstage partyWait"><div><h2>Schau wieder auf den Film.</h2><p>Die Antwortzeit ist vorbei. Die nächste Frage erscheint automatisch.</p></div></div>';return;}
   const answered=p?.choice!==null&&p?.choice!==undefined;
   const allow=!!participantId&&q.accepting&&!answered;
-  part.innerHTML='<div class="partyQuestion quizCinematic"><div class="between"><span class="chip">'+(q.type==='zoom'?'ZOOM-SPIEL':'QUIZFRAGE '+(Number(q.index)+1)+' / '+q.total)+'</span><div class="partyQuizTimerHud"><span class="timer" id="partyTimer">'+q.remaining+' s</span><div class="partyQuizTimeTrack" aria-hidden="true"><i id="partyQuizTimeFill"></i></div></div></div><h3>'+safe(q.q)+'</h3>'+(q.type==='zoom'?'<div class="partyGesture" id="partyGesture"><div class="partyGesturePic" id="partyGestureImage">'+landscape()+'</div></div><p class="small" id="partyGestureValues">Zoome, um die Katze zu entdecken.</p><button id="partyGestureReset" style="margin-bottom:14px">Bild zurücksetzen</button>':'')+'<div class="partyAnswerGrid">'+q.a.map((answer,i)=>'<button class="partyAnswer'+(answered&&p.choice===i?' selected':'')+'" style="--answer-index:'+i+'" data-choice="'+i+'" '+(allow?'':'disabled')+'><b>'+String.fromCharCode(65+i)+'</b><span>'+safe(answer)+'</span></button>').join('')+'</div><p class="partyHint" style="margin-top:15px">'+(!participantId?'Gib oben deinen Namen ein, um mitzumachen.':answered?'Antwort gespeichert! Du kannst weiter auf den Film schauen.':!q.accepting?'Die Antwortzeit ist vorbei.':'Wähle jetzt eine Antwort – das Quiz wird automatisch ausgewertet.')+'</p></div>';
-  if(q.type==='zoom')bindGesture();else paintPartyQuizTimer(q);
+  part.innerHTML='<div class="partyQuestion quizCinematic">'+ownWatchScoreHtml(p)+'<div class="between"><span class="chip">'+(q.type==='zoom'?'ZOOM-SPIEL':'QUIZFRAGE '+(Number(q.index)+1)+' / '+q.total)+'</span><div class="partyQuizTimerHud"><span class="timer" id="partyTimer">'+q.remaining+' s</span><div class="partyQuizTimeTrack" aria-hidden="true"><i id="partyQuizTimeFill"></i></div></div></div><h3>'+safe(q.q)+'</h3>'+(q.type==='zoom'?'<div class="partyGesture" id="partyGesture"><div class="partyGesturePic" id="partyGestureImage">'+landscape()+'</div></div><p class="small" id="partyGestureValues">Zoome, um die Katze zu entdecken.</p><button id="partyGestureReset" style="margin-bottom:14px">Bild zurücksetzen</button>':'')+'<div class="partyAnswerGrid">'+q.a.map((answer,i)=>'<button class="partyAnswer'+(answered&&p.choice===i?' selected':'')+'" style="--answer-index:'+i+'" data-choice="'+i+'" '+(allow?'':'disabled')+'><b>'+String.fromCharCode(65+i)+'</b><span>'+safe(answer)+'</span></button>').join('')+'</div><p class="partyHint" style="margin-top:15px">'+(!participantId?'Gib oben deinen Namen ein, um mitzumachen.':answered?'Antwort gespeichert! Du kannst weiter auf den Film schauen.':!q.accepting?'Die Antwortzeit ist vorbei.':'Wähle jetzt eine Antwort – das Quiz wird automatisch ausgewertet.')+'</p></div>';
+  if(q.type==='zoom')bindGesture();else paintPartyQuizTimer(q);refreshOwnWatchScore(p);
   part.querySelectorAll('[data-choice]').forEach(btn=>btn.onclick=async()=>{btn.disabled=true;try{await api('/api/answer',{id:participantId,choice:Number(btn.dataset.choice)});quizSignature='';await poll();}catch(e){showError(e.message);quizSignature='';await poll();}});
   return;
  }
