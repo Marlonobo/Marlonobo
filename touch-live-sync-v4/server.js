@@ -308,7 +308,7 @@ async function handler(req,res){
  if(Object.hasOwn(x.answers,z.id))return send(res,409,{error:'Easter Egg wurde bereits gefunden.'});
  const px=Number(b.x),py=Number(b.y),zoom=Number(b.zoom);
  if(!Number.isFinite(px)||!Number.isFinite(py)||!Number.isFinite(zoom)||px<0||px>1000||py<0||py>620||zoom<1.7||zoom>7.05)return send(res,400,{error:'Zoome ins Bild und tippe das versteckte Objekt an.'});
- if(Math.abs(px-746)>27||Math.abs(py-332)>25)return send(res,400,{error:'FALSCH – versuch es nochmal! Kein Punktabzug.'});
+ if(Math.abs(px-746)>34||Math.abs(py-332)>30)return send(res,400,{error:'Noch nicht gefunden. Tipp: Suche am Dachfenster der Berghütte. Kein Punktabzug.'});
  const bonus=Math.min(130,Math.max(0,Math.round(a.remaining/ZOOM_MISSION_SECONDS*130/10)*10)),points=170+bonus;
  x.answers[z.id]=z.correct;x.zoomPoints=points;x.score+=points;saveUsers();
  return send(res,200,{ok:true,correct:true,points,message:'Mission erfüllt! Die Katze wurde entdeckt und deine Punkte wurden gespeichert.'});
