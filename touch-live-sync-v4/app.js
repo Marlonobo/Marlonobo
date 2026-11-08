@@ -30,7 +30,8 @@ function paintQuizTimer(q){
  const seconds=Math.max(0,Math.ceil(Number(q.remaining)||0));
  if(timer){timer.textContent=seconds+' s';timer.classList.toggle('timerUrgent',seconds<=10);timer.setAttribute('aria-label',seconds+' Sekunden verbleiben');}
  if(fill)fill.style.width=(Math.min(100,seconds/Math.max(1,Number(q.duration)||45)*100))+'%';
- if(card)card.classList.toggle('quizUrgent',seconds<=10);
+ if(card){card.classList.toggle('quizUrgent',seconds<=10&&state?.playing!==false);card.classList.toggle('quizPaused',state?.phase==='film'&&state?.playing===false);}
+ const label=el('quizTimerCaption');if(label)label.textContent=state?.phase==='film'&&state?.playing===false?'Ⅱ Film & Quiz pausiert':seconds<=10?'⚡ Letzte 10 Sekunden':'⏱ Zeit für deine Antwort';
 }
 function waiting(title,desc,icon='◉'){return '<div class="centerstage"><div><div class="symbol">'+icon+'</div><span class="eyebrow">TOUCH LIVE</span><h2>'+title+'</h2><p>'+desc+'</p></div></div>';}
 function podium(){const people=(state?.ranking||[]),rank=n=>people[n-1]||null;
@@ -54,6 +55,14 @@ function refreshStudentScoreBadge(){
  const amount=state?.player?.liveScore;
  if(Number.isFinite(amount)&&lastStudentPoints!==null&&amount>lastStudentPoints){
   badge.classList.remove('scoreBump');void badge.offsetWidth;badge.classList.add('scoreBump');
+  const parent=badge.closest('.studentLiveScore');
+  if(parent){
+   parent.querySelector('.studentScoreGain')?.remove();
+   const gain=document.createElement('span');gain.className='studentScoreGain';
+   gain.textContent='+'+Math.round(amount-lastStudentPoints).toLocaleString('de-DE')+' Punkte';
+   gain.setAttribute('aria-label','Neue Punkte erhalten');
+   parent.appendChild(gain);setTimeout(()=>gain.remove(),1900);
+  }
  }
  badge.textContent=Number.isFinite(amount)?Math.round(amount).toLocaleString('de-DE'):'—';
  if(Number.isFinite(amount))lastStudentPoints=amount;
@@ -85,12 +94,19 @@ function userPage(){
  else if(q&&!q.accepting)body=waiting('Schau auf den Beamer.','Die Antwortzeit ist vorbei. Die Dokumentation läuft weiter.','◉');
   else if(q){const hide=p.hide||[],jk=p.jokers||{},canJ=q.jokers&&q.accepting&&!answered;
   const jbar=q.jokers?'<div class="jokers">'+(jk.fifty?'':'<button class="joker" data-joker="fifty" '+(canJ?'':'disabled')+'>50:50</button>')+(jk.hint?'':'<button class="joker" data-joker="hint" '+(canJ?'':'disabled')+'>💡 Tipp</button>')+(jk.fifty&&jk.hint?'<span class="small">Alle Joker eingesetzt</span>':'<span class="small">Jeder Joker nur einmal im ganzen Abschlussquiz</span>')+'</div>':'';
-  body='<div class="card quiz quizCinematic"><div class="between"><span class="chip">'+(q.jokers?'ABSCHLUSSQUIZ · ':'')+'FRAGE '+(q.index+1)+' / '+q.total+'</span><div class="quizTimerHud"><div id="liveTimer" class="timer">'+q.remaining+' s</div><div class="quizTimeTrack" aria-hidden="true"><i id="quizTimeFill"></i></div></div></div>'+jbar+'<h2>'+esc(q.q)+'</h2>'+(p.hint?'<div class="hintbox">💡 '+esc(p.hint)+'</div>':'')+'<div class="answers">'+q.a.map((v,i)=>'<button class="answer'+(answered&&p.choice===i?' chosen':'')+(hide.includes(i)?' gone':'')+'" style="--answer-index:'+i+'" data-choice="'+i+'" '+(answered||!q.accepting||hide.includes(i)?'disabled':'')+'><b>'+String.fromCharCode(65+i)+'</b><span>'+esc(v)+'</span></button>').join('')+'</div><p class="small" style="margin-top:17px">'+(answered?'Deine Antwort ist gespeichert. Dein Punktestand oben wird automatisch aktualisiert. Schau jetzt wieder auf den Film.':q.accepting?'Wähle eine Antwort. Jede Frage kann nur einmal beantwortet werden.':'Antwortzeit vorbei. Bitte wieder auf den Beamer schauen.')+'</p></div>';}
+  body='<div class="card quiz quizCinematic"><div class="between"><span class="chip">'+(q.jokers?'ABSCHLUSSQUIZ · ':'')+'FRAGE '+(q.index+1)+' / '+q.total+'</span><div class="quizTimerHud"><div id="liveTimer" class="timer">'+q.remaining+' s</div><div class="quizTimeTrack" aria-hidden="true"><i id="quizTimeFill"></i></div><small class="quizTimerCaption" id="quizTimerCaption">⏱ Zeit für deine Antwort</small></div></div>'+jbar+'<h2>'+esc(q.q)+'</h2>'+(p.hint?'<div class="hintbox">💡 '+esc(p.hint)+'</div>':'')+'<div class="answers">'+q.a.map((v,i)=>'<button class="answer'+(answered&&p.choice===i?' chosen':'')+(hide.includes(i)?' gone':'')+'" style="--answer-index:'+i+'" data-choice="'+i+'" '+(answered||!q.accepting||hide.includes(i)?'disabled':'')+'><b>'+String.fromCharCode(65+i)+'</b><span>'+esc(v)+'</span></button>').join('')+'</div><p class="small" style="margin-top:17px">'+(answered?'Deine Antwort ist gespeichert. Dein Punktestand oben wird automatisch aktualisiert. Schau jetzt wieder auf den Film.':q.accepting?'Wähle eine Antwort. Jede Frage kann nur einmal beantwortet werden.':'Antwortzeit vorbei. Bitte wieder auf den Beamer schauen.')+'</p></div>';}
  else if(state.phase==='results'||state.phase==='end'||state.phase==='handout')body='<div class="card"><span class="eyebrow">ABSCHLUSS</span><h2>Danke für deine Rückmeldung!</h2><p>Dein Punktestand</p><div class="values">'+(p.score||0)+'</div>'+prizeCard()+zoomSolution()+'<h3>Gemeinsame Rangliste</h3>'+ranking()+'<div class="flex" style="margin-top:23px"><a href="/#handout" class="btn primary">Handout ausfüllen & PDF speichern</a></div></div>';
  else body=waiting('Bitte auf den Beamer schauen.','Die Dokumentation läuft. Die nächste Frage erscheint automatisch.','◉');
  const notes=isTeacher?'<div class="card" style="margin-top:17px"><span class="label">LEHRER · PRIVAT</span><h2>Notizen zur Dokumentation</h2><p>Deine Notizen bleiben auf diesem Gerät und sind für Schüler nicht sichtbar.</p><textarea id="teacherNotes" rows="6" placeholder="Beobachtungen, Rückfragen, Feedback …">'+esc(localStorage.getItem('touch_teacher_notes')||'')+'</textarea><div class="flex" style="margin-top:12px"><button id="saveNotes">Notizen als Textdatei speichern</button></div></div>':'';
  wrap(page('Die Dokumentation läuft.',isTeacher?'LEHRER · LIVE MITMACHEN':'SCHÜLER · LIVE MITMACHEN','Teilnehmer: '+esc(userName)+' · '+(isTeacher?'Lehrer':'Schüler')+' · '+state.participants+' angemeldet')+body+notes);
- document.querySelectorAll('[data-choice]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await api('/api/answer','POST',{id:userId,choice:+b.dataset.choice});renderSignature='';await poll();}catch(e){alert(e.message);renderSignature='';await poll();}});
+ document.querySelectorAll('[data-choice]').forEach(b=>b.onclick=async()=>{
+  if(b.disabled)return;
+  const choice=Number(b.dataset.choice);
+  document.querySelectorAll('[data-choice]').forEach(option=>{option.disabled=true;option.classList.toggle('answerSubmitting',option===b);});
+  b.setAttribute('aria-pressed','true');
+  try{await api('/api/answer','POST',{id:userId,choice});renderSignature='';await poll();}
+  catch(e){alert(e.message);renderSignature='';await poll();}
+ });
  document.querySelectorAll('[data-joker]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await api('/api/joker','POST',{id:userId,type:b.dataset.joker});}catch(e){alert(e.message);}renderSignature='';await poll();});
  if(q?.type==='zoom')initEaster();else if(q)paintQuizTimer(q);
  if(isTeacher){el('teacherNotes').oninput=e=>localStorage.setItem('touch_teacher_notes',e.target.value);el('saveNotes').onclick=()=>saveText('TOUCH-LIVE-Lehrernotizen.txt',el('teacherNotes').value);}
@@ -962,13 +978,13 @@ function tvDisplay(){
  const scene=el('tvScene');
  syncWelcomeMusic();
  window.TouchSoundtrack?.sync?.({...state,welcomeMusic:{...(state.welcomeMusic||{}),on:false}}); // HTML5 WAV owns welcome audio.
- if(phase==='welcome'){scene.style.display='flex';tvScene('<div class="welcomeArtwork"><div><span class="eyebrow">LERNFELD 14 · INTERAKTIVE DOKUMENTATION</span><h1>TOUCH<em>SCREEN</em></h1><p class="welcomeProgramTitle">'+esc(state.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation')+'</p><p>Geschichte, Technik und Zukunft – gemeinsam entdecken.</p><p class="welcomePrompt">Öffnet den Schülerlink auf eurem iPad. Gleich geht es los!</p></div><img src="/touchscreen-motiv.svg" alt="Leuchtender Touchscreen mit Berührungswellen"></div>');pauseTV();}
+ if(phase==='welcome'){scene.style.display='flex';tvScene('<div class="welcomeArtwork tvGrandWelcome"><div class="tvCinematicLights" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div><div class="tvIntroCopy"><span class="eyebrow">LERNFELD 14 · INTERAKTIVE DOKUMENTATION</span><span class="tvIntroLine">BERÜHREN · VERSTEHEN · MITMACHEN</span><h1>TOUCH<em>SCREEN</em></h1><p class="welcomeProgramTitle">'+esc(state.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation')+'</p><p>Geschichte, Technik und Zukunft – gemeinsam entdecken.</p><p class="welcomePrompt">Öffnet den Schülerlink auf eurem iPad. Gleich geht es los!</p><span class="tvIntroReady"><i></i> TOUCH LIVE · BEREIT</span></div><img src="/touchscreen-motiv.svg" alt="Leuchtender Touchscreen mit Berührungswellen"></div>');pauseTV();}
  else if(phase==='gesture'){scene.style.display='flex';tvScene('<div><span class="eyebrow">KAPITEL 04 / MULTITOUCH</span><h1><em>Gesten üben.</em></h1><p>Auf den iPads verschieben, vergrößern und drehen!</p></div>');pauseTV();}
  else if(phase==='zoom'){scene.style.display='flex';const q=state.quiz;tvScene('<div class="egg-projector"><div><span class="eyebrow">KAPITEL 04 · MULTITOUCH LIVE-EXPERIMENT</span><h1>Die <em>Touch-Challenge!</em></h1><p>So funktioniert Multitouch in der Praxis: Vergrößert das digitale Bild mit zwei Fingern, verschiebt es und tippt auf das versteckte Easter Egg.</p><div class="egg-tv-counter"><strong>'+(q?q.remaining:0)+' s</strong><span>⏱ Zeit übrig<br>🔎 '+(q?q.foundCount:0)+' von '+state.participants+' haben das Easter Egg gefunden</span></div><p class="small" style="margin-top:22px">Pinch-to-Zoom = zwei Finger auseinanderziehen · Pan = verschieben · Tap = antippen.</p></div><img class="egg-tv-art" src="/easter-scene.svg" alt="Panorama mit Berghütte als Easter-Egg-Spiel"></div>');pauseTV();}
  else if(phase==='demo'){scene.style.display='flex';tvScene('<div><span class="eyebrow">LIVE-QUIZ · PROBELAUF</span><h1>Frage '+(state.quiz?.index+1||'')+'</h1><h2>'+esc(state.quiz?.q||'Bereit für die erste Frage?')+'</h2><p>Antwortet auf euren iPads · '+(state.quiz?.remaining||0)+' Sekunden</p></div>');pauseTV();}
  else if(phase==='results'){scene.style.display='flex';tvScene('<div class="resultshow podiumScene"><span class="eyebrow">TOUCH LIVE · DIE GROSSE SIEGEREHRUNG</span><h1>Das sind eure <em>Top 3!</em></h1>'+podium()+'<p class="podiumFoot">Herzlichen Glückwunsch! · '+state.participants+' Teilnehmende</p></div>');pauseTV();}
  else if(phase==='handout'){scene.style.display='flex';tvScene('<div class="endArtwork"><img src="/touchscreen-motiv.svg" alt="Touchscreen"><div><span class="eyebrow">LERNFELD 14 · ZUM ABSCHLUSS</span><h1>Jetzt seid <em>ihr</em> dran!</h1><p>Öffnet das Handout auf eurem iPad. Tragt nur eure Bewertungen und kurzen Notizen in die Tabelle ein. Keine Rechnungen!</p></div></div>');pauseTV();}
- else if(phase==='end'){scene.style.display='flex';tvScene('<div class="endArtwork"><img src="/touchscreen-motiv.svg" alt="Touchscreen"><div><span class="eyebrow">TOUCH LIVE · LERNFELD 14</span><h1>Vielen Dank für eure <em>Aufmerksamkeit!</em></h1><p>Das war meine Dokumentation <strong>„'+esc(state.videoTitle||'TOUCHSCREEN')+'“</strong>.</p><p class="closingLine">Ich hoffe, es hat euch gefallen – habt ihr noch Fragen?</p></div></div>');pauseTV();}
+ else if(phase==='end'){scene.style.display='flex';tvScene('<div class="endArtwork tvGrandEnding"><div class="tvCinematicLights" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div><img src="/touchscreen-motiv.svg" alt="Touchscreen"><div class="tvEndCopy"><span class="eyebrow">TOUCH LIVE · DAS FINALE</span><span class="tvOutroLine">7 KAPITEL · 17 FRAGEN · 2 MISSIONEN</span><h1>Vielen Dank für eure <em>Aufmerksamkeit!</em></h1><p>Das war meine Dokumentation <strong>„'+esc(state.videoTitle||'TOUCHSCREEN')+'“</strong>.</p><p class="closingLine">Fragen? Ideen? Jetzt seid ihr dran!</p><span class="tvEndSignature">✦ TOUCH LIVE 2026 ✦</span></div></div>');pauseTV();}
  else if(phase==='film'){if(state.video.type==='local'&&!tvLocalObjectURL){
   scene.style.display='flex';
   tvScene('<div><span class="eyebrow">LOKALE MP4 NOCH NICHT AUSGEWÄHLT</span><h1>Film am <em>Windows-PC</em> auswählen</h1><p>Im Admin „Willkommen“ drücken, dann hier am PC die MP4 wählen und den Ton freigeben. Die Datei bleibt lokal.</p></div>');
@@ -1090,16 +1106,25 @@ function handout(){
  const rows=chapters.map(([nr,title,help],i)=>'<tr><th scope="row"><span class="lf14TopicNumber">'+nr+'</span><b>'+esc(title)+'</b><small>'+esc(help)+'</small></th><td><select data-save="simpleRating'+i+'" aria-label="Verständnis: '+esc(title)+'"><option value="">Bitte wählen</option><option>Sehr gut</option><option>Gut</option><option>Teilweise</option><option>Noch unklar</option></select></td><td><textarea data-save="simpleNote'+i+'" rows="2" placeholder="Ein Stichwort oder ein Satz …" aria-label="Notiz zu '+esc(title)+'"></textarea></td></tr>').join('');
  const sheet='<article class="paper lf14SimpleSheet" id="paper"><header class="lf14SimpleHeader"><span class="eyebrow">FRIEDRICH-DESSAUER-SCHULE · LERNFELD 14</span><h2>TOUCHSCREEN <em>HANDOUT</em></h2><p>Eine Tabelle zu unserer interaktiven Dokumentation. Einfach auswählen und auf Wunsch kurze Stichwörter eintragen. <b>Keine Rechenaufgaben.</b></p></header><table class="lf14SimpleTable"><thead><tr><th style="width:36%">Thema</th><th style="width:23%">Verstanden?</th><th>Meine Notiz</th></tr></thead><tbody>'+rows+'</tbody></table><footer class="lf14SimpleFooter">TOUCH LIVE · Dokumentation, Quiz und Multitouch-Mission · 2026</footer></article>';
  wrap(page('Handout · Lernfeld 14','NUR EINE TABELLE · OHNE RECHNEN','Bewerte die acht Bereiche und notiere bei Bedarf ein Stichwort. Das Blatt lässt sich als PDF speichern.')+
-  '<div class="flex noPrint lf14SimpleActions"><button type="button" class="primary" id="printHandout">📄 Als PDF speichern / drucken</button><button type="button" id="clearHandout">Tabelle zurücksetzen</button></div>'+sheet);
+  '<div class="flex noPrint lf14SimpleActions"><button type="button" class="primary" id="printHandout">📄 Tabelle als PDF speichern</button><button type="button" id="clearHandout">Tabelle zurücksetzen</button><span class="lf14SavedState" id="lf14SavedState" aria-live="polite">Eingaben werden gespeichert.</span></div>'+sheet);
  el('printHandout').onclick=()=>window.print();
  el('clearHandout').onclick=()=>{
   if(!confirm('Alle Einträge in dieser Handout-Tabelle löschen?'))return;
-  document.querySelectorAll('#paper [data-save]').forEach(x=>{localStorage.removeItem('touch_'+x.dataset.save);x.value='';});
+  document.querySelectorAll('#paper [data-save]').forEach(x=>{try{localStorage.removeItem('touch_'+x.dataset.save);}catch{}x.value='';});
+  updateHandoutStatus();
  };
+ const handoutStatus=el('lf14SavedState');
+ function updateHandoutStatus(){
+  const rows=[...document.querySelectorAll('#paper select[data-save]')];
+  const completed=rows.filter(x=>x.value.trim()).length;
+  if(handoutStatus)handoutStatus.textContent='✓ '+completed+' von '+rows.length+' Tabellenzeilen bewertet · lokal gespeichert';
+ }
  document.querySelectorAll('#paper [data-save]').forEach(x=>{
-  x.value=localStorage.getItem('touch_'+x.dataset.save)||'';
-  x.oninput=()=>localStorage.setItem('touch_'+x.dataset.save,x.value);
+  try{x.value=localStorage.getItem('touch_'+x.dataset.save)||'';}catch{}
+  x.oninput=()=>{try{localStorage.setItem('touch_'+x.dataset.save,x.value);}catch{}updateHandoutStatus();};
+  x.onchange=x.oninput;
  });
+ updateHandoutStatus();
 }
 function setupCanvas(id){const c=el(id),ctx=c.getContext('2d');let drawing=false;ctx.lineCap='round';ctx.lineJoin='round';ctx.lineWidth=2.5;ctx.strokeStyle='#123e58';const saved=localStorage.getItem('touch_'+id);if(saved){const img=new Image();img.onload=()=>ctx.drawImage(img,0,0);img.src=saved;}
  function coords(e){const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height};}
