@@ -330,7 +330,7 @@ function interaction(){
  const q=state.quiz,p=state.player,part=$('partyInteraction'),status=$('joinStatus');
  const phase=state.phase;
  if(status&&participantId&&participantName)status.textContent=participantName+' · angemeldet und mit der Live-Sitzung verbunden.';
- const sig=[phase,q?.id||'',q?.type||'',q?.accepting||false,p?.choice??'unanswered',p?.score??'unknown',state.revision,participantId,(state.ranking||[]).length].join('|');
+ const missionActive=q?.type==='zoom';const sig=[phase,q?.id||'',q?.type||'',q?.accepting||false,missionActive?'mission-stable':p?.choice??'unanswered',missionActive?'mission-score-stable':p?.score??'unknown',missionActive?'mission-revision-stable':state.revision,participantId,missionActive?'mission-rank-stable':(state.ranking||[]).length].join('|');
  if(sig===quizSignature){const timer=$('partyTimer');if(timer&&q)timer.textContent=q.remaining+' s';if(q?.type==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!p?.zoomFound,disabled:!q.accepting});return;}
  quizSignature=sig;
  if(phase==='gesture'||state.sideGame==='gesture'){
@@ -338,7 +338,7 @@ function interaction(){
  }
  if(q?.type==='zoom'&&(phase==='zoom'||phase==='film')){
   part.innerHTML='<div class="partyQuestion"><div class="between"><span class="chip">🎯 30-SEKUNDEN-MISSION · MULTITOUCH</span><span class="small">'+(q.foundCount||0)+' gefunden</span></div><div id="partyEaster"></div><p class="small">'+(participantId?'Wende die Touchscreen-Gesten aus Kapitel 4 an: zwei Finger zum Zoomen, ein Finger zum Verschieben und dann gezielt tippen. Deine Mission: 170 % zoomen, zur Berghütte wischen und die Katze im Dachfenster antippen. Du hast 30 Sekunden!':'Bitte oben mit deinem Namen teilnehmen, damit dein Fund zählt.')+'</p></div>';
-  easterInstance=window.EasterGame?.mount($('partyEaster'),{remaining:q.remaining,duration:30,found:!!p?.zoomFound,disabled:!q.accepting,onFind:async({x,y,zoom})=>{if(!participantId)throw Error('Bitte oben zuerst deinen Namen eingeben.');const r=await api('/api/easter/find',{id:participantId,x,y,zoom});setTimeout(()=>{quizSignature='';poll();},1500);return r;}});
+  easterInstance=window.EasterGame?.mount($('partyEaster'),{remaining:q.remaining,duration:30,found:!!p?.zoomFound,disabled:!q.accepting,onFind:async({x,y,zoom})=>{if(!participantId)throw Error('Bitte oben zuerst deinen Namen eingeben.');const r=await api('/api/easter/find',{id:participantId,x,y,zoom});setTimeout(()=>{poll();},600);return r;}});
   return;
  }
  if(q){
