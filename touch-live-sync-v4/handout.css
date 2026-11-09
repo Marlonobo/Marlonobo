@@ -1,0 +1,56 @@
+
+/* ===== Handout 2026-11 (Rückmeldung statt Tabelle) ===== */
+.hoSheet{max-width:960px;padding:0;overflow:hidden;border-radius:18px}
+.hoHead{display:flex;flex-wrap:wrap;gap:22px;justify-content:space-between;align-items:flex-end;padding:34px 40px 28px;background:linear-gradient(135deg,#0b2a40 0%,#114a5e 60%,#1c7d78 100%);color:#fff}
+.hoHead .eyebrow{color:#9ef0e6;letter-spacing:.14em;font-size:12px}
+.hoHead h2{margin:6px 0 6px;font-size:clamp(28px,4vw,42px);line-height:1.05;color:#fff;letter-spacing:.02em}
+.hoHead h2 em{font-style:normal;color:#6de0d6}
+.hoHead p{margin:0;color:#d5eef2;max-width:460px}
+.hoWho{display:grid;grid-template-columns:1fr 90px 150px;gap:10px;min-width:min(100%,420px)}
+.hoWho label{color:#bfe6ec;margin:0;font-size:12px}
+.hoWho input{background:#ffffff1a;border-color:#ffffff40;color:#fff;min-height:40px}
+.hoBlock{padding:26px 40px 8px}
+.hoBlock h3{display:flex;align-items:center;gap:12px;margin:0 0 14px;font-size:21px;color:#0d2b3e}
+.hoBlock h3 span{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#0f4a5c;color:#fff;font-size:15px}
+.hoIntro{margin:-4px 0 16px;color:#46606f}
+.hoFacts{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.hoFact{display:flex;gap:12px;background:#f2f8fa;border:1px solid #dbe9ee;border-radius:14px;padding:14px 16px}
+.hoFact h4{margin:0 0 4px;font-size:15px;color:#0d2b3e}
+.hoFact p{margin:0;font-size:14px;line-height:1.5;color:#2f4a59}
+.hoFactNr{flex:none;font-weight:800;font-size:13px;color:#13827b;background:#dff4f1;border-radius:8px;padding:4px 7px;height:fit-content}
+.hoArea{border:1px solid #dbe6ec;border-radius:16px;padding:16px 18px 18px;margin-bottom:16px;break-inside:avoid;page-break-inside:avoid}
+.hoArea header{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.hoArea h4{margin:0;font-size:17px;color:#0d2b3e}
+.hoArea small{color:#5b7482}
+.hoAreaIcon{font-size:26px}
+.hoMood{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}
+.hoMood label{margin:0;cursor:pointer}
+.hoMood input{position:absolute;opacity:0;width:1px;height:1px}
+.hoMood span{display:flex;align-items:center;gap:6px;border:1px solid #cfdde4;border-radius:999px;padding:6px 12px;font-size:18px;color:#24404f;background:#fff;transition:.15s}
+.hoMood span small{font-size:12px;font-weight:700;color:#4b6573}
+.hoMood input:checked+span{background:#0f4a5c;border-color:#0f4a5c;color:#fff;box-shadow:0 4px 12px #0f4a5c40}
+.hoMood input:checked+span small{color:#d9f6f3}
+.hoMood input:focus-visible+span{outline:2px solid #13827b;outline-offset:2px}
+.hoTrio{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.hoTrio label{margin:0;color:#0d2b3e;font-size:13px}
+.hoTrio b{display:block;margin-bottom:6px}
+.paper .hoTrio textarea,.paper .hoTrio select,.paper .hoWho input{width:100%}
+.paper .hoTrio textarea,.paper .hoTrio select{background:#fbfdfe;border:1px solid #cfdde4;color:#132a3a;border-radius:10px;resize:vertical;min-height:84px}
+.paper .hoTrio select{min-height:44px}
+.hoGood textarea{border-left:4px solid #3fb07e!important}
+.hoBad textarea{border-left:4px solid #e0795f!important}
+.hoChange textarea{border-left:4px solid #e7b545!important}
+.hoFinal{padding-bottom:24px}
+.hoFoot{padding:14px 40px;background:#f2f8fa;color:#5b7482;font-size:12px;border-top:1px solid #dbe9ee}
+.hoFeedbackList{display:grid;gap:10px;max-height:460px;overflow:auto}
+.hoFeedbackItem{background:#0b1f2f;border:1px solid #28445a;border-radius:12px;padding:12px 14px}
+.hoFeedbackItem pre{white-space:pre-wrap;margin:6px 0 0;font:inherit;font-size:14px;color:#d9e8f0}
+@media (max-width:720px){.hoHead,.hoBlock{padding-left:18px;padding-right:18px}.hoWho{grid-template-columns:1fr 1fr}.hoTrio{grid-template-columns:1fr}}
+@media print{.hoSheet{border-radius:0}.hoHead,.hoBlock h3 span,.hoMood input:checked+span,.hoFact,.hoFactNr{-webkit-print-color-adjust:exact;print-color-adjust:exact}.hoHead h2,.hoHead p,.hoHead .eyebrow{color:#fff!important}.hoHead h2 em{color:#6de0d6!important}.hoWho input{color:#fff!important}.paper .hoTrio textarea{height:62px!important;min-height:0}.hoBlock{padding:14px 18px 4px}.hoMood span small{display:none}}
+
+/* LG-TV: einmal OK drücken, dann steuert das Handy */
+.tvAutoHint{position:fixed;left:50%;bottom:7%;transform:translateX(-50%);z-index:70;background:#071827e6;border:1px solid #59d8d2;color:#e9fbff;border-radius:16px;padding:16px 26px;font-size:clamp(15px,1.7vw,24px);text-align:center;max-width:90vw;box-shadow:0 12px 40px #0008;animation:tvHintPulse 2.4s ease-in-out infinite}
+.tvAutoHint[hidden]{display:none}
+@keyframes tvHintPulse{0%,100%{box-shadow:0 12px 40px #0008,0 0 0 0 #59d8d255}50%{box-shadow:0 12px 40px #0008,0 0 0 14px #59d8d200}}
+html:has(#tvApp),html:has(#tvApp) body{overflow:hidden;background:#000}
+.paper.hoSheet .hoHead p{color:#d5eef2!important}.paper.hoSheet .hoHead h2{color:#fff!important}.paper.hoSheet .hoHead h2 em{color:#6de0d6!important}.paper.hoSheet .hoHead .eyebrow{color:#9ef0e6!important}.paper.hoSheet{padding:0!important}

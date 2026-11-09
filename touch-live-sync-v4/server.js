@@ -256,7 +256,7 @@ async function handler(req,res){
   res.writeHead(status,headers);
   return m==='HEAD'?res.end():res.end(wav.subarray(first,last+1));
  }
- if(m==='GET'&&(p==='/app.js'||p==='/style.css'||p==='/quiz-polish.css'||p==='/spotify-connect.js'||p==='/touch-soundtrack.js'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
+ if(m==='GET'&&(p==='/app.js'||p==='/style.css'||p==='/quiz-polish.css'||p==='/handout.css'||p==='/spotify-connect.js'||p==='/touch-soundtrack.js'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
  if(m==='GET'&&p==='/touchscreen-motiv.svg')return serve(res,path.join(ROOT,'touchscreen-motiv.svg'),'image/svg+xml');
  if(m==='GET'&&p==='/easter-scene.svg')return serve(res,path.join(ROOT,'easter-scene.svg'),'image/svg+xml');
  if(m==='GET'&&(p==='/easter-game.js'||p==='/easter-game.css'||p==='/finger-mission.js'||p==='/finger-mission.css'))return serve(res,path.join(ROOT,p.slice(1)),p.endsWith('.js')?'application/javascript; charset=utf-8':'text/css; charset=utf-8');
