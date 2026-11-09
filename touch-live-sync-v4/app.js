@@ -106,7 +106,7 @@ function userPage(){
  const onlineFilm=state.video&&['youtube','url','upload'].includes(state.video.type)||state.remoteVideo&&state.remoteVideo.type!=='none';
  if(role==='join'&&onlineFilm&&['welcome','film'].includes(state.phase)&&!state.sideGame&&!(q&&q.accepting))body+='<p class="studentWatchLink" style="text-align:center;margin-top:18px"><a class="btn" href="/watch">🎬 Film mit Untertiteln auf diesem Gerät ansehen</a></p>';
  const notes=isTeacher?'<div class="card" style="margin-top:17px"><span class="label">LEHRER · PRIVAT</span><h2>Notizen zur Dokumentation</h2><p>Deine Notizen bleiben auf diesem Gerät und sind für Schüler nicht sichtbar.</p><textarea id="teacherNotes" rows="6" placeholder="Beobachtungen, Rückfragen, Feedback …">'+esc(localStorage.getItem('touch_teacher_notes')||'')+'</textarea><div class="flex" style="margin-top:12px"><button id="saveNotes">Notizen als Textdatei speichern</button></div></div>':'';
- wrap(page('Die Dokumentation läuft.',isTeacher?'LEHRER · LIVE MITMACHEN':'SCHÜLER · LIVE MITMACHEN','Teilnehmer: '+esc(userName)+' · '+(isTeacher?'Lehrer':'Schüler')+' · '+state.participants+' angemeldet')+body+notes);
+ wrap(page('Die Dokumentation läuft.',isTeacher?'LEHRER · LIVE MITMACHEN':'SCHÜLER · LIVE MITMACHEN',isTeacher?'Teilnehmer: '+esc(userName)+' · Lehrer · '+state.participants+' angemeldet':'👤 '+esc(userName))+body+notes);
  document.querySelectorAll('[data-choice]').forEach(b=>b.onclick=async()=>{
   if(b.disabled)return;
   const choice=Number(b.dataset.choice);
