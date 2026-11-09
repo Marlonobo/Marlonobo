@@ -9,7 +9,7 @@ const accessKey=process.env.S3_ACCESS_KEY_ID||'';
 const secretKey=process.env.S3_SECRET_ACCESS_KEY||'';
 const prefix=String(process.env.S3_PREFIX||'touch-live').replace(/^\/+|\/+$/g,'');
 const enabled=!!(endpoint&&bucket&&accessKey&&secretKey);
-const VIDEO=prefix+'/master-video.mp4',CAPTIONS=prefix+'/captions.vtt',MANIFEST=prefix+'/manifest.json';
+const TRAILER=prefix+'/trailer.mp4',VIDEO=prefix+'/master-video.mp4',CAPTIONS=prefix+'/captions.vtt',MANIFEST=prefix+'/manifest.json';
 function check(){if(!enabled)throw Error('S3/R2-Cloud-Speicher ist noch nicht konfiguriert.');}
 const enc=x=>encodeURIComponent(x).replace(/[!'()*]/g,c=>'%'+c.charCodeAt(0).toString(16).toUpperCase());
 const h=(k,s)=>crypto.createHmac('sha256',k).update(s).digest();
@@ -80,4 +80,19 @@ async function manifest(){try{return JSON.parse(await readText(MANIFEST));}catch
 async function putManifest(value){await put(MANIFEST,JSON.stringify(value),'application/json');}
 function videoUrl(){return presign('GET',VIDEO,{},14400);} // 4h: 52min film + pauses + seeks
 async function captionText(){try{return await readText(CAPTIONS);}catch(e){if(e.status===404)return null;throw e;}}
-module.exports={enabled,VIDEO,CAPTIONS,MANIFEST,initiate,partUrl,list,complete,put,readText,manifest,putManifest,videoUrl,captionText};
+// Trailer backup (max. 110 MB): streamed via presigned URLs, never fully buffered in RAM.
+async function putTrailerFile(file){
+ check();const fs=require('node:fs'),{Readable}=require('node:stream');
+ const size=fs.statSync(file).size;
+ const r=await fetch(presign('PUT',TRAILER,{},3600),{method:'PUT',headers:{'content-type':'video/mp4','content-length':String(size)},body:Readable.toWeb(fs.createReadStream(file)),duplex:'half',signal:AbortSignal.timeout(15*60000)});
+ if(!r.ok)throw Error('Trailer-Sicherung fehlgeschlagen ('+r.status+')');
+ return size;
+}
+async function getTrailerFile(file){
+ check();const fs=require('node:fs'),{Readable}=require('node:stream'),{pipeline}=require('node:stream/promises');
+ const r=await fetch(presign('GET',TRAILER,{},3600),{signal:AbortSignal.timeout(15*60000)});
+ if(r.status===404)return false;
+ if(!r.ok)throw Error('Trailer konnte nicht aus dem Cloud-Speicher geladen werden ('+r.status+')');
+ const tmp=file+'.restore';await pipeline(Readable.fromWeb(r.body),fs.createWriteStream(tmp));fs.renameSync(tmp,file);return true;
+}
+module.exports={enabled,TRAILER,putTrailerFile,getTrailerFile,VIDEO,CAPTIONS,MANIFEST,initiate,partUrl,list,complete,put,readText,manifest,putManifest,videoUrl,captionText};

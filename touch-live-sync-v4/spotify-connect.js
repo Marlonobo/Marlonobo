@@ -5,14 +5,19 @@
 'use strict';
 const KEY='touch_spotify_pkce_tokens_v1',CLIENT='touch_spotify_public_client_id_v1',FLOW='touch_spotify_pkce_flow_v1',DEVICE='touch_spotify_device_v2',SELECTION='touch_spotify_music_v2';
 const CALLBACK='/spotify-callback';
-let root=null,selectFn=null,playlists=[],devices=[],lastSelected=localStorage.getItem(SELECTION)||'',busy=false,searchResults=[];
+let root=null,selectFn=null,clientIdFn=null,playlists=[],devices=[],lastSelected=localStorage.getItem(SELECTION)||'',busy=false,searchResults=[],serverClientId='',nowTimer=null;
 const $=id=>document.getElementById(id);
 const escape=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const callbackUrl=()=>location.origin+CALLBACK;
-const read=(key,where=sessionStorage)=>{try{return JSON.parse(where.getItem(key)||'null')}catch{return null}};
-const write=(key,val,where=sessionStorage)=>{try{where.setItem(key,JSON.stringify(val))}catch{}};
+// Tokens and the login flow live in localStorage: on phones the Spotify login often
+// returns in a NEW tab (Spotify app / universal link), where sessionStorage is empty.
+const read=(key,where=localStorage)=>{try{const v=where.getItem(key);if(v!==null)return JSON.parse(v);const old=sessionStorage.getItem(key);return old?JSON.parse(old):null;}catch{return null}};
+const write=(key,val,where=localStorage)=>{try{where.setItem(key,JSON.stringify(val))}catch{}};
+const forget=key=>{try{localStorage.removeItem(key);sessionStorage.removeItem(key);}catch{}};
 const token=()=>read(KEY);
-const registeredClient=()=>{try{return localStorage.getItem(CLIENT)||''}catch{return ''}};
+const SCOPES='playlist-read-private user-read-playback-state user-modify-playback-state user-read-currently-playing streaming user-read-email user-read-private';
+const registeredClient=()=>{try{return localStorage.getItem(CLIENT)||serverClientId||''}catch{return serverClientId||''}};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const validClient=s=>/^[A-Za-z0-9]{32}$/.test(s||'');
 const userAuthorized=()=>!!token()?.access_token;
 function status(message,bad=false){const el=$('spotifyAccountStatus');if(el){el.textContent=message;el.classList.toggle('error',bad);}}
@@ -25,31 +30,36 @@ async function login(){
  const id=$('spotifyClientId')?.value.trim()||registeredClient();
  if(!validClient(id))throw Error('Bitte zuerst die 32-stellige Spotify Client ID aus dem Spotify Developer Dashboard eintragen.');
  localStorage.setItem(CLIENT,id);
+ // Share the public Client ID with the server, so phone and HDMI-PC need not type it again.
+ if(clientIdFn&&id!==serverClientId){try{await clientIdFn(id);serverClientId=id;}catch{}}
  const verifier=rand(64),state=rand(32),challenge=await hash(verifier);
- const returnPath=location.pathname==='/control'?'/control':'/#admin';
+ const returnPath=location.pathname==='/control'?'/control':location.hash.startsWith('#tv')?'/#tv':'/#admin';
  write(FLOW,{verifier,state,clientId:id,returnPath,createdAt:Date.now()});
- const q=new URLSearchParams({client_id:id,response_type:'code',redirect_uri:callbackUrl(),code_challenge_method:'S256',code_challenge:challenge,state,scope:'playlist-read-private user-read-playback-state user-modify-playback-state'});
+ const q=new URLSearchParams({client_id:id,response_type:'code',redirect_uri:callbackUrl(),code_challenge_method:'S256',code_challenge:challenge,state,scope:SCOPES});
  location.assign('https://accounts.spotify.com/authorize?'+q.toString());
 }
 async function callback(){
  if(location.pathname!==CALLBACK)return false;
  const params=new URLSearchParams(location.search),record=read(FLOW);
  if(!record||!record.verifier||Date.now()-(record.createdAt||0)>600000){document.body.textContent='Spotify-Anmeldung abgelaufen. Bitte gehe zurück zum TOUCH-LIVE-Adminbereich und versuche es erneut.';return true;}
- const returnPath=record.returnPath==='/control'?'/control':'/#admin';
- if(params.get('error')){sessionStorage.setItem('touch_spotify_auth_message','Spotify-Anmeldung abgebrochen: '+params.get('error'));sessionStorage.removeItem(FLOW);location.replace(returnPath);return true;}
- if(!params.get('code')||params.get('state')!==record.state){sessionStorage.setItem('touch_spotify_auth_message','Spotify-Sicherheitsprüfung fehlgeschlagen.');sessionStorage.removeItem(FLOW);location.replace(returnPath);return true;}
+ const returnPath=['/control','/#tv'].includes(record.returnPath)?record.returnPath:'/#admin';
+ const note=msg=>{try{localStorage.setItem('touch_spotify_auth_message',msg);}catch{}};
+ if(params.get('error')){note('Spotify-Anmeldung abgebrochen: '+params.get('error'));forget(FLOW);location.replace(returnPath);return true;}
+ if(!params.get('code')||params.get('state')!==record.state){note('Spotify-Sicherheitsprüfung fehlgeschlagen.');forget(FLOW);location.replace(returnPath);return true;}
  try{
   const res=await authPost({grant_type:'authorization_code',code:params.get('code'),redirect_uri:callbackUrl(),client_id:record.clientId,code_verifier:record.verifier});
-  write(KEY,{access_token:res.access_token,refresh_token:res.refresh_token,expiresAt:Date.now()+Number(res.expires_in||3600)*1000,clientId:record.clientId});
-  sessionStorage.setItem('touch_spotify_auth_message','✓ Spotify-Konto erfolgreich verbunden. Du kannst deine Playlists jetzt ansehen.');
- }catch(e){sessionStorage.setItem('touch_spotify_auth_message','Spotify konnte nicht verbunden werden: '+e.message);}
- sessionStorage.removeItem(FLOW);location.replace(returnPath);return true;
+  write(KEY,{access_token:res.access_token,refresh_token:res.refresh_token,expiresAt:Date.now()+Number(res.expires_in||3600)*1000,clientId:record.clientId,scope:res.scope||''});
+  note('✓ Spotify-Konto erfolgreich verbunden. Jetzt „Geräte suchen“ und LG-TV oder HDMI-PC auswählen.');
+ }catch(e){note('Spotify konnte nicht verbunden werden: '+e.message);}
+ forget(FLOW);location.replace(returnPath);return true;
 }
 async function accessToken(){
  let stored=token();if(!stored)return null;
  if(Date.now()<stored.expiresAt-90000)return stored.access_token;
- if(!stored.refresh_token||!stored.clientId){sessionStorage.removeItem(KEY);return null;}
- const r=await authPost({grant_type:'refresh_token',refresh_token:stored.refresh_token,client_id:stored.clientId});
+ if(!stored.refresh_token||!stored.clientId){forget(KEY);return null;}
+ let r;
+ try{r=await authPost({grant_type:'refresh_token',refresh_token:stored.refresh_token,client_id:stored.clientId});}
+ catch(e){forget(KEY);throw Error('Spotify-Sitzung abgelaufen. Bitte erneut „Mit Spotify-Konto anmelden“.');}
  stored={...stored,access_token:r.access_token,refresh_token:r.refresh_token||stored.refresh_token,expiresAt:Date.now()+Number(r.expires_in||3600)*1000};
  write(KEY,stored);return stored.access_token;
 }
@@ -64,7 +74,7 @@ async function spotify(url,method='GET',body){
   if(res.status===403)throw Error('Spotify hat den Zugriff verweigert: '+details+' (für Spotify Connect wird Premium benötigt).');
   if(res.status===404)throw Error('Kein Spotify-Wiedergabegerät gefunden. Starte Spotify zuerst auf dem gewünschten Gerät.');
   if(res.status===429)throw Error('Spotify-Anfragelimit erreicht. Bitte später erneut versuchen.');
-  if(res.status===401){sessionStorage.removeItem(KEY);throw Error('Spotify-Sitzung abgelaufen. Bitte neu anmelden.');}
+  if(res.status===401){forget(KEY);throw Error('Spotify-Sitzung abgelaufen. Bitte neu anmelden.');}
   throw Error(details);
  }
  return data;
@@ -141,7 +151,12 @@ async function devicesFetch(){
   const sel=$('spotifyDevice');
   if(sel){sel.innerHTML='<option value="">Aktives Spotify-Gerät</option>'+devices.map(d=>'<option value="'+escape(d.id)+'">'+escape(d.name)+' ('+escape(d.type)+')'+(d.is_active?' – aktiv':'')+'</option>').join('');
    const preferred=localStorage.getItem(DEVICE)||'';const found=devices.find(d=>d.id===preferred)||devices.find(d=>d.is_active);if(found){sel.value=found.id;localStorage.setItem(DEVICE,found.id);}sel.onchange=()=>{localStorage.setItem(DEVICE,sel.value);status(sel.value?'✓ Spotify-Ausgabegerät: '+(devices.find(d=>d.id===sel.value)?.name||'Gerät'):'Bitte Ausgabegerät auswählen.');};}
-  status(devices.length?devices.length+' Spotify-Geräte gefunden.':'Kein Spotify-Gerät aktiv. Öffne zunächst die Spotify-App auf dem gewünschten Gerät.');
+  if(sel&&!sel.value&&devices.length){
+   // Prefer the TV / beamer: LG app ("TV"), our own TOUCH LIVE PC player, then a computer.
+   const pick=devices.find(d=>/tv/i.test(d.type))||devices.find(d=>/TOUCH LIVE/i.test(d.name))||devices.find(d=>/computer/i.test(d.type))||devices[0];
+   sel.value=pick.id;localStorage.setItem(DEVICE,pick.id);
+  }
+  status(devices.length?devices.length+' Spotify-Geräte gefunden'+(chosenDevice()?' · ausgewählt: '+(devices.find(d=>d.id===chosenDevice())?.name||''):'')+'.':'Kein Spotify-Gerät gefunden. Öffne Spotify auf dem LG-TV (gleiches Konto) oder klicke am HDMI-PC im Beamer-Fenster auf „♫ Spotify auf diesem PC“. Dann erneut „Geräte suchen“.',!devices.length);
  }catch(e){status('Geräte konnten nicht geladen werden: '+e.message,true);}
 }
 function chosenDevice(){return $('spotifyDevice')?.value||'';}
@@ -153,8 +168,12 @@ async function startPlaylist(uri){
  const body=uri.startsWith('spotify:track:')?{uris:[uri]}:{context_uri:uri};
  const id=chosenDevice();if(!id)throw Error('Bitte erst „Geräte suchen“ und dann LG-TV oder HDMI-PC auswählen.');
  const deviceInfo=devices.find(d=>d.id===id);if(deviceInfo?.is_restricted)throw Error('Dieses Spotify-Gerät verweigert die Fernsteuerung.');
- if(!deviceInfo?.is_active)await spotify('/me/player','PUT',{device_ids:[id],play:false});
- await spotify('/me/player/play?device_id='+encodeURIComponent(id),'PUT',body);
+ if(!deviceInfo?.is_active){try{await spotify('/me/player','PUT',{device_ids:[id],play:false});}catch{}await sleep(700);}
+ // LG-TV and PC need a moment after the transfer; Spotify then answers 404 "Device not found".
+ for(let attempt=0;;attempt++){
+  try{await spotify('/me/player/play?device_id='+encodeURIComponent(id),'PUT',body);break;}
+  catch(e){if(attempt>=3||!/Gerät|device|404|502|503/i.test(e.message))throw e;await sleep(900+attempt*600);}
+ }
  // User requested to keep the SAME song; otherwise Spotify advances through playlist tracks.
  // Repeat is a distinct Spotify Web API request and may be blocked for non-Premium accounts.
  const selected=$('spotifyRepeat')?.value||'track';
@@ -206,7 +225,7 @@ function accountButtons(){
   const v=id.value.trim();if(validClient(v))localStorage.setItem(CLIENT,v);
  });}
  const disconnect=$('spotifyAccountLogout');if(disconnect)disconnect.onclick=()=>{
-  sessionStorage.removeItem(KEY);playlists=[];devices=[];renderAccount();status('Dein Spotify-Konto wurde von diesem Browser getrennt.');
+  forget(KEY);playlists=[];devices=[];renderAccount();status('Dein Spotify-Konto wurde von diesem Browser getrennt.');
  };
  const list=$('spotifyPlaylistsLoad');if(list)list.onclick=loadPlaylists;
  const searchButton=$('spotifySearchButton');if(searchButton)searchButton.onclick=searchMusic;
@@ -260,17 +279,71 @@ function renderAccount(){
   '<div class="spotifyAccountSetup"><p class="small">Für Anmeldung und Steuerung deiner Spotify-Geräte benötigst du eine eigene <b>Spotify Client ID</b> und Spotify Premium. Für den einfachen eingebetteten Player unten ist das nicht nötig.</p><label for="spotifyClientId">Spotify Client ID (öffentlich, keine Geheimzahl)</label><input id="spotifyClientId" inputmode="text" maxlength="32" placeholder="32-stellige Client ID"><p class="small">Im <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener noreferrer">Spotify Developer Dashboard</a> eine App anlegen. Als Redirect URI exakt <code>'+escape(callbackUrl())+'</code> eintragen.</p><button type="button" id="spotifyAccountLogin" class="primary">Mit Spotify-Konto anmelden</button><p class="small"><a href="https://open.spotify.com/" target="_blank" rel="noopener noreferrer">Spotify öffnen und anmelden</a> – funktioniert auch ohne Developer-App, aber ohne Steuerung direkt in TOUCH LIVE.</p></div>')+
  '<p class="spotifyAccountStatus" id="spotifyAccountStatus" role="status">'+(active?'Spotify-Konto verbunden.':'Verbinde dein Konto oder nutze den kompakten Spotify-Player unten.')+'</p>';
  accountButtons();
- const message=sessionStorage.getItem('touch_spotify_auth_message');
- if(message){sessionStorage.removeItem('touch_spotify_auth_message');status(message,!message.startsWith('✓'));}
+ let message=null;try{message=localStorage.getItem('touch_spotify_auth_message')||sessionStorage.getItem('touch_spotify_auth_message');}catch{}
+ if(message){forget('touch_spotify_auth_message');status(message,!message.startsWith('✓'));}
  if(active&&playlists.length)renderPlaylists();
 }
 function mount(container,options={}){
  root=container;selectFn=typeof options.onSelect==='function'?options.onSelect:null;
+ clientIdFn=typeof options.onClientId==='function'?options.onClientId:null;
  if(!root)return;
  renderAccount();
  const input=$('spotifyInput');if(input){if(!input.value&&lastSelected)input.value=lastSelected;input.addEventListener('change',()=>rememberSelection(input.value.trim()));}
+ if(userAuthorized()){
+  // Fill the device list and the "now playing" line immediately – no extra taps on the phone.
+  devicesFetch().then(currentPlayback).catch(()=>{});
+  clearInterval(nowTimer);
+  nowTimer=setInterval(()=>{if(!root||!root.isConnected||document.hidden){if(root&&!root.isConnected)clearInterval(nowTimer);return;}currentPlayback();},6000);
+ }
 }
-w.SpotifyConnect={mount,login,connected:userAuthorized,pauseForFilm,refresh:renderAccount,getSelectedClientId:registeredClient,setVolume,devicesFetch,currentPlayback};
+function setDefaultClientId(id){
+ if(!validClient(id)||id===serverClientId)return;
+ serverClientId=id;
+ const input=$('spotifyClientId');if(input&&!input.value)input.value=id;
+}
+
+/* ---- Spotify im Browser des HDMI-PCs (Web Playback SDK) ----
+   Der Beamer-PC wird dadurch selbst zu einem Spotify-Connect-Gerät „TOUCH LIVE Beamer-PC“,
+   das die Handy-Fernbedienung unter „Geräte suchen“ findet. Benötigt Spotify Premium.
+   Der LG-webOS-Browser unterstützt das SDK nicht – dort die Spotify-App des Fernsehers nutzen. */
+let webPlayer=null,webPlayerDevice='',sdkLoading=null;
+function loadSdk(){
+ if(w.Spotify?.Player)return Promise.resolve();
+ if(sdkLoading)return sdkLoading;
+ sdkLoading=new Promise((ok,bad)=>{
+  const prev=w.onSpotifyWebPlaybackSDKReady;
+  w.onSpotifyWebPlaybackSDKReady=()=>{try{prev&&prev();}catch{}ok();};
+  const s=document.createElement('script');s.src='https://sdk.scdn.co/spotify-player.js';s.async=true;
+  s.onerror=()=>{sdkLoading=null;bad(Error('Spotify-Player konnte nicht geladen werden (Internet/Firewall prüfen).'));};
+  document.head.appendChild(s);
+ });
+ return sdkLoading;
+}
+function webPlayerSupported(){return !/web0s|webos|netcast|smart-?tv|tizen/i.test(navigator.userAgent)&&!!w.isSecureContext;}
+async function enableWebPlayer(name='TOUCH LIVE Beamer-PC',onState){
+ if(!webPlayerSupported())throw Error('Dieser Browser (z. B. LG-TV) kann Spotify nicht direkt abspielen. Nutze die Spotify-App des Fernsehers.');
+ if(!userAuthorized())throw Error('Bitte zuerst auf diesem PC mit Spotify anmelden.');
+ const scope=token()?.scope;
+ if(scope!==undefined&&scope!==''&&!/streaming/.test(scope)){forget(KEY);throw Error('Bitte einmal neu mit Spotify anmelden (Berechtigung „Abspielen im Browser“ fehlt).');}
+ if(webPlayer&&webPlayerDevice)return webPlayerDevice;
+ await loadSdk();
+ webPlayer=new w.Spotify.Player({name,volume:.8,getOAuthToken:cb=>{accessToken().then(t=>cb(t||'')).catch(()=>cb(''));}});
+ const ready=new Promise((ok,bad)=>{
+  const timer=setTimeout(()=>bad(Error('Spotify-Player hat sich nicht gemeldet. Ist das Konto Premium?')),15000);
+  webPlayer.addListener('ready',({device_id})=>{clearTimeout(timer);webPlayerDevice=device_id;try{localStorage.setItem(DEVICE,device_id);}catch{}ok(device_id);});
+  for(const ev of ['initialization_error','authentication_error','account_error'])
+   webPlayer.addListener(ev,({message})=>{clearTimeout(timer);bad(Error(ev==='account_error'?'Spotify Premium wird für die Wiedergabe im Browser benötigt.':message));});
+ });
+ webPlayer.addListener('not_ready',()=>{webPlayerDevice='';onState&&onState({ready:false});});
+ webPlayer.addListener('player_state_changed',st=>{onState&&onState({ready:true,playing:st?!st.paused:false,track:st?.track_window?.current_track?.name||'',artist:(st?.track_window?.current_track?.artists||[]).map(a=>a.name).join(', ')});});
+ // Must run inside the click on the PC, otherwise Chrome blocks the sound (autoplay policy).
+ try{webPlayer.activateElement&&webPlayer.activateElement();}catch{}
+ const connected=await webPlayer.connect();
+ if(!connected)throw Error('Spotify-Player konnte nicht verbunden werden.');
+ return ready;
+}
+async function disableWebPlayer(){if(webPlayer){try{await webPlayer.pause();}catch{}try{webPlayer.disconnect();}catch{}}webPlayer=null;webPlayerDevice='';}
+w.SpotifyConnect={mount,login,connected:userAuthorized,pauseForFilm,refresh:renderAccount,getSelectedClientId:registeredClient,setDefaultClientId,setVolume,devicesFetch,currentPlayback,enableWebPlayer,disableWebPlayer,webPlayerSupported,webPlayerActive:()=>!!webPlayerDevice,pauseWebPlayer:()=>{if(webPlayer){try{return webPlayer.pause();}catch{}}return Promise.resolve();},preloadWebPlayer:()=>{if(webPlayerSupported())loadSdk().catch(()=>{});}};
 if(location.pathname===CALLBACK){
  document.addEventListener('DOMContentLoaded',()=>{document.body.innerHTML='<main style="max-width:540px;margin:12vh auto;padding:24px;font-family:system-ui;background:#0b2233;color:white;border-radius:15px"><h1>Spotify wird verbunden …</h1><p>Du wirst danach zur TOUCH-LIVE-Regie zurückgeleitet.</p></main>';});
  callback().catch(err=>{document.body.textContent='Spotify-Anmeldung fehlgeschlagen: '+err.message;});
