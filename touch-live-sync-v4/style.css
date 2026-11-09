@@ -765,3 +765,20 @@ body.studentEntry .studentScoreGain{
  #tvApp .tvCinematicLights i,#tvApp .tvIntroLine,#tvApp .tvOutroLine,
  #tvApp .tvIntroReady,#tvApp .tvIntroReady i,#tvApp .tvEndSignature{animation:none!important;transition:none!important}
 }
+
+/* ---------- Admin: Reiter, Kopfzeile, ruhigeres Layout ---------- */
+#adminRoot{max-width:1180px;margin:0 auto}
+.adminStickyStatus{position:sticky;top:0;z-index:30;margin:0 0 14px!important;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);background:rgba(8,21,33,.86)!important;border:1px solid rgba(80,218,206,.35)!important;border-radius:14px!important;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.adminTabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:0 0 22px}
+.adminTabs button{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:14px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.09);background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));color:inherit;cursor:pointer;transition:transform .15s ease,border-color .15s ease,background .15s ease;min-height:0}
+.adminTabs button b{font-size:15px;letter-spacing:.2px}
+.adminTabs button small{font-size:12px;opacity:.65;font-weight:400;line-height:1.3}
+.adminTabs button:hover{transform:translateY(-1px);border-color:rgba(80,218,206,.45)}
+.adminTabs button.active{background:linear-gradient(135deg,rgba(80,218,206,.22),rgba(80,218,206,.06));border-color:#50dace;box-shadow:0 0 0 1px rgba(80,218,206,.35) inset,0 12px 28px rgba(80,218,206,.12)}
+.adminTabs button.active small{opacity:.9}
+.adminPanels{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:20px;align-items:start}
+.adminPanels>.card{margin:0!important;border-radius:18px;box-shadow:0 14px 40px rgba(0,0,0,.18)}
+.adminPanels>.card[hidden]{display:none!important}
+.adminPanels>.card h2{margin-top:4px}
+@media (max-width:900px){.adminTabs{grid-template-columns:repeat(2,minmax(0,1fr))}.adminTabs button:last-child{grid-column:1/-1}}
+@media (max-width:520px){.adminTabs{grid-template-columns:1fr 1fr;gap:8px}.adminTabs button{padding:11px 12px}.adminTabs button small{display:none}}

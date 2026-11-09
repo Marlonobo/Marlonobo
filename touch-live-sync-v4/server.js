@@ -13,6 +13,7 @@ if(!process.env.ADMIN_KEY)console.log('TOUCH LIVE ADMIN_KEY: '+ADMIN);
 if(!process.env.TV_KEY)console.log('TOUCH LIVE TV_KEY: '+TV);
 fs.mkdirSync(DIR,{recursive:true});
 const TRAILER_FILE=path.join(DIR,'touchscreen-trailer.mp4');
+const BUNDLED_SUB_FILE=path.join(ROOT,'untertitel.vtt');
 const USERS_FILE=path.join(DIR,'users.json'),STATE_FILE=path.join(DIR,'live-state.json'), VIDEO_FILE=path.join(DIR,'touchscreen.mp4'), SUB_FILE=path.join(DIR,'untertitel.vtt'), QUESTIONS_FILE=path.join(DIR,'custom-questions.json');
 try{const saved=JSON.parse(fs.readFileSync(QUESTIONS_FILE,'utf8'));if(Array.isArray(saved)&&saved.length>=1&&saved.length<=50)Q.splice(0,Q.length,...saved);}catch{}
 
@@ -58,6 +59,11 @@ try{s=Object.assign(def(),JSON.parse(fs.readFileSync(STATE_FILE,'utf8')));}catch
 // Public Spotify Client ID (no secret). Env var wins, otherwise the one saved in the admin.
 const ENV_SPOTIFY_CLIENT=/^[A-Za-z0-9]{32}$/.test(process.env.SPOTIFY_CLIENT_ID||'')?process.env.SPOTIFY_CLIENT_ID:'';
 if(ENV_SPOTIFY_CLIENT)s.spotifyClientId=ENV_SPOTIFY_CLIENT;
+// Fester Film für die Schule: YouTube-Link in Render (DEFAULT_VIDEO_URL) übersteht jeden Neustart.
+const DEFAULT_VIDEO=(()=>{const id=youtubeIdSafe(process.env.DEFAULT_VIDEO_URL||'');return id?{type:'youtube',id,url:'https://www.youtube.com/watch?v='+id}:null;})();
+function youtubeIdSafe(link){try{return youtubeId(String(link).trim());}catch{return null;}}
+if(DEFAULT_VIDEO&&(!s.video||s.video.type==='none'||s.video.type==='upload'||s.video.type==='local'))s.video=DEFAULT_VIDEO;
+if(process.env.DEFAULT_VIDEO_TITLE&&String(process.env.DEFAULT_VIDEO_TITLE).trim().length>=3)s.videoTitle=String(process.env.DEFAULT_VIDEO_TITLE).trim().slice(0,110);
 if(migratedFilmCues){s.quizOffset=0;try{fs.writeFileSync(STATE_FILE,JSON.stringify(s),'utf8');}catch(e){console.error('Quiz-Offset nicht gesichert:',e.message);}}
 
 const FEEDBACK_FILE=path.join(DIR,'feedback.json');
@@ -190,7 +196,7 @@ function publicState(id){
  const gestureActive=gestureSeconds>0&&(s.phase==='gesture'||(s.phase==='film'&&s.gestureOverlay));
  return {homeUnlocked:!!s.homeUnlocked,trailerAvailable:fs.existsSync(TRAILER_FILE),trailerPlaying:!!s.trailerPlaying,trailerSerial:s.trailerSerial||0,trailerRevision:s.trailerRevision||0,tvAudio:Date.now()-tvAudioReport.updated<25000?{connected:true,playing:tvAudioReport.playing,blocked:tvAudioReport.blocked,error:tvAudioReport.error}:{connected:false,playing:false,blocked:false,error:''},phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},spotifyClientId:s.spotifyClientId||'',soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
   quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,a:q.a,duration:q.type==='zoom'?ZOOM_MISSION_SECONDS:((s.phase==='demo'||s.demoOverlay)?45:30),remaining:a.remaining,accepting:a.accepting,foundCount:q.type==='zoom'?[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length:0,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
-  player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)};
+  player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)||fs.existsSync(BUNDLED_SUB_FILE)};
 }
 function startZoom(){const z=ZOOM();if(!z)return false;
  if(s.phase==='film'){
@@ -400,7 +406,7 @@ async function handler(req,res){
  if(m==='GET'&&p==='/api/admin-info'){if(!isAdmin(req))return unauthorized(res);return send(res,200,{tvKey:TV,cohostKey:COHOST,questions:Q.map(q=>({id:q.id,type:q.type||'quiz',open:q.open,close:q.close,duration:q.duration,q:q.q,a:q.a,correct:q.correct,chapter:q.chapter,hint:q.hint,fifty:q.fifty})),ranking:[...users.values()].map(x=>({name:x.name,role:x.role,score:x.score,answers:x.answers,jokers:x.jokers||{}})).sort((a,b)=>b.score-a.score),feedback});}
  if(m==='GET'&&p==='/captions.vtt'){
  if(S3.enabled&&s.cloudCaptions){const v=await S3.captionText();if(v!==null){res.writeHead(200,{'Content-Type':'text/vtt; charset=utf-8','Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});return res.end(v);}}
- return serve(res,SUB_FILE,mime['.vtt']);
+ return serve(res,fs.existsSync(SUB_FILE)?SUB_FILE:BUNDLED_SUB_FILE,mime['.vtt']);
  }
  if((m==='GET'||m==='HEAD')&&p==='/media/video')return media(req,res);
  if(m==='POST'&&p==='/api/join'){
