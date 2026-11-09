@@ -60,6 +60,8 @@ const ENV_SPOTIFY_CLIENT=/^[A-Za-z0-9]{32}$/.test(process.env.SPOTIFY_CLIENT_ID|
 if(ENV_SPOTIFY_CLIENT)s.spotifyClientId=ENV_SPOTIFY_CLIENT;
 if(migratedFilmCues){s.quizOffset=0;try{fs.writeFileSync(STATE_FILE,JSON.stringify(s),'utf8');}catch(e){console.error('Quiz-Offset nicht gesichert:',e.message);}}
 
+const FEEDBACK_FILE=path.join(DIR,'feedback.json');
+try{const f=JSON.parse(fs.readFileSync(FEEDBACK_FILE,'utf8'));if(Array.isArray(f))feedback=f.slice(-500);}catch{}
 try{users=new Map(Object.entries(JSON.parse(fs.readFileSync(USERS_FILE,'utf8'))));}catch{}
 let usersTimer=null;function saveUsers(){clearTimeout(usersTimer);usersTimer=setTimeout(()=>fsp.writeFile(USERS_FILE,JSON.stringify(Object.fromEntries(users))).catch(console.error),400);}
 // One 30-second mission, independent from the 22:18–23:20 film passage.
@@ -445,8 +447,11 @@ async function handler(req,res){
  x.jokers[type]=q.id;saveUsers();return send(res,200,{ok:true});
  }
  if(m==='POST'&&p==='/api/feedback'){
- const b=await read(req,3000);
- feedback.push({text:String(b.text||'').trim().slice(0,1000),rating:Math.min(10,Math.max(0,Number(b.rating)||0))});return send(res,200,{ok:true});
+ const b=await read(req,8000);
+ const text=String(b.text||'').trim().slice(0,3000);if(!text)return send(res,400,{error:'Bitte zuerst etwas eintragen.'});
+ feedback.push({text,rating:Math.min(10,Math.max(0,Number(b.rating)||0)),at:new Date().toISOString()});if(feedback.length>500)feedback.splice(0,feedback.length-500);
+ fsp.writeFile(FEEDBACK_FILE,JSON.stringify(feedback)).catch(console.error);
+ return send(res,200,{ok:true});
  }
  if(m==='POST'&&p==='/api/host/tick'){
  if(!isCohost(req))return unauthorized(res);
@@ -588,7 +593,7 @@ async function handler(req,res){
  else if(cmd==='end'){s.phase='end';s.playing=false;}
  else if(cmd==='reset'){
   const keep={video:s.video,remoteVideo:s.remoteVideo,videoVolume:s.videoVolume??1,videoTitle:s.videoTitle,welcomeMusic:{...(s.welcomeMusic||{url:'',id:'',type:''}),on:false},soundtrack:s.soundtrack,spotifyClientId:s.spotifyClientId,subtitles:s.subtitles,captionSize:s.captionSize,captionPosition:s.captionPosition,captionRevision:s.captionsRevision,captionsRevision:s.captionsRevision,cloudCaptions:s.cloudCaptions,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset};
-  s=Object.assign(def(),keep);users=new Map();feedback=[];saveUsers();
+  s=Object.assign(def(),keep);users=new Map();feedback=[];fsp.writeFile(FEEDBACK_FILE,'[]').catch(()=>{});saveUsers();
  }
  else if(cmd==='videoLocal'){s.video={type:'local',url:null,id:null};localMedia={name:'',size:0,duration:0,lastSeen:0};s.clockSource='tv';s.lastHostTick=0;}
   else if(cmd==='filmVolume'){
