@@ -565,6 +565,15 @@ function renderAdminAnswers(){const box=el('adminAnswers');if(!box||!adminInfo)r
  if(!R.length){box.innerHTML='<p class="small">Noch niemand angemeldet.</p>';return;}
  const head=Qs.map(q=>'<th title="'+esc(q.q)+'">'+(q.type==='zoom'?'Zoom':++n)+'</th>').join('');
  box.innerHTML='<table class="rank adminTable"><thead><tr><th>Name</th><th>Punkte</th>'+head+'<th>Joker</th></tr></thead><tbody>'+R.map(u=>'<tr><td>'+esc(u.name)+(u.role==='teacher'?' · L':'')+'</td><td>'+u.score+'</td>'+Qs.map(q=>{const c=u.answers[q.id];return '<td>'+(c===undefined?'·':(c===q.correct?'✓':'✗')+String.fromCharCode(65+c))+'</td>';}).join('')+'<td>'+[u.jokers&&u.jokers.fifty?'50:50':'',u.jokers&&u.jokers.hint?'Tipp':''].filter(Boolean).join(', ')+'</td></tr>').join('')+'</tbody></table>';}
+let spotifyLinking=false;
+async function spotifyServerLink(){
+ const sc=window.SpotifyConnect;if(!sc||!adminKey||spotifyLinking)return;
+ if(!window.__spProvider){window.__spProvider=true;sc.setTokenProvider(()=>api('/api/spotify/token','GET',undefined,adminKey));}
+ if(state&&state.spotifyLinked)return;
+ const t=sc.exportTokens&&sc.exportTokens();if(!t?.refresh_token||!t.clientId)return;
+ spotifyLinking=true;
+ try{await api('/api/spotify/link','POST',t,adminKey);}catch{}finally{spotifyLinking=false;}
+}
 function saveSpotifyClientId(id){return api('/api/admin','POST',{cmd:'spotifyClientSet',value:id},adminKey).catch(()=>{});}
 function controlPage(){
  if(!adminKey){
@@ -866,6 +875,11 @@ function tvRemoteKeydown(e){
   e.preventDefault();tvRemoteBack();return;
  }
  // Remote Play button enables local playback; global playback is controlled by the admin.
+ if(tvSpotifyReady()&&state?.phase==='welcome'){
+  if(['MediaPlay','MediaPlayPause','MediaPause'].includes(e.key)||[415,19,179].includes(code)){e.preventDefault();tvSpotifyAction('toggle');return;}
+  if(['MediaFastForward','MediaTrackNext'].includes(e.key)||[417,176].includes(code)){e.preventDefault();tvSpotifyAction('next');return;}
+  if(['MediaRewind','MediaTrackPrevious'].includes(e.key)||[412,177].includes(code)){e.preventDefault();tvSpotifyAction('previous');return;}
+ }
  if(e.key==='MediaPlay'||e.key==='MediaPlayPause'||[415].includes(code)){e.preventDefault();el('tvPlay')?.click();}
 }
 window.addEventListener('keydown',tvRemoteKeydown,true);
@@ -887,9 +901,70 @@ function tvUnlockAll(){
  if(first){tvFullscreenHint('✓ Ton und Vollbild sind aktiv. Ab jetzt steuerst du alles mit dem Handy.');setTimeout(()=>{if(state?.phase==='welcome'){tvWelcomeDismissed=true;tvControlsVisible(false);}},4500);}
 }
 ['pointerdown','keydown','touchstart'].forEach(type=>window.addEventListener(type,()=>{if(role==='tv')tvUnlockAll();},{capture:true,passive:true}));
+// ---- Spotify auf dem LG-Fernseher, gesteuert mit der TV-Fernbedienung ----
+// Die Musik spielt die Spotify-App des Fernsehers (Spotify Connect). Diese Seite
+// schickt nur Befehle; die Anmeldung kommt einmalig vom Handy/Admin über den Server.
+let tvSpBusy=false,tvSpInfo={playing:false,volume:50,device:'',deviceId:'',track:''},tvSpTimer=null;
+function tvSpotifyReady(){return !!(state?.spotifyLinked&&window.SpotifyConnect?.api);}
+async function tvSpotifyDevice(){
+ const out=await window.SpotifyConnect.api('/me/player/devices');const list=(out.devices||[]).filter(d=>d.id&&!d.is_restricted);
+ return list.find(d=>d.is_active)||list.find(d=>/tv/i.test(d.type))||list.find(d=>/LG|webos/i.test(d.name))||null;
+}
+async function tvSpotifyRefresh(){
+ if(!tvSpotifyReady())return;
+ try{
+  const p=await window.SpotifyConnect.api('/me/player');
+  tvSpInfo.playing=!!p?.is_playing;tvSpInfo.volume=Number.isFinite(p?.device?.volume_percent)?p.device.volume_percent:tvSpInfo.volume;
+  tvSpInfo.device=p?.device?.name||'';tvSpInfo.deviceId=p?.device?.id||'';
+  tvSpInfo.track=p?.item?((p.item.name||'')+' – '+(p.item.artists||[]).map(a=>a.name).join(', ')):'';
+ }catch{}
+ tvSpotifyPaint();
+}
+function tvSpotifyPaint(msg){
+ const t=el('tvSpToggle'),now=el('tvSpNow');
+ if(t)t.textContent=tvSpInfo.playing?'⏸ Spotify':'♫ Spotify ▶';
+ if(now){now.textContent=msg||(tvSpInfo.track?(tvSpInfo.playing?'♫ ':'Ⅱ ')+tvSpInfo.track+(tvSpInfo.device?' · '+tvSpInfo.device:''):'Spotify bereit – OK auf „♫ Spotify ▶“');now.hidden=false;}
+}
+async function tvSpotifyAction(kind){
+ if(tvSpBusy)return;tvSpBusy=true;
+ const sp=window.SpotifyConnect.api;
+ try{
+  if(kind==='toggle'){
+   if(tvSpInfo.playing){await sp('/me/player/pause','PUT');tvSpInfo.playing=false;}
+   else{
+    let dev=tvSpInfo.deviceId?{id:tvSpInfo.deviceId}:await tvSpotifyDevice();
+    if(!dev)throw Error('Spotify-App auf dem Fernseher öffnen (gleiches Konto), dann erneut OK.');
+    const music=state?.welcomeMusic;
+    try{
+     if(!tvSpInfo.track&&music?.id&&['playlist','album','track'].includes(music.type)){
+      await sp('/me/player/play?device_id='+encodeURIComponent(dev.id),'PUT',music.type==='track'?{uris:['spotify:track:'+music.id]}:{context_uri:'spotify:'+music.type+':'+music.id});
+     }else await sp('/me/player/play?device_id='+encodeURIComponent(dev.id),'PUT');
+    }catch(e){
+     // Device asleep or not active yet: hand playback over to the TV, then play.
+     await sp('/me/player','PUT',{device_ids:[dev.id],play:true});
+    }
+    tvSpInfo.playing=true;
+   }
+  }else if(kind==='next'||kind==='previous'){await sp('/me/player/'+kind,'POST');}
+  else if(kind==='up'||kind==='down'){
+   const v=Math.max(0,Math.min(100,(tvSpInfo.volume||50)+(kind==='up'?10:-10)));
+   await sp('/me/player/volume?volume_percent='+v,'PUT');tvSpInfo.volume=v;
+   tvSpotifyPaint('Spotify-Lautstärke: '+v+' %');tvSpBusy=false;return;
+  }
+  setTimeout(tvSpotifyRefresh,900);tvSpotifyPaint();
+ }catch(e){tvSpotifyPaint('Spotify: '+e.message);}
+ finally{tvSpBusy=false;}
+}
+function tvSpotifyVisibility(){
+ const show=tvSpotifyReady()&&state?.phase==='welcome';
+ ['tvSpPrev','tvSpToggle','tvSpNext','tvSpDown','tvSpUp'].forEach(id=>{const b=el(id);if(b)b.hidden=!show;});
+ const now=el('tvSpNow');if(now&&!show)now.hidden=true;
+ if(show&&!tvSpTimer){tvSpotifyRefresh();tvSpTimer=setInterval(()=>{if(role==='tv'&&tvSpotifyReady()&&state?.phase==='welcome')tvSpotifyRefresh();},8000);}
+ if(!show&&tvSpTimer){clearInterval(tvSpTimer);tvSpTimer=null;}
+}
 function tvView(){
  if(!tvKey){app.innerHTML='<div class="wrap page"><h1>Beamer verbinden</h1><p>Bitte den Beamerlink aus der Admin-Ansicht öffnen.</p><label>Beamer-Zugangsschlüssel</label><input type="password" id="tvInput"><p></p><button class="primary" id="tvSubmit">Verbinden</button></div>';el('tvSubmit').onclick=()=>{tvKey=el('tvInput').value;sessionStorage.setItem('touch_tv_key',tvKey);localStorage.setItem('touch_tv_key',tvKey);tvView();};return;}
- app.innerHTML='<div id="tvApp"><audio id="tvWelcomeAudio" src="/welcome-music.wav" preload="auto" loop playsinline style="display:none"></audio><div id="tvScene" class="tvScene"></div><video id="tvTrailer" playsinline preload="auto" controls style="display:none;position:fixed;inset:0;width:100vw;height:100vh;background:#000;object-fit:contain;z-index:50"></video><button id="tvTrailerUnlock" type="button" hidden style="position:fixed;bottom:8%;left:50%;transform:translateX(-50%);z-index:60;max-width:90%;padding:17px 25px;background:#59d8d2;color:#07222b;border-radius:14px;font-size:18px;font-weight:700">▶ Trailer mit Ton starten (OK)</button><div id="tvTrailerMessage" hidden style="position:fixed;top:4%;left:10%;right:10%;z-index:60;padding:12px;background:#07222bcc;color:white;border-radius:12px;text-align:center"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><iframe id="cloudFrame" title="Google Drive Filmvorschau" allow="autoplay; fullscreen; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvLocalChoose" type="button" tabindex="0" hidden>📁 MP4 vom Windows-PC wählen</button><input id="tvLocalFile" type="file" accept=".mp4,video/mp4" hidden><span id="tvLocalStatus" role="status" style="font-size:13px;max-width:400px" hidden>MP4 bitte lokal auswählen.</span><button id="tvFullscreen" type="button" tabindex="0" autofocus>⛶ Vollbild – OK</button><button id="tvSoundtrackUnlock" type="button" tabindex="0">♫ Musik-Ton aktivieren</button><button id="tvSpotifyPlay" type="button" tabindex="0" hidden>♫ Willkommensmusik ▶</button><button id="tvSpotifyPc" type="button" tabindex="0" hidden>♫ Spotify auf diesem PC</button><button id="tvCloudOpen" type="button" tabindex="0" hidden>☁ iCloud-Datei öffnen</button><button id="tvCaptionSync" type="button" tabindex="0" hidden>⏱ Untertitel synchronisieren</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div id="tvAutoHint" class="tvAutoHint">Einmal <b>OK</b> drücken – dann laufen Ton und Vollbild. Danach steuerst du alles mit dem Handy.</div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><button id="tvFilmUnlock" class="tvFilmUnlock" type="button" hidden>🔊 Filmton mit OK einschalten</button><div id="tvWelcomeMusicStatus" class="tvWelcomeMusicStatus" hidden aria-live="polite"></div><div id="tvSpotifyDock" class="tvSpotifyDock" hidden aria-label="Spotify-Vorschau auf LG deaktiviert"></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
+ app.innerHTML='<div id="tvApp"><audio id="tvWelcomeAudio" src="/welcome-music.wav" preload="auto" loop playsinline style="display:none"></audio><div id="tvScene" class="tvScene"></div><video id="tvTrailer" playsinline preload="auto" controls style="display:none;position:fixed;inset:0;width:100vw;height:100vh;background:#000;object-fit:contain;z-index:50"></video><button id="tvTrailerUnlock" type="button" hidden style="position:fixed;bottom:8%;left:50%;transform:translateX(-50%);z-index:60;max-width:90%;padding:17px 25px;background:#59d8d2;color:#07222b;border-radius:14px;font-size:18px;font-weight:700">▶ Trailer mit Ton starten (OK)</button><div id="tvTrailerMessage" hidden style="position:fixed;top:4%;left:10%;right:10%;z-index:60;padding:12px;background:#07222bcc;color:white;border-radius:12px;text-align:center"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><iframe id="cloudFrame" title="Google Drive Filmvorschau" allow="autoplay; fullscreen; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvLocalChoose" type="button" tabindex="0" hidden>📁 MP4 vom Windows-PC wählen</button><input id="tvLocalFile" type="file" accept=".mp4,video/mp4" hidden><span id="tvLocalStatus" role="status" style="font-size:13px;max-width:400px" hidden>MP4 bitte lokal auswählen.</span><button id="tvFullscreen" type="button" tabindex="0" autofocus>⛶ Vollbild – OK</button><button id="tvSoundtrackUnlock" type="button" tabindex="0">♫ Musik-Ton aktivieren</button><button id="tvSpotifyPlay" type="button" tabindex="0" hidden>♫ Willkommensmusik ▶</button><button id="tvSpotifyPc" type="button" tabindex="0" hidden>♫ Spotify auf diesem PC</button><button id="tvSpPrev" type="button" tabindex="0" hidden title="Vorheriger Titel">⏮</button><button id="tvSpToggle" type="button" tabindex="0" hidden>♫ Spotify ▶</button><button id="tvSpNext" type="button" tabindex="0" hidden title="Nächster Titel">⏭</button><button id="tvSpDown" type="button" tabindex="0" hidden title="Leiser">🔉</button><button id="tvSpUp" type="button" tabindex="0" hidden title="Lauter">🔊</button><span id="tvSpNow" class="tvSpNow" hidden></span><button id="tvCloudOpen" type="button" tabindex="0" hidden>☁ iCloud-Datei öffnen</button><button id="tvCaptionSync" type="button" tabindex="0" hidden>⏱ Untertitel synchronisieren</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div id="tvAutoHint" class="tvAutoHint">Einmal <b>OK</b> drücken – dann laufen Ton und Vollbild. Danach steuerst du alles mit dem Handy.</div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><button id="tvFilmUnlock" class="tvFilmUnlock" type="button" hidden>🔊 Filmton mit OK einschalten</button><div id="tvWelcomeMusicStatus" class="tvWelcomeMusicStatus" hidden aria-live="polite"></div><div id="tvSpotifyDock" class="tvSpotifyDock" hidden aria-label="Spotify-Vorschau auf LG deaktiviert"></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
  videoEl=el('tvVideo');
  const trailerVideo=el('tvTrailer'),trailerUnlock=el('tvTrailerUnlock'),trailerMessage=el('tvTrailerMessage');
  if(trailerVideo&&trailerUnlock){
@@ -974,6 +1049,8 @@ function tvView(){
   }else tvFullscreenHint('Spotify-Player wird vorbereitet. Für ganze Songs auf dem LG-TV nutze Spotify Connect.');
   tvControlsVisible(true);
  };
+ if(window.SpotifyConnect?.setTokenProvider)window.SpotifyConnect.setTokenProvider(()=>api('/api/spotify/token','GET',undefined,tvKey));
+ [['tvSpToggle','toggle'],['tvSpNext','next'],['tvSpPrev','previous'],['tvSpUp','up'],['tvSpDown','down']].forEach(([id,kind])=>{const b=el(id);if(b)b.onclick=()=>tvSpotifyAction(kind);});
  const spotifyPc=el('tvSpotifyPc');
  if(spotifyPc&&window.SpotifyConnect?.webPlayerSupported?.()){
   // HDMI-PC: this browser becomes the Spotify Connect device "TOUCH LIVE Beamer-PC".
@@ -1419,6 +1496,8 @@ async function poll(force=false){
  if(role==='join')refreshStudentScoreBadge();
  if(role==='tv'&&old&&old.phase!==next.phase&&['film','trailer'].includes(next.phase)&&window.SpotifyConnect?.webPlayerActive?.())window.SpotifyConnect.pauseWebPlayer().catch(()=>{});
  if(next.spotifyClientId&&window.SpotifyConnect?.setDefaultClientId)window.SpotifyConnect.setDefaultClientId(next.spotifyClientId);
+ if((role==='admin'||role==='control')&&window.SpotifyConnect?.connected?.())spotifyServerLink();
+ if(role==='tv'){tvSpotifyVisibility();if(old&&old.phase==='welcome'&&['film','trailer'].includes(next.phase)&&tvSpInfo.playing&&tvSpotifyReady()){tvSpInfo.playing=false;window.SpotifyConnect.api('/me/player/pause','PUT').catch(()=>{});}}
  if(role==='tv'){tvDisplay();
    const signal=Number(state.tvReloadRequest||0);
    if(window.__touchTVReloadSeen===undefined)window.__touchTVReloadSeen=signal;

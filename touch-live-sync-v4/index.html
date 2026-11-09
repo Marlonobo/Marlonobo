@@ -8,9 +8,9 @@ function check(){if(window.__touchBooted||!loaderShown())return;tries++;var secs
  var x=new XMLHttpRequest();x.open('GET','/api/health?b='+Date.now(),true);x.timeout=8000;
  x.onload=function(){if(window.__touchBooted||!loaderShown())return;if(x.status===200){
    if(tries>=3){info('Seite wird neu geladen …');location.reload();return;}
-   var s=document.createElement('script');s.src='/app.js?v=20261109-2&retry='+tries;document.body.appendChild(s);info('Oberfläche wird erneut geladen …');
+   var s=document.createElement('script');s.src='/app.js?v=20261109-3&retry='+tries;document.body.appendChild(s);info('Oberfläche wird erneut geladen …');
   }else info('Server startet noch ('+secs+' s) … bitte kurz warten.');setTimeout(check,5000);};
  x.onerror=x.ontimeout=function(){info('Server wacht gerade auf ('+secs+' s). Render braucht nach einer Pause bis zu 1 Minute …');setTimeout(check,5000);};
  x.send();}
 setTimeout(check,6000);})();
-</script><script src="/app.js?v=20261109-2" defer></script></body></html>
+</script><script src="/app.js?v=20261109-3" defer></script></body></html>

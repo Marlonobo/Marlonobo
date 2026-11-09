@@ -14,6 +14,7 @@ if(!process.env.TV_KEY)console.log('TOUCH LIVE TV_KEY: '+TV);
 fs.mkdirSync(DIR,{recursive:true});
 const TRAILER_FILE=path.join(DIR,'touchscreen-trailer.mp4');
 const BUNDLED_SUB_FILE=path.join(ROOT,'untertitel.vtt');
+const SPOTIFY_FILE=path.join(DIR,'spotify-token.json');
 const USERS_FILE=path.join(DIR,'users.json'),STATE_FILE=path.join(DIR,'live-state.json'), VIDEO_FILE=path.join(DIR,'touchscreen.mp4'), SUB_FILE=path.join(DIR,'untertitel.vtt'), QUESTIONS_FILE=path.join(DIR,'custom-questions.json');
 try{const saved=JSON.parse(fs.readFileSync(QUESTIONS_FILE,'utf8'));if(Array.isArray(saved)&&saved.length>=1&&saved.length<=50)Q.splice(0,Q.length,...saved);}catch{}
 
@@ -194,7 +195,7 @@ function publicState(id){
   ?Math.max(0,Math.ceil(GESTURE_MISSION_SECONDS-(s.time-(s.gestureOverlayStartTime||0))))
   :s.phase==='gesture'?Math.max(0,Math.ceil(GESTURE_MISSION_SECONDS-(Date.now()-(s.gestureStartTime||Date.now()))/1000)):0;
  const gestureActive=gestureSeconds>0&&(s.phase==='gesture'||(s.phase==='film'&&s.gestureOverlay));
- return {homeUnlocked:!!s.homeUnlocked,trailerAvailable:fs.existsSync(TRAILER_FILE),trailerPlaying:!!s.trailerPlaying,trailerSerial:s.trailerSerial||0,trailerRevision:s.trailerRevision||0,tvAudio:Date.now()-tvAudioReport.updated<25000?{connected:true,playing:tvAudioReport.playing,blocked:tvAudioReport.blocked,error:tvAudioReport.error}:{connected:false,playing:false,blocked:false,error:''},phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},spotifyClientId:s.spotifyClientId||'',soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
+ return {homeUnlocked:!!s.homeUnlocked,trailerAvailable:fs.existsSync(TRAILER_FILE),trailerPlaying:!!s.trailerPlaying,trailerSerial:s.trailerSerial||0,trailerRevision:s.trailerRevision||0,tvAudio:Date.now()-tvAudioReport.updated<25000?{connected:true,playing:tvAudioReport.playing,blocked:tvAudioReport.blocked,error:tvAudioReport.error}:{connected:false,playing:false,blocked:false,error:''},phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},spotifyClientId:s.spotifyClientId||'',spotifyLinked:!!spotifyAuth?.refreshToken,soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
   quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,a:q.a,duration:q.type==='zoom'?ZOOM_MISSION_SECONDS:((s.phase==='demo'||s.demoOverlay)?45:30),remaining:a.remaining,accepting:a.accepting,foundCount:q.type==='zoom'?[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length:0,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
   player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)||fs.existsSync(BUNDLED_SUB_FILE)};
 }
@@ -239,6 +240,25 @@ async function media(req,res){
  const headers={'Content-Type':'video/mp4','Accept-Ranges':'bytes','Content-Length':end-start+1,'Cache-Control':'no-store'};
  if(code===206)headers['Content-Range']='bytes '+start+'-'+end+'/'+size;
  res.writeHead(code,headers);if(req.method==='HEAD')return res.end();fs.createReadStream(VIDEO_FILE,{start,end}).pipe(res);
+}
+// Spotify: one shared login (from phone/admin) so the LG-TV page can control the
+// Spotify app on the TV with the TV remote. Only the public Client ID + PKCE refresh
+// token are stored; there is no Spotify secret.
+let spotifyAuth=null;
+try{spotifyAuth=JSON.parse(fs.readFileSync(SPOTIFY_FILE,'utf8'));}catch{}
+function saveSpotifyAuth(){fsp.writeFile(SPOTIFY_FILE,JSON.stringify(spotifyAuth||{})).catch(()=>{});}
+let spotifyRefreshing=null;
+async function spotifyAccess(){
+ if(!spotifyAuth?.refreshToken||!spotifyAuth?.clientId)throw Object.assign(Error('Spotify ist noch nicht verbunden. Öffne einmal die Handy-Fernbedienung oder den Admin und melde dich bei Spotify an.'),{status:404});
+ if(spotifyAuth.accessToken&&Date.now()<spotifyAuth.expiresAt-90000)return spotifyAuth;
+ if(!spotifyRefreshing)spotifyRefreshing=(async()=>{
+  const r=await fetch('https://accounts.spotify.com/api/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'refresh_token',refresh_token:spotifyAuth.refreshToken,client_id:spotifyAuth.clientId}),signal:AbortSignal.timeout(15000)});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok){if(r.status===400){spotifyAuth=null;saveSpotifyAuth();}throw Object.assign(Error('Spotify-Anmeldung abgelaufen. Bitte am Handy erneut mit Spotify anmelden.'),{status:401});}
+  spotifyAuth={...spotifyAuth,accessToken:j.access_token,expiresAt:Date.now()+Number(j.expires_in||3600)*1000,refreshToken:j.refresh_token||spotifyAuth.refreshToken};
+  saveSpotifyAuth();return spotifyAuth;
+ })().finally(()=>{spotifyRefreshing=null;});
+ return spotifyRefreshing;
 }
 async function handler(req,res){
  const u=new URL(req.url,'http://localhost'),p=u.pathname,m=req.method;
@@ -321,6 +341,22 @@ async function handler(req,res){
   res.writeHead(status,headers);
   if(m==='HEAD')return res.end();
   return fs.createReadStream(TRAILER_FILE,{start:first,end:last,highWaterMark:1024*1024}).pipe(res);
+ }
+ if(m==='POST'&&p==='/api/spotify/link'){
+  if(!isAdmin(req))return unauthorized(res);
+  const b=await read(req,6000),clientId=String(b.clientId||''),refresh=String(b.refresh_token||'');
+  if(!/^[A-Za-z0-9]{32}$/.test(clientId)||refresh.length<20||refresh.length>1000)return send(res,400,{error:'Spotify-Anmeldedaten unvollständig.'});
+  spotifyAuth={clientId,refreshToken:refresh,accessToken:String(b.access_token||''),expiresAt:Number(b.expiresAt)||0,linkedAt:Date.now()};
+  saveSpotifyAuth();s.revision++;return send(res,200,{ok:true});
+ }
+ if(m==='POST'&&p==='/api/spotify/unlink'){
+  if(!isAdmin(req))return unauthorized(res);
+  spotifyAuth=null;saveSpotifyAuth();s.revision++;return send(res,200,{ok:true});
+ }
+ if(m==='GET'&&p==='/api/spotify/token'){
+  const admin=isAdmin(req);if(!admin&&!isTv(req))return unauthorized(res);
+  try{const a=await spotifyAccess();return send(res,200,{access_token:a.accessToken,expiresAt:a.expiresAt,clientId:a.clientId,...(admin?{refresh_token:a.refreshToken}:{})});}
+  catch(e){return send(res,e.status||500,{error:e.message});}
  }
  if(m==='GET'&&p==='/api/state')return send(res,200,publicState(u.searchParams.get('id')));
  if(m==='GET'&&p==='/api/version')return send(res,200,{version:BUILD_VERSION});

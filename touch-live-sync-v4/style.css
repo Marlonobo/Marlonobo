@@ -782,3 +782,8 @@ body.studentEntry .studentScoreGain{
 .adminPanels>.card h2{margin-top:4px}
 @media (max-width:900px){.adminTabs{grid-template-columns:repeat(2,minmax(0,1fr))}.adminTabs button:last-child{grid-column:1/-1}}
 @media (max-width:520px){.adminTabs{grid-template-columns:1fr 1fr;gap:8px}.adminTabs button{padding:11px 12px}.adminTabs button small{display:none}}
+
+/* Spotify-Tasten am LG-Fernseher */
+#tvApp .tvRemoteBar #tvSpPrev,#tvApp .tvRemoteBar #tvSpNext,#tvApp .tvRemoteBar #tvSpDown,#tvApp .tvRemoteBar #tvSpUp{min-width:64px;font-size:22px}
+#tvApp .tvRemoteBar #tvSpToggle{background:#1db954;border-color:#1db954;color:#06210f;font-weight:800}
+#tvApp .tvSpNow{flex-basis:100%;font-size:15px;color:#c7f5dc;padding:2px 6px}

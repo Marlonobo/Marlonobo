@@ -53,7 +53,22 @@ async function callback(){
  }catch(e){note('Spotify konnte nicht verbunden werden: '+e.message);}
  forget(FLOW);location.replace(returnPath);return true;
 }
+// Optional: the server keeps the shared Spotify login (so the LG-TV can use it, too).
+let tokenProvider=null,providerCache=null;
+function setTokenProvider(fn){tokenProvider=typeof fn==='function'?fn:null;providerCache=null;}
 async function accessToken(){
+ if(tokenProvider){
+  if(providerCache&&Date.now()<providerCache.expiresAt-60000)return providerCache.access_token;
+  try{
+   const r=await tokenProvider();
+   if(r?.access_token){
+    providerCache={access_token:r.access_token,expiresAt:Number(r.expiresAt)||Date.now()+3000000};
+    // Keep the newest refresh token locally, so this device can re-link after a server restart.
+    if(r.refresh_token){const old=token()||{};write(KEY,{...old,access_token:r.access_token,refresh_token:r.refresh_token,expiresAt:providerCache.expiresAt,clientId:r.clientId||old.clientId,scope:old.scope||''});}
+    return r.access_token;
+   }
+  }catch(e){if(!token())throw e;}
+ }
  let stored=token();if(!stored)return null;
  if(Date.now()<stored.expiresAt-90000)return stored.access_token;
  if(!stored.refresh_token||!stored.clientId){forget(KEY);return null;}
@@ -343,7 +358,7 @@ async function enableWebPlayer(name='TOUCH LIVE Beamer-PC',onState){
  return ready;
 }
 async function disableWebPlayer(){if(webPlayer){try{await webPlayer.pause();}catch{}try{webPlayer.disconnect();}catch{}}webPlayer=null;webPlayerDevice='';}
-w.SpotifyConnect={mount,login,connected:userAuthorized,pauseForFilm,refresh:renderAccount,getSelectedClientId:registeredClient,setDefaultClientId,setVolume,devicesFetch,currentPlayback,enableWebPlayer,disableWebPlayer,webPlayerSupported,webPlayerActive:()=>!!webPlayerDevice,pauseWebPlayer:()=>{if(webPlayer){try{return webPlayer.pause();}catch{}}return Promise.resolve();},preloadWebPlayer:()=>{if(webPlayerSupported())loadSdk().catch(()=>{});}};
+w.SpotifyConnect={setTokenProvider,exportTokens:()=>{const t=token();return t?{clientId:t.clientId,refresh_token:t.refresh_token,access_token:t.access_token,expiresAt:t.expiresAt}:null;},api:spotify,mount,login,connected:userAuthorized,pauseForFilm,refresh:renderAccount,getSelectedClientId:registeredClient,setDefaultClientId,setVolume,devicesFetch,currentPlayback,enableWebPlayer,disableWebPlayer,webPlayerSupported,webPlayerActive:()=>!!webPlayerDevice,pauseWebPlayer:()=>{if(webPlayer){try{return webPlayer.pause();}catch{}}return Promise.resolve();},preloadWebPlayer:()=>{if(webPlayerSupported())loadSdk().catch(()=>{});}};
 if(location.pathname===CALLBACK){
  document.addEventListener('DOMContentLoaded',()=>{document.body.innerHTML='<main style="max-width:540px;margin:12vh auto;padding:24px;font-family:system-ui;background:#0b2233;color:white;border-radius:15px"><h1>Spotify wird verbunden …</h1><p>Du wirst danach zur TOUCH-LIVE-Regie zurückgeleitet.</p></main>';});
  callback().catch(err=>{document.body.textContent='Spotify-Anmeldung fehlgeschlagen: '+err.message;});
