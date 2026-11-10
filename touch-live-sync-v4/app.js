@@ -1380,8 +1380,9 @@ function updateCaption(){
 async function fetchCaptions(){try{const response=await fetch('/captions.vtt');if(!response.ok)return;subtitles=parseVTT(await response.text());}catch{}}
 function parseVTT(txt){return txt.replace(/\r/g,'').split(/\n\n+/).map(block=>{const lines=block.split('\n'),i=lines.findIndex(x=>x.includes('-->'));if(i<0)return null;const times=lines[i].split('-->');const toSeconds=x=>{const v=x.trim().split(/[.:]/).map(Number);return v.length===4?v[0]*3600+v[1]*60+v[2]+v[3]/1000:v[0]*60+v[1]+(v[2]||0)/1000;};return{start:toSeconds(times[0]),end:toSeconds(times[1]),text:lines.slice(i+1).join('\n')};}).filter(Boolean);}
 function handout(){
- // Handout zur Präsentation (A4, 2 Seiten): Seite 1 Wissen + Aufgabe mit Rechnung,
- // Seite 2 anonymer Feedbackbogen. Bewertung × Gewichtung wird live berechnet.
+ // Handout (A4, 2 Seiten). Jedes Feld kann getippt ODER mit Stift/Finger beschrieben
+ // werden (iPad + Apple Pencil). Rechnen machen die Schüler selbst; „Prüfen“ kontrolliert
+ // nur getippte Zahlen. Alles bleibt auf dem Gerät gespeichert und lässt sich drucken.
  const types=[
   ['Resistiv','Zwei leitende Folien werden durch Druck aneinandergepresst.','Stift und Handschuh gehen, günstig','kein echtes Multitouch, Bild etwas trüber','Kartenterminal, ältere Navis'],
   ['Kapazitiv','Der Finger verändert das elektrische Feld (Kapazität) im Sensorgitter.','Multitouch, sehr genau, robustes Glas','nur leitfähiger Finger, Wasser stört','Smartphone, Tablet'],
@@ -1395,14 +1396,15 @@ function handout(){
   ['Wasser leitet auch.','Darum lösen Tropfen auf dem Display manchmal eine Berührung aus.'],
   ['Multitouch = mehrere Punkte gleichzeitig.','Aus den Punkten berechnet die Software Zoomen, Drehen und Wischen.'],
   ['Haptisches Feedback','ist eine kurze Vibration als Antwort – man „spürt“ den Klick.'],
-  ['Im Auto gefährlich:','Weg = Geschwindigkeit × Zeit. 50 km/h ≈ 13,9 m/s → 2 s Blick aufs Display ≈ 28 m blind gefahren.']
+  ['Im Auto gefährlich:','2 Sekunden Blick aufs Display bei 50 km/h – wie weit fährt man blind? Rechne es unten aus.']
  ];
- const task=[['glove','Bedienung mit Handschuh',30],['clean','robust und leicht zu reinigen',25],['multi','Multitouch (Zoomen, Wischen)',20],['cost','Kosten',25]];
+ const task=[['glove','Bedienung mit Handschuh',30],['clean','robust, leicht zu reinigen',25],['multi','Multitouch',20],['cost','Kosten',25]];
  const taskCols=[['res','Resistiv'],['cap','Kapazitiv'],['ir','Infrarot']];
  const crit=[['inhalt','Inhalt der Doku',25],['verst','Verständlichkeit',20],['inter','Interaktivität (Quiz & Spiele)',25],['technik','Technik & Ablauf',10],['handout','Handout',10],['auftritt','Präsentation (Form, Sprache)',10]];
- const opt=max=>'<option value=""></option>'+Array.from({length:max+1},(_,i)=>'<option>'+i+'</option>').join('');
- const opt15='<option value=""></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>';
- // Schnitt durch einen kapazitiven Touchscreen (schematisch, nicht maßstäblich).
+ // Schreibfeld: getippt (input/textarea) + darüberliegende Stift-Ebene (canvas).
+ const wb=(key,kind,label)=>'<div class="wb wb-'+kind+'" data-wb="'+key+'">'+
+  (kind==='area'?'<textarea data-save="'+key+'" aria-label="'+esc(label||key)+'"></textarea>':'<input data-save="'+key+'" '+(kind==='num'?'inputmode="decimal" autocomplete="off"':'')+' aria-label="'+esc(label||key)+'">')+
+  '<canvas class="wbInk" data-ink="'+key+'"></canvas></div>';
  const layers='<figure class="hxFig"><svg viewBox="0 0 300 132" role="img" aria-label="Aufbau: Deckglas, Sensor, Display">'+
   '<rect x="8" y="14" width="196" height="16" fill="#e8f1f0" stroke="#5b7f7c"/><text x="214" y="26">Deckglas</text>'+
   '<rect x="8" y="34" width="196" height="10" fill="#fff" stroke="#0b6e69"/>'+Array.from({length:12},(_,i)=>'<line x1="'+(16+i*16)+'" y1="34" x2="'+(16+i*16)+'" y2="44" stroke="#0b6e69" stroke-width="1"/>').join('')+'<text x="214" y="43">Sensorgitter</text>'+
@@ -1410,7 +1412,7 @@ function handout(){
   '<rect x="8" y="86" width="196" height="12" fill="#c9d0d6" stroke="#71808c"/><text x="214" y="95">Elektronik</text>'+
   '<path d="M96 0 C96 6 100 10 106 12" fill="none" stroke="#18232b" stroke-width="1.4"/><circle cx="106" cy="11" r="3" fill="#18232b"/>'+
   '<text x="8" y="120" class="hxFigCap">Finger → Feld im Gitter ändert sich → Controller berechnet x/y</text></svg></figure>';
- const head=(kicker,title,sub)=>'<header class="hxHead"><div><div class="hxKicker">'+kicker+'</div><h1 class="hxTitle">'+title+'</h1><div class="hxSub">'+sub+'</div></div><div class="hxMeta"><span>Lernfeld 14</span><span>Friedrich-Dessauer-Schule Limburg</span><label class="hxDate">Datum <input data-save="hx_date" aria-label="Datum"></label></div></header>';
+ const head=(kicker,title,sub)=>'<header class="hxHead"><div><div class="hxKicker">'+kicker+'</div><h1 class="hxTitle">'+title+'</h1><div class="hxSub">'+sub+'</div></div><div class="hxMeta"><span>Lernfeld 14</span><span>Friedrich-Dessauer-Schule Limburg</span><div class="hxMetaLine">Name '+wb('hx_name','line','Name')+'</div></div></header>';
  const sec=(n,title)=>'<h2 class="hxH"><span class="hxNum">'+n+'</span>'+title+'</h2>';
  const page1='<section class="hxPage">'+
   head('Handout zur Präsentation','Touchscreens','Interaktive Dokumentation „TOUCH LIVE“ · Präsentation von Marlon Bonsels')+
@@ -1421,65 +1423,159 @@ function handout(){
   '<p class="hxTimeline"><span><b>1965</b> E. A. Johnson beschreibt den kapazitiven Touch</span><span><b>1972</b> Bent Stumpe, CERN</span><span><b>1983</b> HP-150 mit Infrarot-Touch</span><span><b>1994</b> IBM Simon – erstes Touch-Smartphone</span><span><b>2007</b> iPhone: Multitouch für alle</span></p>'+
   sec(2,'Das musst du wissen')+
   '<ol class="hxKey">'+facts.map(([a,b])=>'<li><b>'+esc(a)+'</b> '+esc(b)+'</li>').join('')+'</ol>'+
-  sec(3,'Aufgabe: Welcher Touchscreen passt?')+
-  '<p class="hxText"><b>Die Kfz-Werkstatt.</b> Die Mitarbeiter tragen Arbeitshandschuhe, der Bildschirm wird schmutzig und muss oft gereinigt werden. Vergebt zu zweit <b>1 bis 5 Punkte</b> pro Technik. Punkte × Gewicht wird addiert – der höchste Nutzwert gewinnt.</p>'+
-  '<table class="hxTable hxCalc"><thead><tr><th>Kriterium</th><th class="r">Gewicht</th>'+taskCols.map(c=>'<th class="c">'+c[1]+'</th>').join('')+'</tr></thead><tbody>'+
-   task.map(([k,l,w])=>'<tr><td>'+esc(l)+'</td><td class="r">'+w+' %</td>'+taskCols.map(([c])=>'<td class="c"><select data-save="hx_t_'+k+'_'+c+'" data-task="'+c+'" data-weight="'+w+'" aria-label="'+esc(l)+' '+c+'">'+opt15+'</select></td>').join('')+'</tr>').join('')+
-   '<tr class="hxSum"><td>Nutzwert</td><td class="r">100 %</td>'+taskCols.map(([c])=>'<td class="c" id="hxTask_'+c+'">–</td>').join('')+'</tr></tbody></table>'+
-  '<div class="hxLine"><span>Unsere Entscheidung und warum:</span><input data-save="hx_decision" aria-label="Unsere Entscheidung"></div>'+
-  '<footer class="hxFoot"><span>Touchscreens · Handout · Marlon Bonsels</span><span>1 / 2</span></footer></section>';
+  '<footer class="hxFoot"><span>Touchscreens · Handout · Marlon Bonsels</span><span>1 / 3</span></footer></section>'+
+  '<section class="hxPage hxBreak">'+head('Arbeitsblatt','Jetzt seid ihr dran','Rechnen, bewerten, entscheiden – tippen oder mit dem Stift schreiben')+
+  sec(3,'Rechnen: Blindflug im Auto')+
+  '<div class="hxCalcBox"><p>Ein Auto fährt <b>50 km/h</b>. Die Fahrerin schaut <b>2 Sekunden</b> auf den Touchscreen. Wie viele Meter fährt sie „blind“? <span class="hxHint">Tipp: km/h ÷ 3,6 = m/s · Weg = Geschwindigkeit × Zeit</span></p>'+
+  '<div class="hxSteps"><label>Geschwindigkeit in m/s'+wb('hx_car_ms','num','Geschwindigkeit in m/s')+'</label><label>Weg in Metern'+wb('hx_car_m','num','Weg in Metern')+'</label><button type="button" class="hxCheck noPrint" data-check="car">Prüfen</button></div><div class="hxWork"><span>Rechenweg</span>'+wb('hx_car_work','area','Rechenweg')+'</div><p class="hxCheckMsg noPrint" id="hxCheckCar" aria-live="polite"></p></div>'+
+  sec(4,'Aufgabe: Welcher Touchscreen passt in die Werkstatt?')+
+  '<p class="hxText"><b>Die Kfz-Werkstatt.</b> Die Mitarbeiter tragen Arbeitshandschuhe, der Bildschirm wird schmutzig und muss oft gereinigt werden. Gebt zu zweit jeder Technik <b>1 bis 5 Punkte</b>, rechnet <b>Punkte × Gewicht</b> und addiert zum <b>Nutzwert</b>. Der höchste Nutzwert gewinnt.</p>'+
+  '<table class="hxTable hxCalc hxWrite"><thead><tr><th rowspan="2">Kriterium</th><th rowspan="2" class="r">Gewicht</th>'+taskCols.map(c=>'<th colspan="2" class="c hxGroup">'+c[1]+'</th>').join('')+'</tr><tr>'+taskCols.map(()=>'<th class="c">Punkte</th><th class="c">× Gewicht</th>').join('')+'</tr></thead><tbody>'+
+   task.map(([k,l,w])=>'<tr><td>'+esc(l)+'</td><td class="r">'+w+' %</td>'+taskCols.map(([c])=>'<td class="c">'+wb('hx_t_'+k+'_'+c,'num',l+' '+c+' Punkte')+'</td><td class="c">'+wb('hx_tp_'+k+'_'+c,'num',l+' '+c+' Ergebnis')+'</td>').join('')+'</tr>').join('')+
+   '<tr class="hxSum"><td>Nutzwert</td><td class="r">100 %</td>'+taskCols.map(([c])=>'<td></td><td class="c">'+wb('hx_tsum_'+c,'num','Nutzwert '+c)+'</td>').join('')+'</tr></tbody></table>'+
+  '<div class="hxRow"><button type="button" class="hxCheck noPrint" data-check="task">Rechnung prüfen</button><span class="hxCheckMsg noPrint" id="hxCheckTask" aria-live="polite"></span></div>'+
+  '<div class="hxLine"><span>Unsere Entscheidung und warum:</span>'+wb('hx_decision','line','Unsere Entscheidung')+'</div>'+
+  '<footer class="hxFoot"><span>Touchscreens · Handout · Marlon Bonsels</span><span>2 / 3</span></footer></section>';
  const page2='<section class="hxPage hxBreak">'+
   head('Feedbackbogen · anonym','Wie war die Präsentation?','Touchscreens · Interaktive Dokumentation „TOUCH LIVE“')+
-  '<p class="hxText">So geht’s: Gib jedem Kriterium eine <b>Bewertung von 0 bis 10</b> (10 = sehr gut). Bewertung × Gewichtung wird gerechnet und addiert – heraus kommt eine Note von 0 bis 10.</p>'+
-  '<table class="hxTable hxCalc hxFeedback"><thead><tr><th>Kriterium</th><th class="r">Gewichtung</th><th class="c">Bewertung (0–10)</th><th class="r">Bewertung × Gewichtung</th></tr></thead><tbody>'+
-   crit.map(([k,l,w])=>'<tr><td><b>'+esc(l)+'</b></td><td class="r">'+w+' %</td><td class="c"><select data-save="hx_f_'+k+'" data-crit="'+k+'" data-weight="'+w+'" aria-label="Bewertung '+esc(l)+'">'+opt(10)+'</select></td><td class="r" id="hxCrit_'+k+'">–</td></tr>').join('')+
-   '<tr class="hxSum"><td>Summe</td><td class="r">100 %</td><td></td><td class="r"><b id="hxCritTotal">–</b></td></tr></tbody></table>'+
-  '<div class="hxResult" id="hxResult">Noch keine Bewertung.</div>'+
-  '<div class="hxCols3"><label><span class="g">Das war gut</span><textarea data-save="hx_good" rows="5"></textarea></label><label><span class="b">Das war nicht so gut</span><textarea data-save="hx_better" rows="5"></textarea></label><label><span class="c">Das würde ich ändern</span><textarea data-save="hx_change" rows="5"></textarea></label></div>'+
+  '<p class="hxText">So geht’s: Gib jedem Kriterium eine <b>Bewertung von 0 bis 10</b> (10 = sehr gut). Rechne <b>Bewertung × Gewichtung</b> und addiere alles – heraus kommt eine Note von 0 bis 10.</p>'+
+  '<table class="hxTable hxCalc hxWrite hxFeedback"><thead><tr><th>Kriterium</th><th class="r">Gewichtung</th><th class="c">Bewertung (0–10)</th><th class="c">Bewertung × Gewichtung</th></tr></thead><tbody>'+
+   crit.map(([k,l,w])=>'<tr><td><b>'+esc(l)+'</b></td><td class="r">'+w+' %</td><td class="c">'+wb('hx_f_'+k,'num','Bewertung '+l)+'</td><td class="c">'+wb('hx_fp_'+k,'num','Ergebnis '+l)+'</td></tr>').join('')+
+   '<tr class="hxSum"><td>Summe</td><td class="r">100 %</td><td></td><td class="c">'+wb('hx_fsum','num','Summe')+'</td></tr></tbody></table>'+
+  '<div class="hxRow"><button type="button" class="hxCheck noPrint" data-check="feedback">Rechnung prüfen</button><span class="hxCheckMsg noPrint" id="hxCheckFeedback" aria-live="polite"></span></div>'+
+  '<div class="hxCols3"><div><span class="hxColHead g">Das war gut</span>'+wb('hx_good','area','Das war gut')+'</div><div><span class="hxColHead b">Das war nicht so gut</span>'+wb('hx_better','area','Das war nicht so gut')+'</div><div><span class="hxColHead c">Das würde ich ändern</span>'+wb('hx_change','area','Das würde ich ändern')+'</div></div>'+
   '<p class="hxNote">Beispiel: Bewertung 8 bei Interaktivität ergibt 8 × 0,25 = 2,0. Danke fürs Ausfüllen!</p>'+
-  '<footer class="hxFoot"><span>Touchscreens · Feedbackbogen</span><span>2 / 2</span></footer></section>';
- wrap(page('Handout','LERNFELD 14 · TOUCHSCREENS','Ausfüllen, als PDF speichern oder die Rückmeldung direkt an die Lehrkraft senden. Alles bleibt auf deinem Gerät gespeichert.')+
-  '<div class="hxActions noPrint"><button type="button" class="primary" id="sendHandout">Rückmeldung senden</button><button type="button" id="printHandout">Als PDF speichern</button><button type="button" id="clearHandout">Leeren</button><span id="hxSaved" aria-live="polite"></span></div>'+
+  '<footer class="hxFoot"><span>Touchscreens · Feedbackbogen</span><span>3 / 3</span></footer></section>';
+ const tools='<div class="hxTools noPrint" role="toolbar" aria-label="Schreibwerkzeuge">'+
+  '<div class="hxSeg"><button type="button" data-mode="type" class="on">⌨ Tippen</button><button type="button" data-mode="pen">✎ Stift</button><button type="button" data-mode="erase">⌫ Radierer</button></div>'+
+  '<div class="hxSeg hxColors"><button type="button" data-color="#1b2a8a" class="on" title="Blau" style="--c:#1b2a8a"></button><button type="button" data-color="#111111" title="Schwarz" style="--c:#111"></button><button type="button" data-color="#c0392b" title="Rot" style="--c:#c0392b"></button></div>'+
+  '<button type="button" id="hxUndo">↶ Rückgängig</button>'+
+  '<label class="hxPenOnly"><input type="checkbox" id="hxPenOnly"> nur Apple Pencil</label>'+
+  '<span class="hxToolsGap"></span><button type="button" class="primary" id="sendHandout">Rückmeldung senden</button><button type="button" id="printHandout">PDF / Drucken</button><button type="button" id="clearHandout">Leeren</button><span id="hxSaved" aria-live="polite"></span></div>';
+ wrap(page('Handout','LERNFELD 14 · TOUCHSCREENS','Tippen oder mit dem Stift schreiben – auch mit dem Apple Pencil. Gerechnet wird selbst. Alles bleibt auf deinem Gerät gespeichert.')+tools+
   '<article class="hx" id="paper">'+page1+page2+'</article>');
- const fields=()=>[...document.querySelectorAll('#paper [data-save]')];
- const value=k=>{const n=document.querySelector('#paper [data-save="'+k+'"]');return n?String(n.value||'').trim():'';};
- const fmt=n=>n.toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
- function recalc(){
-  const totals={};
-  for(const [c] of taskCols){let sum=0,any=false;document.querySelectorAll('#paper select[data-task="'+c+'"]').forEach(x=>{if(x.value!==''){any=true;sum+=Number(x.value)*Number(x.dataset.weight)/100;}});totals[c]=any?sum:null;const cell=el('hxTask_'+c);if(cell)cell.textContent=any?fmt(sum):'–';}
-  const filled=Object.values(totals).filter(v=>v!==null),best=filled.length?Math.max(...filled):null;
-  for(const [c] of taskCols){const cell=el('hxTask_'+c);if(cell)cell.classList.toggle('hxBest',best!==null&&totals[c]===best);}
-  let total=0,count=0;
-  for(const [k,,w] of crit){const v=value('hx_f_'+k),cell=el('hxCrit_'+k);if(v!==''){const part=Number(v)*w/100;total+=part;count++;if(cell)cell.textContent=fmt(part);}else if(cell)cell.textContent='–';}
-  const t=el('hxCritTotal'),r=el('hxResult');
-  if(t)t.textContent=count?fmt(total):'–';
-  if(r)r.innerHTML=count?(count<crit.length?'Zwischenstand: <b>'+fmt(total)+'</b> – noch '+(crit.length-count)+' Kriterien offen.':'Ergebnis: <b>'+fmt(total)+' von 10 Punkten</b>'):'Noch keine Bewertung.';
-  return {total,count};
- }
+ const paper=el('paper');
+ const fields=()=>[...paper.querySelectorAll('[data-save]')];
+ const value=k=>{const n=paper.querySelector('[data-save="'+k+'"]');return n?String(n.value||'').trim():'';};
+ const num=k=>{const v=value(k).replace(/\s/g,'').replace(',','.');return v===''||!Number.isFinite(Number(v))?null:Number(v);};
+ const fmt=n=>n.toLocaleString('de-DE',{maximumFractionDigits:2});
+ const saved=()=>{const s=el('hxSaved');if(s)s.textContent='✓ gespeichert';};
  fields().forEach(x=>{
   const key='touch_'+x.dataset.save;
   try{x.value=localStorage.getItem(key)||'';}catch{}
-  x.oninput=x.onchange=()=>{try{localStorage.setItem(key,x.value);}catch{}recalc();const s=el('hxSaved');if(s)s.textContent='✓ gespeichert';};
+  x.oninput=()=>{try{localStorage.setItem(key,x.value);}catch{}saved();x.closest('.wb')?.classList.remove('ok','bad');};
  });
- el('printHandout').onclick=()=>window.print();
+ // ---------- Stift-Ebene ----------
+ let mode='type',color='#1b2a8a',penOnly=false;const undo=[];
+ try{penOnly=localStorage.getItem('touch_hx_penonly')==='1';}catch{}
+ el('hxPenOnly').checked=penOnly;
+ const canvases=()=>[...paper.querySelectorAll('canvas.wbInk')];
+ function fit(c){
+  const r=c.getBoundingClientRect(),dpr=Math.min(3,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width*dpr)),h=Math.max(1,Math.round(r.height*dpr));
+  if(c.width===w&&c.height===h)return;
+  c.width=w;c.height=h;
+  let data=null;try{data=localStorage.getItem('touch_ink_'+c.dataset.ink);}catch{}
+  if(data){const img=new Image();img.onload=()=>{const g=c.getContext('2d');g.clearRect(0,0,c.width,c.height);g.drawImage(img,0,0,c.width,c.height);};img.src=data;c.parentElement.classList.add('inked');}
+ }
+ function store(c){
+  const blank=!c.getContext('2d').getImageData(0,0,c.width,c.height).data.some((v,i)=>i%4===3&&v>0);
+  try{if(blank)localStorage.removeItem('touch_ink_'+c.dataset.ink);else localStorage.setItem('touch_ink_'+c.dataset.ink,c.toDataURL('image/png'));}catch{alert('Speicher voll – bitte einzelne Zeichnungen löschen.');}
+  c.parentElement.classList.toggle('inked',!blank);saved();
+ }
+ function setMode(m){
+  mode=m;document.body.classList.toggle('hxInkMode',m!=='type');document.body.classList.toggle('hxEraseMode',m==='erase');
+  document.querySelectorAll('.hxTools [data-mode]').forEach(b=>b.classList.toggle('on',b.dataset.mode===m));
+  if(m!=='type')document.activeElement?.blur?.();
+  canvases().forEach(fit);
+ }
+ canvases().forEach(c=>{
+  let drawing=false,last=null,g=null;
+  c.addEventListener('pointerdown',e=>{
+   if(mode==='type')return;
+   if(penOnly&&e.pointerType==='touch')return; // Handballen/Finger ignorieren
+   e.preventDefault();fit(c);g=c.getContext('2d');
+   undo.push({c,data:c.toDataURL()});if(undo.length>40)undo.shift();
+   drawing=true;c.setPointerCapture(e.pointerId);
+   const r=c.getBoundingClientRect(),dpr=c.width/r.width;last={x:(e.clientX-r.left)*dpr,y:(e.clientY-r.top)*dpr};
+   g.lineCap='round';g.lineJoin='round';
+  });
+  c.addEventListener('pointermove',e=>{
+   if(!drawing)return;e.preventDefault();
+   const r=c.getBoundingClientRect(),dpr=c.width/r.width,events=e.getCoalescedEvents?e.getCoalescedEvents():[e];
+   for(const ev of events){
+    const p={x:(ev.clientX-r.left)*dpr,y:(ev.clientY-r.top)*dpr},pr=ev.pressure&&ev.pointerType==='pen'?ev.pressure:.5;
+    g.globalCompositeOperation=mode==='erase'?'destination-out':'source-over';
+    g.strokeStyle=color;g.lineWidth=(mode==='erase'?18:1.2+pr*2.4)*dpr;
+    g.beginPath();g.moveTo(last.x,last.y);g.lineTo(p.x,p.y);g.stroke();last=p;
+   }
+  });
+  const end=()=>{if(!drawing)return;drawing=false;g.globalCompositeOperation='source-over';store(c);};
+  c.addEventListener('pointerup',end);c.addEventListener('pointercancel',end);
+ });
+ document.querySelectorAll('.hxTools [data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+ document.querySelectorAll('.hxTools [data-color]').forEach(b=>b.onclick=()=>{color=b.dataset.color;document.querySelectorAll('.hxTools [data-color]').forEach(x=>x.classList.toggle('on',x===b));if(mode!=='pen')setMode('pen');});
+ el('hxPenOnly').onchange=e=>{penOnly=e.target.checked;try{localStorage.setItem('touch_hx_penonly',penOnly?'1':'0');}catch{}};
+ el('hxUndo').onclick=()=>{const u=undo.pop();if(!u)return;const img=new Image();img.onload=()=>{const g=u.c.getContext('2d');g.globalCompositeOperation='source-over';g.clearRect(0,0,u.c.width,u.c.height);g.drawImage(img,0,0);store(u.c);};img.src=u.data;};
+ // Mit dem Stift direkt loslegen: Pencil-Berührung schaltet automatisch in den Stiftmodus.
+ paper.addEventListener('pointerdown',e=>{if(e.pointerType==='pen'&&mode==='type'){setMode('pen');}},true);
+ let resizeT=null;window.addEventListener('resize',()=>{clearTimeout(resizeT);resizeT=setTimeout(()=>{if(el('paper'))canvases().forEach(c=>{c.width=0;fit(c);});},200);});
+ requestAnimationFrame(()=>canvases().forEach(fit));
+ // ---------- Rechnung prüfen (nur getippte Zahlen) ----------
+ const mark=(k,ok)=>{const b=paper.querySelector('[data-wb="'+k+'"]');if(b){b.classList.toggle('ok',ok===true);b.classList.toggle('bad',ok===false);}};
+ const near=(a,b)=>Math.abs(a-b)<=0.051;
+ function checkTask(){
+  let right=0,wrong=0,open=0;
+  for(const [c] of taskCols){let sum=0,complete=true;
+   for(const [k,,w] of task){const p=num('hx_t_'+k+'_'+c),x=num('hx_tp_'+k+'_'+c);
+    if(p===null||x===null){complete=false;open++;mark('hx_tp_'+k+'_'+c,null);continue;}
+    const ok=near(p*w/100,x);mark('hx_tp_'+k+'_'+c,ok);ok?right++:wrong++;sum+=x;}
+   const s=num('hx_tsum_'+c);if(s===null||!complete){mark('hx_tsum_'+c,null);if(s===null)open++;}else{const ok=near(sum,s);mark('hx_tsum_'+c,ok);ok?right++:wrong++;}
+  }
+  return {right,wrong,open};
+ }
+ function checkFeedback(){
+  let right=0,wrong=0,open=0,sum=0,complete=true;
+  for(const [k,,w] of crit){const b=num('hx_f_'+k),x=num('hx_fp_'+k);
+   if(b===null||x===null){complete=false;open++;mark('hx_fp_'+k,null);continue;}
+   const ok=near(b*w/100,x);mark('hx_fp_'+k,ok);ok?right++:wrong++;sum+=x;}
+  const s=num('hx_fsum');if(s===null||!complete){mark('hx_fsum',null);if(s===null)open++;}else{const ok=near(sum,s);mark('hx_fsum',ok);ok?right++:wrong++;}
+  return {right,wrong,open};
+ }
+ const report=(id,r)=>{const m=el(id);if(!m)return;
+  m.textContent=r.right+r.wrong===0?'Zum Prüfen bitte die Zahlen tippen (Handschrift kann die Seite nicht lesen).':(r.wrong?'✗ '+r.wrong+(r.wrong>1?' Ergebnisse stimmen':' Ergebnis stimmt')+' noch nicht – rot markiert.':'✓ Alles richtig gerechnet!')+(r.open&&r.right+r.wrong?' ('+r.open+' Felder noch leer)':'');
+  m.className='hxCheckMsg noPrint '+(r.wrong?'bad':r.right?'ok':'');};
+ paper.querySelectorAll('[data-check]').forEach(b=>b.onclick=()=>{
+  if(b.dataset.check==='task')report('hxCheckTask',checkTask());
+  else if(b.dataset.check==='feedback')report('hxCheckFeedback',checkFeedback());
+  else{const ms=num('hx_car_ms'),m=num('hx_car_m'),msg=el('hxCheckCar');
+   if(ms!==null)mark('hx_car_ms',Math.abs(ms-50/3.6)<=0.06);if(m!==null)mark('hx_car_m',Math.abs(m-100/3.6)<=0.6);
+   msg.textContent=ms===null&&m===null?'Zum Prüfen bitte die Zahlen tippen.':(ms!==null&&Math.abs(ms-50/3.6)>0.06)||(m!==null&&Math.abs(m-100/3.6)>0.6)?'✗ Noch nicht ganz – schau dir die Formel im Tipp an.':'✓ Richtig! Rund '+fmt(Math.round(100/3.6*10)/10)+' m ohne Blick auf die Straße.';
+   msg.className='hxCheckMsg noPrint '+(msg.textContent.startsWith('✓')?'ok':msg.textContent.startsWith('✗')?'bad':'');}
+ });
+ el('printHandout').onclick=()=>{setMode('type');window.print();};
  el('clearHandout').onclick=()=>{
-  if(!confirm('Alle Einträge im Handout löschen?'))return;
-  fields().forEach(x=>{try{localStorage.removeItem('touch_'+x.dataset.save);}catch{}x.value='';});recalc();
+  if(!confirm('Alle Einträge und Zeichnungen im Handout löschen?'))return;
+  fields().forEach(x=>{try{localStorage.removeItem('touch_'+x.dataset.save);}catch{}x.value='';});
+  canvases().forEach(c=>{try{localStorage.removeItem('touch_ink_'+c.dataset.ink);}catch{}c.getContext('2d').clearRect(0,0,c.width,c.height);c.parentElement.classList.remove('inked');});
+  paper.querySelectorAll('.wb').forEach(b=>b.classList.remove('ok','bad'));
  };
  el('sendHandout').onclick=async()=>{
-  const {total,count}=recalc(),lines=[];
-  if(count)lines.push('Bewertung: '+fmt(total)+' von 10'+(count<crit.length?' ('+count+' von '+crit.length+' Kriterien)':''));
+  const lines=[];
+  const s=num('hx_fsum');if(s!==null)lines.push('Bewertung (selbst gerechnet): '+fmt(s)+' von 10');
   for(const [k,l] of crit){const v=value('hx_f_'+k);if(v!=='')lines.push(l+': '+v+'/10');}
   if(value('hx_good'))lines.push('Das war gut: '+value('hx_good'));
   if(value('hx_better'))lines.push('Nicht so gut: '+value('hx_better'));
   if(value('hx_change'))lines.push('Ändern: '+value('hx_change'));
   if(value('hx_decision'))lines.push('Aufgabe – Entscheidung: '+value('hx_decision'));
-  if(!value('hx_good')&&!value('hx_better')&&!value('hx_change')&&!count)return alert('Bitte zuerst den Feedbackbogen ausfüllen.');
+  const inked=canvases().some(c=>c.parentElement.classList.contains('inked'));
+  if(inked)lines.push('(Teile wurden mit dem Stift geschrieben – die sind nur im PDF des Schülers sichtbar.)');
+  if(!lines.length)return alert('Bitte zuerst den Feedbackbogen ausfüllen (getippt). Handschrift kannst du als PDF speichern und abgeben.');
   const btn=el('sendHandout');btn.disabled=true;
-  try{await api('/api/feedback','POST',{text:lines.join('\n').slice(0,3000),rating:Math.round(total)});btn.textContent='✓ Gesendet – danke!';}
+  try{await api('/api/feedback','POST',{text:lines.join('\n').slice(0,3000),rating:s===null?0:Math.round(s)});btn.textContent='✓ Gesendet – danke!';}
   catch(err){btn.disabled=false;alert('Senden fehlgeschlagen: '+err.message);}
  };
- recalc();
+ setMode('type');
 }
 function setupCanvas(id){const c=el(id),ctx=c.getContext('2d');let drawing=false;ctx.lineCap='round';ctx.lineJoin='round';ctx.lineWidth=2.5;ctx.strokeStyle='#123e58';const saved=localStorage.getItem('touch_'+id);if(saved){const img=new Image();img.onload=()=>ctx.drawImage(img,0,0);img.src=saved;}
  function coords(e){const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height};}

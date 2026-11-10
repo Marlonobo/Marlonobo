@@ -40,7 +40,7 @@
 .hx input:focus,.hx textarea:focus,.hx select:focus{outline:2px solid rgba(11,110,105,.35);outline-offset:1px}
 .hxDate{display:flex;align-items:flex-end;gap:6px;margin:4px 0 0;font-size:11px;font-weight:400;color:var(--soft)}
 .hxDate input{width:110px!important;padding:0 2px!important}
-.hxLine{display:flex;gap:10px;align-items:flex-end;margin-top:16px;font-size:13.5px}
+.hxLine{display:flex;gap:10px;align-items:center;margin-top:14px;font-size:13.5px}.hxLine .wb{flex:1}
 .hxLine span{white-space:nowrap;font-weight:700}
 .hxResult{margin:14px 0 4px;padding:10px 14px;border:1px solid var(--acc);background:var(--tint);border-radius:4px;font-size:14px}
 .hxResult b{color:var(--acc)}
@@ -48,7 +48,7 @@
 .hxCols3 label{display:block;margin:0;color:var(--ink);font-size:13.5px;font-weight:700}
 .hxCols3 label span{display:block;margin-bottom:4px;padding-bottom:3px;border-bottom:2px solid var(--line)}
 .hxCols3 label span.g{border-color:#3a9a62}.hxCols3 label span.b{border-color:#c2573f}.hxCols3 label span.c{border-color:var(--acc)}
-.hx textarea{resize:vertical;font-weight:400;line-height:28px;padding:0 4px;border:0;background:repeating-linear-gradient(transparent,transparent 27px,#b3bfc7 27px,#b3bfc7 28px);min-height:168px}
+
 .hxFoot{display:flex;justify-content:space-between;margin-top:28px;padding-top:9px;border-top:1px solid var(--line);font-size:10.5px;color:var(--soft);letter-spacing:.04em}
 .hxActions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;max-width:880px;margin:0 auto 18px}
 .hxActions #hxSaved{font-size:13px;color:var(--muted,#9bb5c6)}
@@ -82,8 +82,78 @@
  .hxTable{font-size:9.6px}.hxTable th{font-size:8px;padding:4px 5px}.hxTable td{padding:3.5px 5px}
  .hxTimeline{font-size:8.8px}.hxKey li{margin-bottom:3px}
  .hx select{width:38px;padding:0;border:1px solid #bbb;-webkit-appearance:none;appearance:none;text-align:center}
- .hxCols3{margin-top:18px}
- .hx textarea{min-height:330px;line-height:24px;background:repeating-linear-gradient(transparent,transparent 23px,#9aa9b3 23px,#9aa9b3 24px)}
  .hxResult{font-size:10.5px;padding:6px 10px}.hxNote{font-size:9px}.hxFoot{margin-top:12px;font-size:8.5px}
  .hxPage::before,.hxCalc td.hxBest,.hxTable tbody tr:nth-child(even) td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+
+/* ---------- Schreibfelder: tippen ODER Stift ---------- */
+.wb{position:relative;display:block;width:100%}
+.wb input,.wb textarea{position:relative;z-index:1;display:block;width:100%;background:transparent;border:0;border-bottom:1px solid #9aa9b3;border-radius:0;padding:4px 6px;font:inherit;font-family:"Segoe Print","Bradley Hand","Comic Sans MS",cursive;color:#1b2a8a;font-size:15px}
+.wb canvas{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;touch-action:auto}
+.hxInkMode .wb canvas{pointer-events:auto;touch-action:none;cursor:crosshair}
+.hxEraseMode .wb canvas{cursor:cell}
+.hxInkMode .wb{background:rgba(11,110,105,.035);outline:1px dashed rgba(11,110,105,.28);outline-offset:-1px}
+.hxInkMode .wb input,.hxInkMode .wb textarea{pointer-events:none}
+.wb-num{min-width:52px;height:34px}
+.wb-num input{height:34px;text-align:center;border:1px solid #c6d0d5;border-radius:6px;background:#fff;font-size:16px;padding:2px 4px}
+.wb-line{height:34px}.wb-line input{height:34px}
+.wb-area textarea{height:260px;resize:none;line-height:30px;padding:0 6px;border:0;background:repeating-linear-gradient(transparent,transparent 29px,#b9c4cb 29px,#b9c4cb 30px)}
+.wb-area{height:260px}
+.wb.ok input{border-color:#2e8b57;background:#eaf7ef;color:#1d6b3f}
+.wb.bad input{border-color:#c0392b;background:#fdecea;color:#a12a1f}
+.hxWrite td{padding:5px 6px}
+.hxWrite th.hxGroup{text-align:center;border-bottom:1px solid var(--line);color:var(--ink)}
+.hxWrite .c .wb{max-width:84px;margin:0 auto}
+.hxMetaLine{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:11px;font-weight:400;color:var(--soft)}
+.hxMetaLine .wb{width:170px}.hxMetaLine .wb-line,.hxMetaLine .wb-line input{height:28px}
+.hxCalcBox{border:1px solid var(--line);border-left:4px solid var(--acc);border-radius:6px;padding:12px 16px;background:#fbfcfc}
+.hxCalcBox p{margin:0 0 10px}
+.hxHint{display:block;font-size:12px;color:var(--soft);margin-top:3px}
+.hxSteps{display:flex;gap:18px;align-items:flex-end;flex-wrap:wrap}
+.hxSteps label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:700;color:var(--soft);margin:0}
+.hxSteps .wb{width:130px}
+.hxRow{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.hxCheck{min-height:36px;padding:6px 14px;border-radius:8px;background:#fff;color:var(--acc);border:1.5px solid var(--acc);font-weight:700}
+.hxCheck:hover{background:var(--tint)}
+.hxCheckMsg{font-size:13px;color:var(--soft);margin:0}
+.hxCheckMsg.ok{color:#1d6b3f;font-weight:700}.hxCheckMsg.bad{color:#a12a1f;font-weight:700}
+.hxColHead{display:block;font-weight:700;font-size:13.5px;padding-bottom:3px;margin-bottom:4px;border-bottom:2px solid var(--line)}
+.hxColHead.g{border-color:#3a9a62}.hxColHead.b{border-color:#c2573f}.hxColHead.c{border-color:var(--acc)}
+/* Werkzeugleiste wie in einer Notiz-App */
+.hxTools{position:sticky;top:8px;z-index:40;display:flex;gap:10px;align-items:center;flex-wrap:wrap;max-width:880px;margin:0 auto 18px;padding:10px 12px;border-radius:16px;background:rgba(10,26,38,.92);border:1px solid #2b4a5e;box-shadow:0 12px 34px rgba(0,0,0,.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.hxTools button{min-height:40px;padding:8px 14px;border-radius:10px;font-size:14px}
+.hxSeg{display:flex;background:#0b1f2f;border:1px solid #2b4a5e;border-radius:12px;padding:3px;gap:3px}
+.hxSeg button{background:transparent;border:0;min-height:36px}
+.hxSeg button.on{background:#6de0d6;color:#06252b}
+.hxColors button{width:36px;min-width:36px;padding:0;position:relative}
+.hxColors button::after{content:"";position:absolute;inset:9px;border-radius:50%;background:var(--c);box-shadow:0 0 0 2px #fff4}
+.hxColors button.on{background:#ffffff22}
+.hxColors button.on::after{box-shadow:0 0 0 2px #6de0d6}
+.hxPenOnly{display:flex;align-items:center;gap:6px;margin:0;font-size:13px;font-weight:600;color:#c8dbe5}
+.hxPenOnly input{width:18px;height:18px;min-height:0}
+.hxToolsGap{flex:1}
+#hxSaved{font-size:12px;color:#9bb5c6}
+@media (max-width:760px){.hxWrite{display:block;overflow-x:auto}.hxTools{top:4px}.hxToolsGap{display:none}.wb-area,.wb-area textarea{height:200px}}
+@media print{
+ .hxTools,.hxCheck,.hxCheckMsg{display:none!important}
+ .wb input,.wb textarea{font-size:11px}
+ .wb-num,.wb-num input{height:24px}.wb-num input{border:1px solid #bbb}
+ .wb-line,.wb-line input{height:24px}
+ .wb-area,.wb-area textarea{height:300px}
+ .wb-area textarea{line-height:24px;background:repeating-linear-gradient(transparent,transparent 23px,#9aa9b3 23px,#9aa9b3 24px);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .wb.ok input,.wb.bad input{background:#fff!important;color:#1b2a8a!important;border-color:#bbb!important}
+ .hxCalcBox{padding:8px 12px}
+ .hxWrite td{padding:3px 4px}
+}
+
+.hxWork{margin-top:12px}
+.hxWork>span{display:block;font-size:12px;font-weight:700;color:var(--soft);margin-bottom:4px}
+.hxWork .wb-area,.hxWork .wb-area textarea{height:150px}
+.hxWrite .wb-num,.hxWrite .wb-num input{height:42px}
+.hxWrite .c .wb{max-width:92px}
+@media print{
+ .hxWork .wb-area,.hxWork .wb-area textarea{height:120px}
+ .hxWrite .wb-num,.hxWrite .wb-num input{height:30px}
+ .wb-area,.wb-area textarea{height:420px}
+ .hxCols3{margin-top:16px}
 }
