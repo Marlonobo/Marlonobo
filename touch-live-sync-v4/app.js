@@ -1243,8 +1243,11 @@ function tvDisplay(){
  tvLastDisplayPhase=phase;
  tvControlsVisible(false);
  const cinemaSetup=el('tvCinemaSetup'),cinemaPick=el('tvCinemaPick');
- if(cinemaSetup)cinemaSetup.hidden=phase!=='welcome'||tvSoundActivated;
- if(cinemaPick)cinemaPick.hidden=phase!=='welcome'||state.video?.type!=='local'||!!tvLocalObjectURL;
+ const needLocalFile=phase==='welcome'&&state.video?.type==='local'&&!tvLocalObjectURL;
+ if(cinemaSetup)cinemaSetup.hidden=phase!=='welcome'||(tvSoundActivated&&!needLocalFile);
+ const cinemaStart=el('tvCinemaStart');
+ if(cinemaStart)cinemaStart.hidden=tvSoundActivated;
+ if(cinemaPick)cinemaPick.hidden=!needLocalFile;
  const filmUnlock=el('tvFilmUnlock');
  if(filmUnlock)filmUnlock.hidden=true; // Film must never show a bottom audio/setup overlay.
  const layer=el('videoLayer');if(layer)layer.style.display=videoMode&&state.video.type!=='none'&&(state.video.type!=='local'||!!tvLocalObjectURL)?'block':'none';
