@@ -1219,3 +1219,69 @@ body.rgModalOpen{overflow:hidden}
  .rgMenu a,.rgMenu button{min-height:0;line-height:1.1;padding:16px 0;text-align:left;font-family:"Arial Narrow","Roboto Condensed",Arial,sans-serif;font-size:clamp(30px,9vw,44px);font-weight:900;letter-spacing:0;border-bottom:1px solid #ffffff1a}
  .rgMenu a::after,.rgMenu button::after{display:none}
 }
+
+/* ================= Kino-Stil für Quiz, Admin, Lehrer, Fernbedienung ================= */
+body.rgTheme{background:#05090d;--panel:#0b1218;--panel2:#101a22;--stroke:#1f2c35;--aqua:#7ff0e6}
+body.rgTheme::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 85% -10%,#12343c66,transparent 55%),radial-gradient(ellipse at -10% 110%,#0f2a3355,transparent 50%)}
+/* Menüleiste */
+body.rgTheme .rgBar2{position:sticky;top:0;z-index:40;max-width:none;margin:0;padding:0 clamp(16px,3vw,40px);height:64px;background:#000;border-bottom:1px solid #ffffff14}
+body.rgTheme .rgLogo{font-family:"Arial Narrow","Roboto Condensed",Arial,sans-serif;font-weight:900;font-size:24px;letter-spacing:.02em;color:#fff;text-decoration:none}
+body.rgTheme .rgLogo b{color:#7ff0e6;margin-left:3px}
+body.rgTheme .rgLinks{gap:4px}
+body.rgTheme .rgLinks a{position:relative;padding:0 12px;line-height:64px;color:#e9eef1;font:800 12.5px/64px Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}
+body.rgTheme .rgLinks a::after{content:"";position:absolute;left:12px;right:12px;bottom:14px;height:2px;background:#7ff0e6;transform:scaleX(0);transform-origin:left;transition:transform .25s}
+body.rgTheme .rgLinks a:hover::after,body.rgTheme .rgLinks a.on::after{transform:scaleX(1)}
+body.rgTheme .rgLinks a:hover{color:#fff}
+/* Überschriften */
+body.rgTheme .page h1,body.rgTheme .studentEntryIntro h1,body.rgTheme .phoneRemoteHead h1{font-family:"Arial Narrow","Roboto Condensed","Helvetica Neue",Arial,sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;line-height:.95}
+body.rgTheme .page h1{font-size:clamp(34px,5.4vw,72px)}
+body.rgTheme .card h2,body.rgTheme .card h3{font-family:"Arial Narrow","Roboto Condensed",Arial,sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:0}
+body.rgTheme .eyebrow,body.rgTheme .label{color:#9ff3ea;letter-spacing:.24em}
+/* Karten & Flächen: eckig, schwarz, feine Linien */
+body.rgTheme .card,body.rgTheme .phoneRemotePanel,body.rgTheme .centerstage,body.rgTheme .clsLab,body.rgTheme .chessSide,body.rgTheme .mpRow{border-radius:4px;background:linear-gradient(180deg,#0d161d,#0a1117);border:1px solid #ffffff12;box-shadow:0 20px 50px #0007}
+body.rgTheme .status{border-radius:2px;background:#0b1a16;border-color:#2f5a4a}
+/* Knöpfe: eckig, Großbuchstaben, Weiß = Hauptaktion */
+body.rgTheme main button,body.rgTheme main .btn,body.rgTheme .tDock button{border-radius:2px;letter-spacing:.06em;text-transform:uppercase;font-size:13px;font-weight:800;background:#0f1a22;border:1px solid #ffffff2a}
+body.rgTheme main button:hover,body.rgTheme main .btn:hover,body.rgTheme .tDock button:hover{border-color:#7ff0e6;background:#13232d}
+body.rgTheme main button.primary,body.rgTheme main .btn.primary,body.rgTheme .phoneMainPlay{background:#f3f6f8!important;border-color:#f3f6f8!important;color:#05090d!important}
+body.rgTheme main button.primary:hover,body.rgTheme main .btn.primary:hover{background:#7ff0e6!important;border-color:#7ff0e6!important}
+body.rgTheme main button.danger{background:#3a1218;border-color:#7a2a35}
+body.rgTheme input,body.rgTheme select,body.rgTheme textarea{border-radius:2px;background:#060d12;border-color:#ffffff26}
+/* Ausnahmen, die ihr eigenes Aussehen behalten */
+body.rgTheme main .chSq{border-radius:0;letter-spacing:0;text-transform:none;border:0}
+body.rgTheme main .chSq.lt{background:#e9e4d6}body.rgTheme main .chSq.dk{background:#6f9690}
+body.rgTheme main .chSq.last.lt{background:#f1e39a}body.rgTheme main .chSq.last.dk{background:#b9b65c}
+body.rgTheme .hx button,body.rgTheme .hxTools button{text-transform:none;letter-spacing:0}
+body.rgTheme .hxTools .hxColors button{background:transparent}
+body.rgTheme main .hxCheck{background:#fff;color:#0b6e69;border-color:#0b6e69}
+/* Reiter (Admin, Labor, Schach, Musik): wie Menü mit Unterstrich */
+body.rgTheme .adminTabs button,body.rgTheme .clsTabs button{border-radius:2px;background:#0b1218;border:1px solid #ffffff14;text-transform:none;letter-spacing:0}
+body.rgTheme .adminTabs button b,body.rgTheme .clsTabs button b{text-transform:uppercase;letter-spacing:.08em;font-size:13px}
+body.rgTheme .adminTabs button.active,body.rgTheme .clsTabs button.on{background:#0f1a22;border-color:#7ff0e6;box-shadow:inset 0 -3px 0 #7ff0e6}
+body.rgTheme .chessSeg,body.rgTheme .mpSeg,body.rgTheme .hxSeg,body.rgTheme .tdSeg{border-radius:2px}
+body.rgTheme .chessSeg button,body.rgTheme .mpSeg button{border:0;background:transparent}
+body.rgTheme .chessSeg button.on,body.rgTheme .mpSeg button.on{background:#f3f6f8;color:#05090d}
+/* Quiz */
+body.rgTheme .quiz h2{font-family:"Arial Narrow","Roboto Condensed",Arial,sans-serif;font-weight:900;text-transform:none;letter-spacing:-.005em}
+body.rgTheme main .answer{border-radius:2px;background:#0b141b;border:1px solid #ffffff22;text-transform:none;letter-spacing:0;font-size:17px;font-weight:700;justify-content:flex-start}
+body.rgTheme main .answer b{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;background:#7ff0e6;color:#05090d;font-family:"Arial Narrow",Arial,sans-serif;font-weight:900}
+body.rgTheme main .answer:hover:not(:disabled){border-color:#7ff0e6;background:#0f1d25}
+body.rgTheme main .answer.chosen{border:2px solid #f3f6f8;background:#16262f}
+body.rgTheme .timer{font-family:"Arial Narrow","Roboto Condensed",Arial,sans-serif;font-weight:900}
+body.rgTheme .chip{border-radius:2px;letter-spacing:.12em}
+body.rgTheme .studentBrand{border-bottom-color:#ffffff1a}
+/* Lehrer-Panel */
+body.rgTheme .tDock{background:#05090d;border-left-color:#ffffff1a}
+body.rgTheme .tdTabs button{border-radius:2px;font-size:11.5px}
+body.rgTheme .tdTabs button.on{background:#0f1a22;border-color:#7ff0e6;box-shadow:inset 0 -3px 0 #7ff0e6;color:#fff}
+body.rgTheme .tdStats div,body.rgTheme .tdNow,body.rgTheme .tdFb{border-radius:2px}
+body.rgTheme #teacherNotes,body.rgTheme .tdInkWrap{border-radius:2px}
+/* Handy-Fernbedienung */
+body.rgTheme .phoneRemoteGrid button{border-radius:2px}
+body.rgTheme .phoneRemoteStatus{border-radius:2px}
+@media (max-width:700px){
+ body.rgTheme .rgBar2{height:auto;flex-wrap:wrap;padding:10px 16px;gap:4px}
+ body.rgTheme .rgLinks{width:100%;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+ body.rgTheme .rgLinks a{line-height:36px;padding:0 10px;white-space:nowrap}
+ body.rgTheme .rgLinks a::after{bottom:4px}
+}
