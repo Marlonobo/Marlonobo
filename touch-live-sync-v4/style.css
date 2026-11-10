@@ -995,3 +995,58 @@ body.studentEntry .studentScoreGain{
 .chSq .pw{color:#fbfaf5;text-shadow:0 0 0 #000,1px 1px 0 #1d2a30,-1px -1px 0 #1d2a30,1px -1px 0 #1d2a30,-1px 1px 0 #1d2a30,0 3px 6px #0007}
 .chSq .pb{color:#1b2328;text-shadow:0 0 1px #ffffff40,0 3px 6px #0005}
 .chessCaps{letter-spacing:0}
+
+/* ---------- Lehrer-Panel ---------- */
+.tDock{position:fixed;z-index:60;top:0;right:0;bottom:0;width:390px;display:flex;flex-direction:column;background:#0b1d2b;border-left:1px solid #28445a;box-shadow:-18px 0 50px #0006;color:var(--text)}
+body.teacherMode #app{padding-right:390px}
+body.teacherMode.teacherDockClosed #app{padding-right:0}
+.tDock.tdClosed{transform:translateX(calc(100% - 46px))}
+.tDock.tdClosed .tdHead>div,.tDock.tdClosed .tdTabs,.tDock.tdClosed .tdPane{visibility:hidden}
+.tdHead{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 14px 10px}
+.tdHead b{display:block;font-size:16px;margin-top:3px}
+.tdFold{min-height:36px;width:36px;padding:0;border-radius:10px}
+.tDock.tdClosed .tdFold{transform:rotate(180deg)}
+.tdTabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:0 10px 10px;border-bottom:1px solid #28445a}
+.tdTabs button{min-height:40px;padding:6px 4px;font-size:13px;border-radius:10px;background:transparent;border:1px solid transparent}
+.tdTabs button.on{background:#173249;border-color:#3e6680;color:#7ff0e6}
+.tdPane{flex:1;overflow:auto;padding:12px 14px 18px;display:flex;flex-direction:column;gap:10px}
+.tdPane[hidden]{display:none}
+.tdTools{display:flex;gap:6px;align-items:center}
+.tdTools>button{min-height:38px;padding:6px 10px;font-size:13px}
+.tdSeg{display:flex;background:#081827;border:1px solid #28445a;border-radius:10px;padding:2px}
+.tdSeg button{min-height:34px;width:38px;padding:0;border:0;background:transparent}
+.tdSeg button.on{background:#6de0d6;color:#06252b}
+#teacherNotes{min-height:200px;flex:0 0 auto;resize:vertical;background:#fffef8;color:#1d2a35;border-radius:10px;border:0;line-height:28px;padding:4px 10px;background-image:repeating-linear-gradient(transparent,transparent 27px,#d5dde2 27px,#d5dde2 28px);font-size:15px}
+.tdInkWrap{position:relative;border-radius:10px;overflow:hidden;background:#fffef8;background-image:repeating-linear-gradient(transparent,transparent 27px,#d5dde2 27px,#d5dde2 28px)}
+.tdInkWrap span{position:absolute;left:10px;top:4px;font-size:11px;color:#7a8a94;pointer-events:none}
+#tdInk{display:block;width:100%;height:260px;touch-action:auto}
+.tdInking #tdInk{touch-action:none;cursor:crosshair}
+.tdBtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tdData h4{margin:14px 0 6px;font-size:13px;color:#9bd9d2;text-transform:uppercase;letter-spacing:.08em}
+.tdStats{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px}
+.tdStats div{background:#102a3c;border:1px solid #28445a;border-radius:10px;padding:8px 10px}
+.tdStats small{display:block;font-size:11px;color:var(--muted)}.tdStats b{font-size:18px}
+.tdNow{margin-top:10px;background:#12324a;border:1px solid #2f6079;border-radius:12px;padding:10px 12px}
+.tdNow small{font-size:11px;color:#9bd9d2;letter-spacing:.06em}.tdNow p{margin:4px 0 8px;font-weight:700}
+.tdBar{height:8px;border-radius:5px;background:#081827;overflow:hidden;margin-bottom:5px}.tdBar i{display:block;height:100%;background:#6de0d6;transition:width .4s}
+.tdQ{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid #1f3a4d;font-size:13.5px}
+.tdQ small{display:block;color:var(--muted)}
+.tdRate{flex:0 0 52px;text-align:center;font-weight:800;border-radius:8px;padding:3px 0;background:#173f35;color:#8be3b4}.tdRate.low{background:#4a1f25;color:#ff9aa5}
+.tdTable{width:100%;border-collapse:collapse;font-size:13.5px}
+.tdTable th{text-align:left;font-size:11px;color:var(--muted);font-weight:600;padding:5px 6px;border-bottom:1px solid #28445a}
+.tdTable td{padding:6px;border-bottom:1px solid #1f3a4d}
+.tdDot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#4b5d69;margin-right:6px}.tdDot.on{background:#5be19a}
+.tdFb{background:#102a3c;border:1px solid #28445a;border-radius:10px;padding:8px 10px}
+.tdFb pre{white-space:pre-wrap;margin:4px 0 0;font:inherit;font-size:13px;color:#d9e8f0}
+.tdKey p{font-size:13.5px;color:#c8dbe5}.tdKey form{display:flex;gap:6px}.tdKey input{flex:1}
+.tdErr{color:#ff9aa5;font-size:13px}
+@media (max-width:1000px){
+ .tDock{top:auto;left:0;width:auto;height:min(62vh,560px);border-left:0;border-top:1px solid #28445a;border-radius:18px 18px 0 0}
+ body.teacherMode #app{padding-right:0;padding-bottom:62vh}
+ body.teacherMode.teacherDockClosed #app{padding-bottom:60px}
+ .tDock.tdClosed{transform:translateY(calc(100% - 58px))}
+ .tDock.tdClosed .tdHead>div{visibility:visible}
+ .tDock.tdClosed .tdFold{transform:rotate(-90deg)}
+ .tdFold{transform:rotate(90deg)}
+}
+@media print{.tDock{display:none!important}body.teacherMode #app{padding:0!important}}

@@ -7,6 +7,8 @@ const PORT=Number(process.env.PORT||3000), ROOT=__dirname, DIR=process.env.DATA_
 const ADMIN=process.env.ADMIN_KEY||crypto.randomBytes(24).toString('hex');
 const TV=process.env.TV_KEY||crypto.randomBytes(24).toString('hex');
 const COHOST=process.env.COHOST_KEY||crypto.randomBytes(24).toString('hex');
+// Lehrer-Code: aus dem Admin-Schlüssel abgeleitet, damit der Lehrer-Link nach Neustarts gleich bleibt.
+const TEACHER=process.env.TEACHER_KEY||crypto.createHmac('sha256',ADMIN).update('touch-live-teacher').digest('hex').slice(0,24);
 // A change to the deployed app is detected by an existing TV tab via /api/version.
 const BUILD_VERSION=process.env.RENDER_GIT_COMMIT||process.env.RENDER_DEPLOY_ID||crypto.randomBytes(12).toString('hex');
 if(!process.env.ADMIN_KEY)console.log('TOUCH LIVE ADMIN_KEY: '+ADMIN);
@@ -156,6 +158,7 @@ function secure(a,b){const x=Buffer.from(String(a||'')),y=Buffer.from(String(b||
 function isAdmin(req){return secure(req.headers['x-admin-key'],ADMIN);}
 function isTv(req){return secure(req.headers['x-tv-key'],TV);}
 function isCohost(req){return secure(req.headers['x-cohost-key'],COHOST);}
+function isTeacher(req){return secure(req.headers['x-teacher-key'],TEACHER)||isAdmin(req);}
 function isStoragePublisher(req){return isAdmin(req)||isCohost(req);}
 function active(){
  let i=-1,remaining=0;
@@ -361,6 +364,18 @@ async function handler(req,res){
   try{const a=await spotifyAccess();return send(res,200,{access_token:a.accessToken,expiresAt:a.expiresAt,clientId:a.clientId,...(admin?{refresh_token:a.refreshToken}:{})});}
   catch(e){return send(res,e.status||500,{error:e.message});}
  }
+ if(m==='GET'&&p==='/api/teacher/overview'){
+  if(!isTeacher(req))return send(res,403,{error:'Lehrer-Code stimmt nicht.'});
+  const list=[...users.values()],a=active(),cur=a.index>=0?Q[a.index]:null;
+  const questions=Q.map((q,i)=>{const answered=list.filter(x=>Object.hasOwn(x.answers||{},q.id)),right=answered.filter(x=>x.answers[q.id]===q.correct);
+   return {nr:i+1,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,answer:q.a?.[q.correct]??'',open:q.open,answered:answered.length,correct:right.length};});
+  const players=[...users.entries()].map(([id,x])=>{const ans=Object.entries(x.answers||{});const ok=ans.filter(([qid,c])=>{const q=Q.find(y=>y.id===qid);return q&&c===q.correct;}).length;
+   return {name:x.name,role:x.role,score:x.score||0,correct:ok,wrong:ans.length-ok,online:Number.isFinite(x.lastSeen)&&Date.now()-x.lastSeen<30000};}).sort((p1,p2)=>p2.score-p1.score||p1.name.localeCompare(p2.name,'de'));
+  const fb=feedback.slice(-60);const rated=fb.filter(f=>f.rating>0);
+  return send(res,200,{phase:s.phase,time:s.time,playing:s.playing,participants:users.size,
+   current:cur?{nr:a.index+1,q:cur.q,type:cur.type||'quiz',remaining:a.remaining,accepting:a.accepting,answered:list.filter(x=>Object.hasOwn(x.answers||{},cur.id)).length}:null,
+   questions,players,feedback:{count:feedback.length,average:rated.length?Math.round(rated.reduce((t,f)=>t+f.rating,0)/rated.length*10)/10:null,latest:fb.slice(-12).reverse().map(f=>({text:f.text,rating:f.rating}))}});
+ }
  if(m==='GET'&&p==='/api/state')return send(res,200,publicState(u.searchParams.get('id')));
  if(m==='GET'&&p==='/api/version')return send(res,200,{version:BUILD_VERSION});
  if(m==='GET'&&p==='/api/health')return send(res,200,{ok:true,questionCount:Q.length,now:Date.now(),cloudStorageConfigured:S3.enabled});
@@ -442,7 +457,7 @@ async function handler(req,res){
   saveUsers();s.revision++;await persist();
   return send(res,200,{ok:true,action,participants:users.size});
  }
- if(m==='GET'&&p==='/api/admin-info'){if(!isAdmin(req))return unauthorized(res);return send(res,200,{tvKey:TV,cohostKey:COHOST,questions:Q.map(q=>({id:q.id,type:q.type||'quiz',open:q.open,close:q.close,duration:q.duration,q:q.q,a:q.a,correct:q.correct,chapter:q.chapter,hint:q.hint,fifty:q.fifty})),ranking:[...users.values()].map(x=>({name:x.name,role:x.role,score:x.score,answers:x.answers,jokers:x.jokers||{}})).sort((a,b)=>b.score-a.score),feedback});}
+ if(m==='GET'&&p==='/api/admin-info'){if(!isAdmin(req))return unauthorized(res);return send(res,200,{tvKey:TV,cohostKey:COHOST,teacherKey:TEACHER,questions:Q.map(q=>({id:q.id,type:q.type||'quiz',open:q.open,close:q.close,duration:q.duration,q:q.q,a:q.a,correct:q.correct,chapter:q.chapter,hint:q.hint,fifty:q.fifty})),ranking:[...users.values()].map(x=>({name:x.name,role:x.role,score:x.score,answers:x.answers,jokers:x.jokers||{}})).sort((a,b)=>b.score-a.score),feedback});}
  if(m==='GET'&&p==='/captions.vtt'){
  if(S3.enabled&&s.cloudCaptions){const v=await S3.captionText();if(v!==null){res.writeHead(200,{'Content-Type':'text/vtt; charset=utf-8','Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});return res.end(v);}}
  return serve(res,fs.existsSync(SUB_FILE)?SUB_FILE:BUNDLED_SUB_FILE,mime['.vtt']);
