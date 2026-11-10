@@ -58,15 +58,22 @@ function home(){
  const afterDoc=['results','end','handout'].includes(state?.phase);
  const open=!!(state?.homeUnlocked||afterDoc);
  const hasTrailer=!!state?.trailerAvailable;
- const media=hasTrailer
-  ?'<video class="rgBgVideo" id="clsTrailer" autoplay muted loop playsinline preload="auto" poster="'+HOME_IMG.cern.src+'" src="/api/trailer/video?v='+encodeURIComponent(state.trailerRevision||0)+'"></video>'
-  :'<img class="rgBgVideo rgKen" src="'+HOME_IMG.cern.src+'" alt="'+esc(HOME_IMG.cern.alt)+'" referrerpolicy="no-referrer">';
- const hero='<section class="rgHero">'+media+'<div class="rgShade"></div>'+
+ const loopSrc='/trailer-loop.mp4',poster='/trailer-poster.jpg';
+ const media='<video class="rgBgVideo" id="clsTrailer" autoplay muted loop playsinline preload="auto" poster="'+poster+'" src="'+loopSrc+'"></video>';
+ // Premiere laut Trailer: 20.11.
+ const prem=new Date(2026,10,20),days=Math.ceil((prem-new Date(new Date().toDateString()))/864e5);
+ const premTxt=days>1?'Noch '+days+' Tage':days===1?'Morgen':days===0?'Heute':'Jetzt verfügbar';
+ const nav='<header class="rgNav" id="rgNav"><a class="rgLogo" href="/" aria-label="TOUCH LIVE Start">TOUCH<b>LIVE</b></a>'+
+  '<nav class="rgMenu" id="rgMenu" aria-label="Hauptmenü">'+
+   '<button type="button" data-go="trailer">Trailer</button><button type="button" data-go="doku">Die Doku</button>'+
+   '<a href="/join">Quiz</a><button type="button" data-go="lab">Touch-Labor</button><a href="#handout">Handout</a><a href="#teacher">Lehrer</a></nav>'+
+  '<button type="button" class="rgNavCta" data-go="trailer">▶ Trailer ansehen</button>'+
+  '<button type="button" class="rgBurger" id="rgBurger" aria-label="Menü öffnen" aria-expanded="false"><span></span><span></span><span></span></button></header>';
+ const hero=nav+'<section class="rgHero" id="rgTop">'+media+'<div class="rgShade"></div>'+
   '<div class="rgHeroInner"><span class="rgKicker">TOUCH LIVE · INTERAKTIVE DOKUMENTATION · LERNFELD 14</span>'+
   '<h1 class="rgTitle">TOUCH<span>SCREEN</span></h1><p class="rgClaim">Geschichte, Technik und Zukunft – erlebt mit deinen eigenen Fingern.</p>'+
-  '<div class="rgActions">'+(open?'<a class="rgBtn rgBtnMain" href="#lab" id="rgToLab">🎮 Touch-Labor &amp; Schach</a><a class="rgBtn" href="#handout">📝 Handout</a>':'<a class="rgBtn rgBtnMain" href="/join">🎮 Zum Quiz</a>')+
-  (hasTrailer?'<button type="button" class="rgBtn" id="clsTrailerPlay">🔊 Trailer mit Ton</button>':'')+'</div>'+
-  (hasTrailer?'<p class="rgLoop">Trailer läuft in Dauerschleife · '+'<a href="'+HOME_IMG.cern.page+'" target="_blank" rel="noopener noreferrer">Standbild: CERN, CC BY 2.0</a></p>':'<p class="rgLoop"><a href="'+HOME_IMG.cern.page+'" target="_blank" rel="noopener noreferrer">Bild: Maximilien Brice / CERN · CC BY 2.0</a></p>')+
+  '<div class="rgPremiere"><span>PREMIERE</span><b>20.11.</b><em>'+premTxt+'</em></div>'+
+  '<div class="rgActions"><button type="button" class="rgBtn rgBtnMain" data-go="trailer">▶ Trailer ansehen</button>'+(open?'<button type="button" class="rgBtn" data-go="lab">🎮 Touch-Labor &amp; Schach</button><a class="rgBtn" href="#handout">📝 Handout</a>':'<a class="rgBtn" href="/join">🎮 Zum Quiz</a>')+'</div>'+
   '</div><div class="rgScroll" aria-hidden="true">▼</div></section>';
  const tiles='<section class="rgTiles"><header class="rgSecHead"><span>DIE DOKU</span><h2>Sieben Kapitel. Ein Bildschirm, den jeder kennt.</h2></header><div class="rgGrid">'+
   homeTile('cern','KAPITEL 1 · GESCHICHTE','Alles begann am CERN','1972 baute Bent Stumpe am Kernforschungszentrum CERN einen kapazitiven Touchscreen für den Kontrollraum eines Teilchenbeschleunigers.','rgWide')+
@@ -87,12 +94,36 @@ function home(){
  document.body.classList.add('rgHome');
  bindTrailerCard();
  if(open)initHomeLab();
- const toLab=el('rgToLab');if(toLab)toLab.onclick=e=>{e.preventDefault();el('lab')?.scrollIntoView({behavior:'smooth'});};
+ rgNavBind(hasTrailer);
+}
+function rgTrailerModal(){
+ let m=el('rgModal');
+ if(!m){m=document.createElement('div');m.id='rgModal';m.className='rgModal';m.setAttribute('role','dialog');m.setAttribute('aria-label','Trailer');
+  m.innerHTML='<button type="button" class="rgModalClose" aria-label="Schließen">✕</button><video id="rgModalVideo" controls playsinline preload="auto" poster="/trailer-poster.jpg"></video>';
+  document.body.appendChild(m);
+  const close=()=>{const v=el('rgModalVideo');try{v.pause();}catch{}m.classList.remove('on');document.body.classList.remove('rgModalOpen');};
+  m.querySelector('.rgModalClose').onclick=close;m.onclick=e=>{if(e.target===m)close();};
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&m.classList.contains('on'))close();});
+ }
+ const v=el('rgModalVideo');
+ if(!v.getAttribute('src'))v.src='/api/trailer/video?v='+encodeURIComponent(state?.trailerRevision||0);
+ m.classList.add('on');document.body.classList.add('rgModalOpen');
+ v.muted=false;v.currentTime=0;const p=v.play();if(p?.catch)p.catch(()=>{});
+}
+function rgNavBind(){
+ const go=t=>{const menu=el('rgMenu');document.body.classList.remove('rgMenuOpen');el('rgBurger')?.setAttribute('aria-expanded','false');
+  if(t==='trailer')return rgTrailerModal();
+  const target=t==='doku'?document.querySelector('.rgTiles'):t==='lab'?(el('lab')||document.querySelector('.rgLocked')):null;
+  target?.scrollIntoView({behavior:'smooth',block:'start'});};
+ document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+ document.querySelectorAll('#rgMenu a').forEach(a=>a.addEventListener('click',()=>document.body.classList.remove('rgMenuOpen')));
+ const burger=el('rgBurger');if(burger)burger.onclick=()=>{const on=!document.body.classList.contains('rgMenuOpen');document.body.classList.toggle('rgMenuOpen',on);burger.setAttribute('aria-expanded',String(on));};
+ const nav=el('rgNav');const onScroll=()=>{if(nav)nav.classList.toggle('solid',window.scrollY>40);};onScroll();
+ if(!window.__rgNavScroll){window.__rgNavScroll=true;window.addEventListener('scroll',()=>{const n=el('rgNav');if(n)n.classList.toggle('solid',window.scrollY>40);},{passive:true});}
 }
 function bindTrailerCard(){
- const v=el('clsTrailer'),pb=el('clsTrailerPlay');if(!v)return;
+ const v=el('clsTrailer');if(!v)return;
  v.muted=true;v.loop=true;const p=v.play();if(p?.catch)p.catch(()=>{});
- if(pb)pb.onclick=()=>{if(v.muted){v.muted=false;v.currentTime=0;v.play().catch(()=>{});pb.textContent='🔇 Ton aus';}else{v.muted=true;pb.textContent='🔊 Trailer mit Ton';}};
 }
 // ---------- Touch-Labor auf der Klassenseite (nach der Doku) ----------
 let labTimer=null,labGame=null;

@@ -290,6 +290,16 @@ async function handler(req,res){
   return m==='HEAD'?res.end():res.end(wav.subarray(first,last+1));
  }
  if(m==='GET'&&(p==='/app.js'||p==='/style.css'||p==='/quiz-polish.css'||p==='/handout.css'||p==='/spotify-connect.js'||p==='/touch-soundtrack.js'||p==='/chess.js'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
+ if((m==='GET'||m==='HEAD')&&(p==='/trailer-loop.mp4'||p==='/trailer-poster.jpg')){
+  // Feste Dateien im Projekt: stumme Schleife für die Startseite und Standbild.
+  const file=path.join(ROOT,p.slice(1));let st;try{st=await fsp.stat(file);}catch{return send(res,404,{error:'Datei fehlt'});}
+  const type=p.endsWith('.jpg')?'image/jpeg':'video/mp4',size=st.size,headers={'Content-Type':type,'Accept-Ranges':'bytes','Cache-Control':'public, max-age=604800','X-Content-Type-Options':'nosniff'};
+  let first=0,last=size-1,status=200;const rg=/^bytes=(\d*)-(\d*)$/.exec(req.headers.range||'');
+  if(rg&&(rg[1]||rg[2])){if(!rg[1]){first=Math.max(0,size-Number(rg[2]));}else{first=Number(rg[1]);if(rg[2])last=Math.min(last,Number(rg[2]));}
+   if(first>=size||first>last){res.writeHead(416,{...headers,'Content-Range':'bytes */'+size});return res.end();}status=206;headers['Content-Range']='bytes '+first+'-'+last+'/'+size;}
+  headers['Content-Length']=last-first+1;res.writeHead(status,headers);if(m==='HEAD')return res.end();
+  return fs.createReadStream(file,{start:first,end:last,highWaterMark:1024*1024}).pipe(res);
+ }
  if(m==='GET'&&p==='/touchscreen-motiv.svg')return serve(res,path.join(ROOT,'touchscreen-motiv.svg'),'image/svg+xml');
  if(m==='GET'&&p==='/easter-scene.svg')return serve(res,path.join(ROOT,'easter-scene.svg'),'image/svg+xml');
  if(m==='GET'&&(p==='/easter-game.js'||p==='/easter-game.css'||p==='/finger-mission.js'||p==='/finger-mission.css'))return serve(res,path.join(ROOT,p.slice(1)),p.endsWith('.js')?'application/javascript; charset=utf-8':'text/css; charset=utf-8');

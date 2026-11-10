@@ -1178,3 +1178,44 @@ body.rgIntroOn .rgHero .rgKicker,body.rgIntroOn .rgHero .rgTitle,body.rgIntroOn 
  main.wrap{padding-left:16px;padding-right:16px}
  .navlinks{gap:10px}
 }
+
+/* ---------- Menüleiste im Rockstar-Stil ---------- */
+body.rgHome>#app>.nav,body.rgHome .nav.wrap{display:none!important}
+.rgNav{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:center;gap:28px;height:68px;padding:0 clamp(16px,3vw,40px);background:linear-gradient(#000d,#0000);transition:background .35s ease,box-shadow .35s ease}
+.rgNav.solid{background:#000;box-shadow:0 1px 0 #ffffff14}
+.rgLogo{font-family:"Arial Narrow","Roboto Condensed",Arial,sans-serif;font-weight:900;font-size:24px;letter-spacing:.02em;color:#fff;text-decoration:none;white-space:nowrap}
+.rgLogo b{color:#7ff0e6;margin-left:3px}
+.rgMenu{display:flex;align-items:center;gap:6px;flex:1}
+.rgMenu a,.rgMenu button{position:relative;background:none;border:0;border-radius:0;min-height:68px;padding:0 12px;color:#e9eef1;font:800 13px/68px Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;cursor:pointer}
+.rgMenu a::after,.rgMenu button::after{content:"";position:absolute;left:12px;right:12px;bottom:16px;height:2px;background:#7ff0e6;transform:scaleX(0);transform-origin:left;transition:transform .25s ease}
+.rgMenu a:hover::after,.rgMenu button:hover::after,.rgMenu a:focus-visible::after,.rgMenu button:focus-visible::after{transform:scaleX(1)}
+.rgMenu a:hover,.rgMenu button:hover{background:none;color:#fff}
+.rgNavCta{border-radius:0;border:0;background:#f3f6f8;color:#05090d;font-weight:900;letter-spacing:.12em;text-transform:uppercase;font-size:12px;min-height:40px;padding:0 18px}
+.rgNavCta:hover{background:#7ff0e6;color:#05090d}
+.rgBurger{display:none;width:44px;height:44px;min-height:44px;padding:10px;background:none;border:0;border-radius:0;flex-direction:column;justify-content:center;gap:6px}
+.rgBurger span{display:block;height:2px;background:#fff;transition:transform .25s,opacity .25s}
+body.rgMenuOpen .rgBurger span:nth-child(1){transform:translateY(8px) rotate(45deg)}
+body.rgMenuOpen .rgBurger span:nth-child(2){opacity:0}
+body.rgMenuOpen .rgBurger span:nth-child(3){transform:translateY(-8px) rotate(-45deg)}
+.rgPremiere{display:inline-flex;align-items:baseline;gap:14px;margin:0 0 26px;padding:10px 16px;border-left:3px solid #7ff0e6;background:#05090d88}
+.rgPremiere span{font:700 12px Consolas,monospace;letter-spacing:.3em;color:#9ff3ea}
+.rgPremiere b{font-family:"Arial Narrow",Arial,sans-serif;font-weight:900;font-size:clamp(28px,3.4vw,44px);line-height:1}
+.rgPremiere em{font-style:normal;color:#c8d6de;font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+.rgHero.rgIn .rgPremiere{animation:rgUp 1s .58s cubic-bezier(.2,.7,.1,1) forwards}
+.rgHero .rgPremiere{opacity:0;transform:translateY(40px)}
+/* Trailer-Kino */
+.rgModal{position:fixed;inset:0;z-index:300;background:#000;display:none;align-items:center;justify-content:center}
+.rgModal.on{display:flex;animation:rgFade .35s ease}
+.rgModal video{width:min(100vw,calc(100vh * 16 / 9));max-height:100vh;aspect-ratio:16/9;background:#000}
+.rgModalClose{position:absolute;top:14px;right:14px;z-index:2;width:48px;height:48px;min-height:48px;padding:0;border-radius:0;background:#ffffff14;border:1px solid #ffffff44;color:#fff;font-size:20px}
+body.rgModalOpen{overflow:hidden}
+@media (max-width:900px){
+ .rgNav{height:60px;gap:12px}
+ .rgNavCta{display:none}
+ .rgBurger{display:flex;margin-left:auto}
+ .rgMenu{position:fixed;inset:60px 0 0 0;flex-direction:column;align-items:stretch;gap:0;padding:20px clamp(20px,6vw,40px);background:#000;transform:translateY(-110%);opacity:0;pointer-events:none;transition:transform .35s cubic-bezier(.2,.7,.1,1),opacity .25s}
+ body.rgMenuOpen .rgMenu{transform:none;opacity:1;pointer-events:auto}
+ body.rgMenuOpen{overflow:hidden}
+ .rgMenu a,.rgMenu button{min-height:0;line-height:1.1;padding:16px 0;text-align:left;font-family:"Arial Narrow","Roboto Condensed",Arial,sans-serif;font-size:clamp(30px,9vw,44px);font-weight:900;letter-spacing:0;border-bottom:1px solid #ffffff1a}
+ .rgMenu a::after,.rgMenu button::after{display:none}
+}
