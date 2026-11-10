@@ -812,3 +812,94 @@ body.studentEntry .studentScoreGain{
 #tvApp .tvCinemaSetup .tvCinemaPick{background:#193b50;color:#efffff;border-color:#7aafc8}
 #tvApp .tvCinemaSetup button:focus-visible{outline:4px solid #fff;outline-offset:3px}
 @media(max-width:650px){#tvApp .tvCinemaSetup{padding:11px 14px;bottom:18px;gap:7px}}
+
+
+/* TOUCH LIVE — cinematic photo-based landing and animated presentation, Nov 2026 */
+.touchHeroCinema{
+  position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.08fr);
+  gap:clamp(20px,4vw,62px);align-items:center;overflow:visible;
+  padding:clamp(34px,6vw,80px) clamp(18px,3vw,48px)!important;
+  background:radial-gradient(ellipse at 10% 5%,rgba(35,198,184,.13),transparent 55%),
+             linear-gradient(145deg,#0c2435,#06131f 75%);
+  border:1px solid #32687866;border-radius:28px;box-shadow:0 25px 80px #020d16ba;
+}
+.touchHeroCinema::before,.homeHero::before{
+ content:"";position:absolute;pointer-events:none;left:10%;top:0;width:40%;
+ height:1px;background:linear-gradient(90deg,transparent,#7beddf,transparent);
+ animation:touchScanLight 6s ease-in-out infinite;
+}
+.touchHeroText{position:relative;z-index:2}
+.touchHeroCinema h1,.homeHero h1{letter-spacing:-.052em;line-height:1.07}
+.touchHeroCinema h1{font-size:clamp(42px,5.2vw,82px);margin:20px 0 22px}
+.touchHeroCinema h1 em{color:#61e0d4;font-style:normal}
+.touchHeroCinema .lead{max-width:580px;color:#cee5eb;font-size:clamp(16px,1.65vw,21px)}
+.touchHeroCinema .btn{margin:16px 0 10px;min-height:51px}
+.touchPhotoFrame{
+ position:relative;isolation:isolate;min-width:0;min-height:clamp(285px,35vw,520px);
+ border:1px solid #72dfdb6b;border-radius:24px;overflow:hidden;
+ box-shadow:0 32px 80px #0009,0 0 52px #4fc8bd1a;
+ background:linear-gradient(145deg,#1b4356,#09202d);
+ animation:touchImageReveal .75s both;
+}
+.touchPhotoFrame img{
+ position:absolute!important;inset:0!important;display:block;width:100%!important;
+ height:100%!important;max-height:none!important;object-fit:cover!important;
+ filter:saturate(.9) contrast(1.06);transform:scale(1.025);
+ transition:transform .65s ease,filter .4s ease;
+}
+.touchPhotoFrame:hover img{transform:scale(1.085);filter:saturate(1.04) contrast(1.07)}
+.touchPhotoFrame::after{
+ content:"";position:absolute;inset:35% 0 0;pointer-events:none;
+ background:linear-gradient(0deg,#051724ef,transparent);
+}
+.touchPhotoOverlay{position:absolute;bottom:23px;left:26px;z-index:2;display:grid;gap:4px;color:#e9ffff}
+.touchPhotoOverlay b{letter-spacing:.16em;font-size:12px;color:#8ef2dc}
+.touchPhotoOverlay span{font-weight:750;font-size:clamp(15px,1.7vw,21px)}
+.touchPhotoCredit{text-align:right;margin:8px 8px 19px;color:#93adbc!important;font-size:11px!important}
+.touchPhotoCredit a{color:inherit}
+.homeHeroPreview.touchPhotoFrame{height:auto;aspect-ratio:1.1/1;min-height:320px;display:block}
+.homeHeroPreview.touchPhotoFrame img{filter:saturate(.89) contrast(1.12)}
+.homeHeroPreview.touchPhotoFrame::after{inset:35% 0 0}
+.homeHeroPreview.touchPhotoFrame .homePreviewTag{color:#a4ffeb;letter-spacing:.12em;z-index:2}
+.homeHeroPreview.touchPhotoFrame .homePreviewTag b{color:#fff}
+.touchTrailerCard{position:relative;overflow:hidden;border-color:#47958b75!important}
+.touchTrailerCard::before{content:"";display:block;position:absolute;right:-15%;top:-120px;width:270px;height:270px;border-radius:50%;background:#58dacf16;filter:blur(35px);pointer-events:none}
+.homeHeroCopy,.touchHeroText{animation:touchCopyRise .75s .08s both}
+.hero.homeHero{position:relative}
+@keyframes touchCopyRise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes touchImageReveal{from{opacity:.2;transform:translateY(18px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes touchScanLight{0%,100%{opacity:.16;transform:translateX(-20px)}50%{opacity:.8;transform:translateX(70px)}}
+
+/* Real image as the welcome-screen artwork, without affecting the movie/video layer. */
+#tvApp .tvPhotoStage{
+ position:relative;min-width:0;width:100%;aspect-ratio:1.15/1;
+ border-radius:clamp(15px,2.5vw,32px);border:1px solid #76eee089;
+ background:#103b4b;overflow:hidden;
+ box-shadow:0 35px 100px #000b,0 0 65px #32c7c02c;
+ transform:rotate(-2deg);animation:tvPhotoArrival 1s .12s both;
+}
+#tvApp .welcomeArtwork .tvPhotoStage img{
+ display:block;width:100%;height:100%;max-height:none;object-fit:cover;
+ filter:brightness(.84) saturate(.85) contrast(1.1);
+ animation:none!important;transform:scale(1.05)
+}
+#tvApp .tvPhotoStage::after{
+ content:"";position:absolute;inset:40% 0 0;
+ background:linear-gradient(transparent,#041925eb)
+}
+#tvApp .tvPhotoCaption{
+ position:absolute;bottom:6%;left:6%;z-index:2;font-size:clamp(13px,1.3vw,23px);
+ font-weight:900;color:#b7fff1;letter-spacing:.12em
+}
+@keyframes tvPhotoArrival{from{opacity:0;transform:translateX(32px) rotate(3deg) scale(.96)}to{opacity:1;transform:translateX(0) rotate(-2deg) scale(1)}}
+@media(max-width:780px){
+ .touchHeroCinema{grid-template-columns:1fr;padding:22px!important;gap:18px}
+ .touchHeroCinema .touchPhotoFrame{min-height:260px}
+ .homeHeroPreview.touchPhotoFrame{min-height:245px}
+ #tvApp .tvPhotoStage{max-width:65vw;max-height:33vh;margin:auto}
+}
+@media(prefers-reduced-motion:reduce){
+ .touchHeroCinema::before,.homeHero::before,.homeHeroCopy,.touchHeroText,
+ .touchPhotoFrame,#tvApp .tvPhotoStage{animation:none!important;transition:none!important}
+ .touchPhotoFrame:hover img{transform:none!important}
+}
