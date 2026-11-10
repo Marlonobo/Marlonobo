@@ -28,6 +28,28 @@ const HOME_IMG={
  cap:{src:'https://commons.wikimedia.org/wiki/Special:FilePath/TouchScreen_capacitive.svg?width=900',alt:'Schema eines kapazitiven Touchscreens',credit:'Grafik: Mercury13 · CC BY-SA 3.0',page:'https://commons.wikimedia.org/wiki/File:TouchScreen_capacitive.svg'},
  hand:{src:'https://commons.wikimedia.org/wiki/Special:FilePath/Smartphone-mobile-hand-technology-internet-finger.jpg?width=1600',alt:'Hand bedient den Touchscreen eines Smartphones',credit:'Foto: Wikimedia Commons · CC0 (gemeinfrei)',page:'https://commons.wikimedia.org/wiki/File:Smartphone-mobile-hand-technology-internet-finger.jpg'}
 };
+// Kino-Effekte: Intro mit Kinobalken, Text-Einblendungen beim Scrollen, Parallax im Trailer.
+let rgObserver=null,rgScrollBound=false;
+function rgCinema(introHtml){
+ // Intro liegt außerhalb von #app, damit ein Neuaufbau der Seite es nicht abbricht.
+ if(introHtml){document.body.insertAdjacentHTML('beforeend',introHtml);try{sessionStorage.setItem('touch_intro','1');}catch{}}
+ const intro=introHtml?el('rgIntro'):null;
+ if(intro){
+  document.body.classList.add('rgIntroOn');
+  const done=()=>{if(!intro.isConnected)return;intro.classList.add('rgIntroOut');document.body.classList.remove('rgIntroOn');try{sessionStorage.setItem('touch_intro','1');}catch{}setTimeout(()=>intro.remove(),900);};
+  const t=setTimeout(done,4200);
+  intro.onclick=()=>{clearTimeout(t);done();};
+ }
+ document.querySelectorAll('.rgHero, .rgTile, .rgSecHead, .rgLocked, .rgPage .clsLab').forEach((n,i)=>n.classList.add('rgReveal'));
+ if('IntersectionObserver' in window){
+  rgObserver?.disconnect();
+  rgObserver=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('rgIn');rgObserver.unobserve(e.target);}}),{threshold:.12});
+  document.querySelectorAll('.rgReveal').forEach(n=>rgObserver.observe(n));
+ }else document.querySelectorAll('.rgReveal').forEach(n=>n.classList.add('rgIn'));
+ if(!rgScrollBound){rgScrollBound=true;let raf=0;
+  window.addEventListener('scroll',()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;const v=document.querySelector('.rgBgVideo'),inner=document.querySelector('.rgHeroInner');if(!v)return;const y=Math.min(window.scrollY,window.innerHeight);
+   v.style.transform='scale('+(1.06+y/window.innerHeight*.12)+') translateY('+(y*.25)+'px)';if(inner){inner.style.transform='translateY('+(y*.45)+'px)';inner.style.opacity=String(Math.max(0,1-y/(window.innerHeight*.7)));}});},{passive:true});}
+}
 function homeTile(img,kicker,title,text,extra=''){
  const i=HOME_IMG[img];
  return '<article class="rgTile'+(extra?' '+extra:'')+'"><figure><img src="'+i.src+'" alt="'+esc(i.alt)+'" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add(\'noimg\')"><figcaption><a href="'+i.page+'" target="_blank" rel="noopener noreferrer">'+esc(i.credit)+'</a></figcaption></figure><div class="rgTileText"><span>'+kicker+'</span><h3>'+title+'</h3><p>'+text+'</p></div></article>';
@@ -58,7 +80,10 @@ function home(){
   '<section class="clsBottom"><a class="clsHandout" href="#handout"><span class="eyebrow">ZUM ABSCHLUSS</span><h3>Handout ausfüllen</h3><p>Wissen, Arbeitsblatt und Feedbackbogen – tippen oder mit dem Apple Pencil schreiben.</p><b>Handout öffnen →</b></a><div class="clsChapters"><span class="eyebrow">NACH DER SIEGEREHRUNG</span><h3 style="margin:8px 0">Doku noch einmal?</h3><p class="small">Die ganze Dokumentation mit Untertiteln auf deinem Gerät.</p><a class="btn" href="/watch">🎬 Doku ansehen</a></div></section>'
   :'<section class="rgLocked"><div><span>NACH DER SIEGEREHRUNG</span><h2>Touch-Labor, Schach &amp; Handout</h2><p>Sobald die Doku vorbei ist, öffnet sich hier das Touch-Labor mit Schach gegen den Bot, Finger-Messung und Reaktionstest.</p></div><a class="rgBtn rgBtnMain" href="/join">🎮 Jetzt zum Quiz</a></section>';
  const credits='<section class="rgCredits"><h4>Bildquellen</h4><ul>'+Object.values(HOME_IMG).map(i=>'<li><a href="'+i.page+'" target="_blank" rel="noopener noreferrer">'+esc(i.alt)+'</a> – '+esc(i.credit)+', via Wikimedia Commons</li>').join('')+'</ul></section>';
- wrap('<div class="rgPage">'+hero+tiles+lab+credits+'</div>');
+ let introSeen=false;try{introSeen=sessionStorage.getItem('touch_intro')==='1';}catch{}
+ const intro='',introHtml='<div class="rgIntro" id="rgIntro" aria-hidden="true"><div class="rgBar rgBarTop"></div><div class="rgBar rgBarBottom"></div><div class="rgIntroText"><span class="rgIntroPre">Friedrich-Dessauer-Schule präsentiert</span><span class="rgIntroLogo">TOUCH<b>LIVE</b></span><span class="rgIntroSub">Eine interaktive Dokumentation</span></div><button type="button" class="rgSkip" id="rgSkip">Überspringen ›</button></div>';
+ wrap(intro+'<div class="rgPage"><div class="rgGrain" aria-hidden="true"></div>'+hero+tiles+lab+credits+'</div>');
+ rgCinema(!introSeen&&!el('rgIntro')?introHtml:'');
  document.body.classList.add('rgHome');
  bindTrailerCard();
  if(open)initHomeLab();
