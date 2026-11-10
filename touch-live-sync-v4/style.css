@@ -787,3 +787,28 @@ body.studentEntry .studentScoreGain{
 #tvApp .tvRemoteBar #tvSpPrev,#tvApp .tvRemoteBar #tvSpNext,#tvApp .tvRemoteBar #tvSpDown,#tvApp .tvRemoteBar #tvSpUp{min-width:64px;font-size:22px}
 #tvApp .tvRemoteBar #tvSpToggle{background:#1db954;border-color:#1db954;color:#06210f;font-weight:800}
 #tvApp .tvSpNow{flex-basis:100%;font-size:15px;color:#c7f5dc;padding:2px 6px}
+
+
+/* TOUCH LIVE presentation-only display: no upper setup toolbar on LG / projectors.
+   The browser's own address bar can disappear only in browser-approved fullscreen. */
+#tvApp #tvRemoteBar,
+#tvApp #tvRemoteHelp,
+#tvApp #tvAutoHint,
+#tvApp .tvFooter{display:none!important;visibility:hidden!important}
+#tvApp .tvCinemaSetup{
+ position:fixed;left:50%;bottom:max(28px,5vh);transform:translateX(-50%);
+ z-index:75;display:flex;flex-direction:column;align-items:center;gap:10px;
+ width:min(94vw,470px);padding:14px 20px;
+ border:1px solid rgba(80,218,206,.38);border-radius:16px;
+ background:rgba(5,18,27,.89);box-shadow:0 14px 42px #0009;
+ color:#dceff1;text-align:center;font-size:clamp(12px,1.2vw,15px);
+}
+#tvApp .tvCinemaSetup[hidden],#tvApp .tvCinemaSetup button[hidden]{display:none!important}
+#tvApp .tvCinemaSetup button{
+ width:100%;border-radius:12px;min-height:48px;padding:10px 16px;
+ border:1px solid #74dfd8;background:#4fd8d2;color:#06252b;
+ font-weight:850;font-size:clamp(15px,1.5vw,19px);
+}
+#tvApp .tvCinemaSetup .tvCinemaPick{background:#193b50;color:#efffff;border-color:#7aafc8}
+#tvApp .tvCinemaSetup button:focus-visible{outline:4px solid #fff;outline-offset:3px}
+@media(max-width:650px){#tvApp .tvCinemaSetup{padding:11px 14px;bottom:18px;gap:7px}}
