@@ -1050,3 +1050,72 @@ body.teacherMode.teacherDockClosed #app{padding-right:0}
  .tdFold{transform:rotate(90deg)}
 }
 @media print{.tDock{display:none!important}body.teacherMode #app{padding:0!important}}
+
+/* ---------- Startseite im Kino-Stil ---------- */
+body.rgHome main.wrap{max-width:none;padding:0}
+body.rgHome .nav{position:fixed;top:0;left:0;right:0;z-index:30;max-width:none;padding:16px clamp(18px,4vw,56px);border-bottom:0;background:linear-gradient(#000c,#0000)}
+body.rgHome footer{border-top:1px solid #ffffff14}
+.rgPage{background:#05090d;color:#f3f6f8}
+.rgHero{position:relative;min-height:100svh;display:flex;align-items:flex-end;overflow:hidden;isolation:isolate}
+.rgBgVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;background:#000}
+.rgKen{animation:rgKen 26s ease-in-out infinite alternate}
+@keyframes rgKen{from{transform:scale(1.04)}to{transform:scale(1.16) translate(-2%,-1%)}}
+.rgShade{position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,#05090d55 0%,#05090d00 30%,#05090d88 65%,#05090d 100%),linear-gradient(90deg,#05090dcc 0%,#05090d00 60%)}
+.rgHeroInner{width:100%;padding:0 clamp(20px,5vw,72px) clamp(56px,9vh,110px)}
+.rgKicker{display:inline-block;font:700 12px/1 Consolas,monospace;letter-spacing:.24em;color:#9ff3ea;padding:8px 12px;border:1px solid #9ff3ea55;background:#05090d66}
+.rgTitle{font-family:"Arial Narrow","Roboto Condensed","Helvetica Neue",Arial,sans-serif;font-stretch:condensed;font-weight:900;text-transform:uppercase;font-size:clamp(64px,13vw,190px);line-height:.86;letter-spacing:-.02em;margin:18px 0 10px;text-shadow:0 10px 40px #000a}
+.rgTitle span{display:block;color:transparent;-webkit-text-stroke:2px #f3f6f8}
+.rgClaim{font-size:clamp(17px,2vw,24px);max-width:640px;color:#d8e3ea;margin:0 0 26px}
+.rgActions{display:flex;gap:12px;flex-wrap:wrap}
+.rgBtn{display:inline-flex;align-items:center;gap:8px;min-height:52px;padding:0 24px;border-radius:0;border:2px solid #f3f6f8;background:transparent;color:#f3f6f8;font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:14px;text-decoration:none;transition:background .15s,color .15s}
+.rgBtn:hover{background:#f3f6f8;color:#05090d;border-color:#f3f6f8}
+.rgBtnMain{background:#f3f6f8;color:#05090d}
+.rgBtnMain:hover{background:#7ff0e6;border-color:#7ff0e6}
+.rgLoop{margin:18px 0 0;font-size:12px;color:#a9b8c2}.rgLoop a{color:#a9b8c2}
+.rgScroll{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);color:#ffffff88;animation:rgBob 2s ease-in-out infinite}
+@keyframes rgBob{50%{transform:translate(-50%,6px)}}
+.rgTiles,.rgLocked,.rgCredits,.rgPage .clsLab,.rgPage .clsBottom{max-width:1280px;margin-left:auto;margin-right:auto;padding-left:clamp(18px,4vw,40px);padding-right:clamp(18px,4vw,40px)}
+.rgTiles{padding-top:70px;padding-bottom:30px}
+.rgSecHead span{font:700 12px Consolas,monospace;letter-spacing:.24em;color:#9ff3ea}
+.rgSecHead h2{font-family:"Arial Narrow","Roboto Condensed",Arial,sans-serif;font-weight:900;text-transform:uppercase;font-size:clamp(30px,4.5vw,58px);line-height:.95;margin:10px 0 28px;max-width:900px}
+.rgGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.rgTile{position:relative;min-height:380px;background:#0d151c;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
+.rgTile.rgWide{grid-column:span 2}
+.rgTile figure{position:absolute;inset:0;margin:0}
+.rgTile img{width:100%;height:100%;object-fit:cover;transition:transform .8s ease;filter:saturate(.9)}
+.rgTile:hover img{transform:scale(1.05)}
+.rgTile.rgLight figure{background:#f4f6f7}.rgTile.rgLight img{object-fit:contain;padding:24px 24px 140px}
+.rgTile::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#0000 35%,#05090de6 85%);pointer-events:none}
+.rgTile figcaption{position:absolute;top:10px;right:10px;z-index:2;font-size:11px;background:#05090dcc;padding:4px 8px}
+.rgTile figcaption a{color:#c9d6de;text-decoration:none}
+.rgTileText{position:relative;z-index:1;padding:22px}
+.rgTileText span{font:700 11px Consolas,monospace;letter-spacing:.2em;color:#9ff3ea}
+.rgTileText h3{font-family:"Arial Narrow","Roboto Condensed",Arial,sans-serif;font-weight:900;text-transform:uppercase;font-size:clamp(24px,2.6vw,36px);line-height:1;margin:8px 0}
+.rgTileText p{margin:0;color:#d1dce3;max-width:560px}
+.rgTileText2{background:linear-gradient(150deg,#0f3a42,#0a1720);justify-content:center}
+.rgTileText2::after{display:none}
+.rgChapters{margin:12px 0 0;padding-left:20px;color:#d1dce3;line-height:1.7}
+.rgLocked{display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;margin-top:40px;margin-bottom:40px;padding-top:34px;padding-bottom:34px;border-top:1px solid #ffffff1c;border-bottom:1px solid #ffffff1c}
+.rgLocked span{font:700 12px Consolas,monospace;letter-spacing:.24em;color:#9ff3ea}
+.rgLocked h2{font-family:"Arial Narrow",Arial,sans-serif;font-weight:900;text-transform:uppercase;font-size:clamp(26px,3.4vw,44px);margin:8px 0}
+.rgLocked p{color:#c3d1da;max-width:640px;margin:0}
+.rgPage .clsLab{margin-top:40px}
+.rgCredits{padding-top:30px;padding-bottom:40px;font-size:12.5px;color:#93a6b2}
+.rgCredits h4{margin:0 0 6px;color:#c8d6de;font-size:13px;letter-spacing:.1em;text-transform:uppercase}
+.rgCredits ul{margin:0;padding-left:18px}.rgCredits a{color:#b9d3dd}
+@media (max-width:900px){.rgGrid{grid-template-columns:1fr}.rgTile.rgWide{grid-column:auto}.rgTile{min-height:320px}.rgTitle span{-webkit-text-stroke:1.5px #f3f6f8}}
+
+/* Musik-Plan im Admin */
+.mpRow{border:1px solid #28445a;border-radius:14px;padding:14px;margin-top:12px;background:#0b1f2f}
+.mpHead b{display:block;font-size:16px}.mpHead small{color:var(--muted)}
+.mpSeg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:#081827;border:1px solid #28445a;border-radius:12px;padding:4px;margin:10px 0}
+.mpSeg button{min-height:42px;border:0;background:transparent;border-radius:9px}
+.mpSeg button.on{background:#6de0d6;color:#06252b}
+.mpSpotify .flex{flex-wrap:nowrap;margin-top:6px}.mpSpotify input{flex:1}
+.mpResults{display:grid;gap:6px;margin-top:8px}
+.mpItem{display:flex;flex-direction:column;align-items:flex-start;text-align:left;min-height:0;padding:8px 12px}
+.mpItem small{color:var(--muted);font-weight:400}
+.mpNow{margin:6px 0 0}
+.rgTile figure.noimg{background:linear-gradient(140deg,#123c46,#0a141b)}.rgTile figure.noimg img{display:none}
+.rgTileText2{grid-column:span 2}
+@media (max-width:900px){.rgTileText2{grid-column:auto}}

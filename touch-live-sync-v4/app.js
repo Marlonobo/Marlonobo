@@ -22,25 +22,52 @@ function wrap(body){
  app.innerHTML='<header class="nav wrap"><a class="logo" href="#home">TOUCH <span>LIVE</span></a><nav class="navlinks"><a href="#home">Start</a><a href="/join">Schüler</a><a href="#teacher">Lehrer</a><a href="#handout">Handout</a></nav></header><main class="wrap">'+body+'</main><footer>TOUCH LIVE · Friedrich-Dessauer-Schule Limburg · 2026</footer>';
 }
 function page(title,tag,sub){return '<div class="page"><span class="eyebrow">'+tag+'</span><h1>'+title+'</h1><p>'+sub+'</p></div>';}
-function home(){
-const afterDoc=['results','end','handout'].includes(state?.phase);
-if(!state?.homeUnlocked&&!afterDoc){
- wrap('<section class="hero touchHeroCinema touchHeroLocked"><div class="touchHeroText"><span class="eyebrow">TOUCH LIVE · LIVE IM UNTERRICHT</span><h1>Die Zukunft<br><em>liegt in deinen Händen.</em></h1><p class="lead">Die Dokumentation läuft auf dem Beamer. Die Fragen erscheinen automatisch auf deinem iPad. Nach der Siegerehrung gibt die Regie die vollständige Seite frei.</p><a class="btn primary" href="/join">🎮 Quiz jetzt öffnen</a><p class="small">7 Kapitel · 17 Fragen · 2 Mitmach-Spiele</p></div>'+(state?.trailerAvailable?'<div class="clsPlayer"><video id="clsTrailer" controls playsinline preload="metadata" src="/api/trailer/video?v='+encodeURIComponent(state.trailerRevision||0)+'#t=0.5"></video><button type="button" class="clsPlay" id="clsTrailerPlay" aria-label="Trailer abspielen"><span>▶</span><b>Trailer ansehen</b><small>mit Ton</small></button></div>':'<div class="touchPhotoFrame"><img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cc/Smartphone-mobile-hand-technology-internet-finger.jpg/960px-Smartphone-mobile-hand-technology-internet-finger.jpg" alt="Echte Fotografie einer Hand auf dem Touchscreen eines Smartphones" loading="lazy"><div class="touchPhotoOverlay"><b>TOUCH IM ALLTAG</b><span>Ein Fingertipp löst eine Aktion aus</span></div></div>')+'</section><p class="touchPhotoCredit"><a href="https://commons.wikimedia.org/wiki/File:Smartphone-mobile-hand-technology-internet-finger.jpg" target="_blank" rel="noopener noreferrer">Foto: Wikimedia Commons · CC0 (gemeinfrei)</a></p>');
- bindTrailerCard();return;
+// Bilder mit freier Lizenz (Wikimedia Commons) – Quelle steht direkt am Bild.
+const HOME_IMG={
+ cern:{src:'https://commons.wikimedia.org/wiki/Special:FilePath/CERN-Stumpe_Capacitance_Touchscreen.jpg?width=1600',alt:'Prototypen der ersten kapazitiven Touchscreens am CERN, 1972/73',credit:'Foto: Maximilien Brice / CERN · CC BY 2.0',page:'https://commons.wikimedia.org/wiki/File:CERN-Stumpe_Capacitance_Touchscreen.jpg'},
+ cap:{src:'https://commons.wikimedia.org/wiki/Special:FilePath/TouchScreen_capacitive.svg?width=900',alt:'Schema eines kapazitiven Touchscreens',credit:'Grafik: Mercury13 · CC BY-SA 3.0',page:'https://commons.wikimedia.org/wiki/File:TouchScreen_capacitive.svg'},
+ hand:{src:'https://commons.wikimedia.org/wiki/Special:FilePath/Smartphone-mobile-hand-technology-internet-finger.jpg?width=1600',alt:'Hand bedient den Touchscreen eines Smartphones',credit:'Foto: Wikimedia Commons · CC0 (gemeinfrei)',page:'https://commons.wikimedia.org/wiki/File:Smartphone-mobile-hand-technology-internet-finger.jpg'}
+};
+function homeTile(img,kicker,title,text,extra=''){
+ const i=HOME_IMG[img];
+ return '<article class="rgTile'+(extra?' '+extra:'')+'"><figure><img src="'+i.src+'" alt="'+esc(i.alt)+'" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add(\'noimg\')"><figcaption><a href="'+i.page+'" target="_blank" rel="noopener noreferrer">'+esc(i.credit)+'</a></figcaption></figure><div class="rgTileText"><span>'+kicker+'</span><h3>'+title+'</h3><p>'+text+'</p></div></article>';
 }
-const trailer=state?.trailerAvailable?'<div class="clsPlayer"><video id="clsTrailer" controls playsinline preload="metadata" src="/api/trailer/video?v='+encodeURIComponent(state.trailerRevision||0)+'#t=0.5"></video><button type="button" class="clsPlay" id="clsTrailerPlay" aria-label="Trailer abspielen"><span>▶</span><b>Trailer ansehen</b><small>mit Ton</small></button></div>':'<div class="clsPlayer clsPlayerEmpty"><div><span>🎬</span><b>Der Trailer kommt gleich.</b><small>Die Regie lädt ihn im Admin hoch.</small></div></div>';
- wrap('<section class="clsHero"><div class="clsHeroText"><span class="eyebrow">TOUCH LIVE · FÜR DIE KLASSE</span><h1>Berühren.<br><em>Verstehen.</em><br>Ausprobieren.</h1><p class="lead">Die Doku ist vorbei – jetzt seid ihr dran. Schaut euch den Trailer noch einmal an, testet eure Finger im Touch-Labor und füllt das Handout aus.</p><div class="flex"><button type="button" class="btn primary" id="clsToLab">🖐️ Zum Touch-Labor</button><a href="#handout" class="btn">📝 Handout</a><a href="/watch" class="btn">🎬 Doku nochmal ansehen</a></div></div>'+trailer+'</section>'+
-  '<section class="clsLab" id="lab"><div class="clsLabHead"><div><span class="eyebrow">NACH DER DOKU · TOUCH-LABOR</span><h2>Fünf Spiele. Echte Messwerte.</h2><p>Alles läuft direkt im Browser – am besten auf dem iPad mit den Fingern. Dein Gerät misst dabei, was der Touchscreen erkennt.</p></div></div>'+
+function home(){
+ const afterDoc=['results','end','handout'].includes(state?.phase);
+ const open=!!(state?.homeUnlocked||afterDoc);
+ const hasTrailer=!!state?.trailerAvailable;
+ const media=hasTrailer
+  ?'<video class="rgBgVideo" id="clsTrailer" autoplay muted loop playsinline preload="auto" poster="'+HOME_IMG.cern.src+'" src="/api/trailer/video?v='+encodeURIComponent(state.trailerRevision||0)+'"></video>'
+  :'<img class="rgBgVideo rgKen" src="'+HOME_IMG.cern.src+'" alt="'+esc(HOME_IMG.cern.alt)+'" referrerpolicy="no-referrer">';
+ const hero='<section class="rgHero">'+media+'<div class="rgShade"></div>'+
+  '<div class="rgHeroInner"><span class="rgKicker">TOUCH LIVE · INTERAKTIVE DOKUMENTATION · LERNFELD 14</span>'+
+  '<h1 class="rgTitle">TOUCH<span>SCREEN</span></h1><p class="rgClaim">Geschichte, Technik und Zukunft – erlebt mit deinen eigenen Fingern.</p>'+
+  '<div class="rgActions">'+(open?'<a class="rgBtn rgBtnMain" href="#lab" id="rgToLab">🎮 Touch-Labor &amp; Schach</a><a class="rgBtn" href="#handout">📝 Handout</a>':'<a class="rgBtn rgBtnMain" href="/join">🎮 Zum Quiz</a>')+
+  (hasTrailer?'<button type="button" class="rgBtn" id="clsTrailerPlay">🔊 Trailer mit Ton</button>':'')+'</div>'+
+  (hasTrailer?'<p class="rgLoop">Trailer läuft in Dauerschleife · '+'<a href="'+HOME_IMG.cern.page+'" target="_blank" rel="noopener noreferrer">Standbild: CERN, CC BY 2.0</a></p>':'<p class="rgLoop"><a href="'+HOME_IMG.cern.page+'" target="_blank" rel="noopener noreferrer">Bild: Maximilien Brice / CERN · CC BY 2.0</a></p>')+
+  '</div><div class="rgScroll" aria-hidden="true">▼</div></section>';
+ const tiles='<section class="rgTiles"><header class="rgSecHead"><span>DIE DOKU</span><h2>Sieben Kapitel. Ein Bildschirm, den jeder kennt.</h2></header><div class="rgGrid">'+
+  homeTile('cern','KAPITEL 1 · GESCHICHTE','Alles begann am CERN','1972 baute Bent Stumpe am Kernforschungszentrum CERN einen kapazitiven Touchscreen für den Kontrollraum eines Teilchenbeschleunigers.','rgWide')+
+  homeTile('cap','KAPITEL 2 · TECHNIK','So funktioniert’s','Ein Gitter aus Leiterbahnen unter dem Glas. Dein Finger verändert das elektrische Feld – der Controller berechnet daraus die Position.','rgLight')+
+  homeTile('hand','KAPITEL 5 · ALLTAG','Überall Touch','Smartphone, Kasse, Fahrkartenautomat, Auto: Touchscreens sind heute fast überall – und jeder bedient sie ohne Anleitung.')+
+  '<article class="rgTile rgTileText2"><div class="rgTileText"><span>KAPITEL 3–7</span><h3>Fünf Arten · Multitouch · Probleme &amp; Zukunft</h3><ol class="rgChapters">'+CH.map(v=>'<li>'+esc(v)+'</li>').join('')+'</ol></div></article>'+
+  '</div></section>';
+ const lab=open?'<section class="clsLab" id="lab"><div class="clsLabHead"><div><span class="eyebrow">NACH DER DOKU · TOUCH-LABOR</span><h2>Fünf Spiele. Echte Messwerte.</h2><p>Alles läuft direkt im Browser – am besten auf dem iPad mit den Fingern. Dein Gerät misst dabei, was der Touchscreen erkennt.</p></div></div>'+
   '<div class="clsTabs" role="tablist">'+[['chess','♟️','Schach gegen Bot','Leicht · Mittel · Schwer'],['egg','🔎','Easter Egg','Zoomen, Verschieben, Tippen'],['finger','🖐️','Finger-Messlabor','Abstand, Zoom, Drehwinkel'],['react','⚡','Reaktionstest','Wie schnell tippst du?'],['multi','✋','Multitouch-Zähler','Wie viele Finger erkennt dein Gerät?']].map(([id,ic,t,sub])=>'<button type="button" role="tab" data-lab="'+id+'"><span>'+ic+'</span><b>'+t+'</b><small>'+sub+'</small></button>').join('')+'</div>'+
   '<div class="clsStage" id="labStage"></div></section>'+
-  '<section class="clsBottom"><a class="clsHandout" href="#handout"><span class="eyebrow">ZUM ABSCHLUSS</span><h3>Handout ausfüllen</h3><p>Wissen, Arbeitsblatt und Feedbackbogen – tippen oder mit dem Apple Pencil schreiben.</p><b>Handout öffnen →</b></a><div class="clsChapters"><span class="eyebrow">DIE DOKU IN SIEBEN KAPITELN</span><ol>'+CH.map(v=>'<li>'+esc(v)+'</li>').join('')+'</ol></div></section>');
- const toLab=el('clsToLab');if(toLab)toLab.onclick=()=>el('lab')?.scrollIntoView({behavior:'smooth'});
+  '<section class="clsBottom"><a class="clsHandout" href="#handout"><span class="eyebrow">ZUM ABSCHLUSS</span><h3>Handout ausfüllen</h3><p>Wissen, Arbeitsblatt und Feedbackbogen – tippen oder mit dem Apple Pencil schreiben.</p><b>Handout öffnen →</b></a><div class="clsChapters"><span class="eyebrow">NACH DER SIEGEREHRUNG</span><h3 style="margin:8px 0">Doku noch einmal?</h3><p class="small">Die ganze Dokumentation mit Untertiteln auf deinem Gerät.</p><a class="btn" href="/watch">🎬 Doku ansehen</a></div></section>'
+  :'<section class="rgLocked"><div><span>NACH DER SIEGEREHRUNG</span><h2>Touch-Labor, Schach &amp; Handout</h2><p>Sobald die Doku vorbei ist, öffnet sich hier das Touch-Labor mit Schach gegen den Bot, Finger-Messung und Reaktionstest.</p></div><a class="rgBtn rgBtnMain" href="/join">🎮 Jetzt zum Quiz</a></section>';
+ const credits='<section class="rgCredits"><h4>Bildquellen</h4><ul>'+Object.values(HOME_IMG).map(i=>'<li><a href="'+i.page+'" target="_blank" rel="noopener noreferrer">'+esc(i.alt)+'</a> – '+esc(i.credit)+', via Wikimedia Commons</li>').join('')+'</ul></section>';
+ wrap('<div class="rgPage">'+hero+tiles+lab+credits+'</div>');
+ document.body.classList.add('rgHome');
  bindTrailerCard();
- initHomeLab();
+ if(open)initHomeLab();
+ const toLab=el('rgToLab');if(toLab)toLab.onclick=e=>{e.preventDefault();el('lab')?.scrollIntoView({behavior:'smooth'});};
 }
 function bindTrailerCard(){
- const v=el('clsTrailer'),pb=el('clsTrailerPlay');
- if(v&&pb){pb.onclick=()=>{v.muted=false;v.play().catch(()=>{});};v.addEventListener('play',()=>pb.hidden=true);v.addEventListener('pause',()=>{if(!v.seeking)pb.hidden=false;});v.addEventListener('ended',()=>pb.hidden=false);}
+ const v=el('clsTrailer'),pb=el('clsTrailerPlay');if(!v)return;
+ v.muted=true;v.loop=true;const p=v.play();if(p?.catch)p.catch(()=>{});
+ if(pb)pb.onclick=()=>{if(v.muted){v.muted=false;v.currentTime=0;v.play().catch(()=>{});pb.textContent='🔇 Ton aus';}else{v.muted=true;pb.textContent='🔊 Trailer mit Ton';}};
 }
 // ---------- Touch-Labor auf der Klassenseite (nach der Doku) ----------
 let labTimer=null,labGame=null;
@@ -374,14 +401,16 @@ function showAdmin(){
  wrap(page('Live-Regie','ADMIN · NUR FÜR DICH','Steuere den Film, die Fragen, das Gestenspiel, Untertitel und Abschluss.')+(open?'<div id="adminRoot">'+adminContents()+'</div>':'<section class="card" style="max-width:540px"><h2>Privater Admin-Zugang</h2><form id="unlockAdmin"><label>Admin-Schlüssel</label><input id="adminPassword" type="password" autocomplete="off" required><p></p><button class="primary">Anmelden</button></form></section>'));
  if(!open){el('unlockAdmin').onsubmit=async e=>{e.preventDefault();adminKey=el('adminPassword').value;sessionStorage.setItem('touch_admin_key',adminKey);try{adminInfo=await api('/api/admin-info','GET',undefined,adminKey);showAdmin();}catch(err){alert(err.message);adminKey='';sessionStorage.removeItem('touch_admin_key');}};return;}
  bindAdmin();
+ musicPlanCard();
  organizeAdmin();
 }
 // Admin in übersichtliche Reiter gliedern. Die Karten werden nur verschoben/ein- und
 // ausgeblendet – alle Knöpfe und Funktionen bleiben unverändert.
+const MUSIC_PLAN_LABEL='MUSIK-PLAN';
 const ADMIN_TABS=[
  ['live','🎬 Live','Präsentation, Trailer, Spiele',['LIVE-REGIE','TRAILER','ZOOM','CO-MODERATION']],
  ['film','🎞 Film & Untertitel','Filmquelle, Untertitel, Darstellung',['FILMQUELLE','UNTERTITEL']],
- ['musik','♫ Musik & Spotify','Willkommen, Spotify, Pausenmusik',['WILLKOMMEN','SPOTIFY','ORIGINALMUSIK']],
+ ['musik','♫ Musik & Spotify','Willkommen, Abschluss, Spotify',['MUSIK-PLAN','WILLKOMMEN','SPOTIFY','ORIGINALMUSIK']],
  ['leute','👥 Teilnehmer','Links, Ergebnisse, Antworten, Handout',['LINKS','ERGEBNISSE','NUR FÜR DICH','HANDOUT']],
  ['quiz','📝 Quizfragen','Zeitmarken und Fragen bearbeiten',['TIMELINE']]
 ];
@@ -390,6 +419,37 @@ function adminCardTab(card){
  const label=((card.querySelector('.label')||{}).textContent||'').toUpperCase();
  for(const [id,,,keys] of ADMIN_TABS)if(keys.some(k=>label.includes(k)))return id;
  return 'live';
+}
+function musicPlanCard(){
+ const root=el('adminRoot');if(!root||el('musicPlanCard'))return;
+ const c=document.createElement('section');c.id='musicPlanCard';c.className='card';
+ const row=(slot,title,sub)=>'<div class="mpRow" data-slot="'+slot+'"><div class="mpHead"><b>'+title+'</b><small>'+sub+'</small></div>'+
+  '<div class="mpSeg">'+[['off','Aus'],['touch','♫ Eigene Melodie'],['spotify','Spotify']].map(([m,l])=>'<button type="button" data-mode="'+m+'">'+l+'</button>').join('')+'</div>'+
+  '<div class="mpSpotify" hidden><div class="flex"><input type="url" class="mpUrl" placeholder="https://open.spotify.com/playlist/… oder Song-Link"><button type="button" class="mpSave primary">Übernehmen</button></div>'+
+  '<div class="flex mpSearchRow"><input type="search" class="mpQuery" placeholder="Spotify durchsuchen, z. B. Chill, Lofi, Party"><button type="button" class="mpSearch">🔎 Suchen</button></div><div class="mpResults"></div></div>'+
+  '<p class="small mpNow"></p></div>';
+ c.innerHTML='<span class="label">'+MUSIC_PLAN_LABEL+' · WILLKOMMEN &amp; ABSCHLUSS</span><h2>Welche Musik läuft wann?</h2><p class="small">Spotify spielt über die Spotify-App des LG-Fernsehers (einmal am Handy oder hier mit Spotify anmelden). Beim Film, Trailer und Quiz wird die Musik automatisch gestoppt.</p>'+
+  row('welcome','Willkommensfolie','läuft, bis du den Film startest')+row('end','Abschluss / Dankeschön-Folie','läuft nach der Siegerehrung');
+ root.appendChild(c);
+ const paint=()=>{const plan=state?.musicPlan||{};c.querySelectorAll('.mpRow').forEach(r=>{const p=plan[r.dataset.slot]||{mode:r.dataset.slot==='welcome'?'touch':'off'};
+  r.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('on',b.dataset.mode===p.mode));
+  r.querySelector('.mpSpotify').hidden=p.mode!=='spotify'&&!r.dataset.picking;
+  const u=r.querySelector('.mpUrl');if(u&&document.activeElement!==u&&p.url)u.value=p.url;
+  r.querySelector('.mpNow').textContent=p.mode==='off'?'Keine Musik.':p.mode==='touch'?'Eigene TOUCH-LIVE-Melodie in Dauerschleife (am LG einmal OK für Ton).':p.url?'Spotify: '+(p.title||p.url)+(state?.spotifyLinked?'':' · ⚠ Spotify noch nicht verbunden – am Handy unter /control anmelden.'):'Spotify gewählt – bitte Song oder Playlist auswählen.';});};
+ const save=async(slot,mode,url,title)=>{try{await api('/api/admin','POST',{cmd:'musicPlan',slot,mode,url,title},adminKey);await poll(true);paint();}catch(e){alert(e.message);}};
+ c.querySelectorAll('.mpRow').forEach(r=>{const slot=r.dataset.slot;
+  r.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{if(b.dataset.mode==='spotify'){r.dataset.picking='1';const cur=state?.musicPlan?.[slot];if(cur?.mode==='spotify')save(slot,'spotify',cur.url,cur.title);else{r.querySelector('.mpSpotify').hidden=false;r.querySelectorAll('[data-mode]').forEach(x=>x.classList.toggle('on',x===b));}}else{delete r.dataset.picking;save(slot,b.dataset.mode);}});
+  r.querySelector('.mpSave').onclick=()=>save(slot,'spotify',r.querySelector('.mpUrl').value.trim());
+  r.querySelector('.mpSearch').onclick=async()=>{const q=r.querySelector('.mpQuery').value.trim(),out=r.querySelector('.mpResults');if(q.length<2)return;
+   if(!window.SpotifyConnect?.api||!(window.SpotifyConnect.connected()||state?.spotifyLinked)){out.innerHTML='<p class="small">Für die Suche erst mit Spotify anmelden (unten im Spotify-Bereich). Einen Link kannst du jederzeit oben einfügen.</p>';return;}
+   out.innerHTML='<p class="small">Suche …</p>';
+   try{const d=await window.SpotifyConnect.api('/search?'+new URLSearchParams({q,type:'playlist,track',limit:'6'}));
+    const items=[...(d.playlists?.items||[]).filter(Boolean).map(x=>({...x,k:'playlist',sub:'Playlist'})),...(d.tracks?.items||[]).filter(Boolean).map(x=>({...x,k:'track',sub:(x.artists||[]).map(a=>a.name).join(', ')}))];
+    out.innerHTML=items.map((x,i)=>'<button type="button" class="mpItem" data-i="'+i+'"><b>'+esc(x.name)+'</b><small>'+esc(x.sub)+'</small></button>').join('')||'<p class="small">Nichts gefunden.</p>';
+    out.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{const x=items[Number(b.dataset.i)];save(slot,'spotify','https://open.spotify.com/'+x.k+'/'+x.id,x.name+(x.k==='track'?' – '+x.sub:''));});
+   }catch(e){out.innerHTML='<p class="small">Suche nicht möglich: '+esc(e.message)+'</p>';}};
+ });
+ paint();window.__paintMusicPlan=paint;
 }
 function organizeAdmin(){
  const root=el('adminRoot');if(!root)return;
@@ -1053,7 +1113,7 @@ function tvRemoteKeydown(e){
   if(start&&!start.hidden)start.click();else tvEnablePlayback();
   return;
  }
- if(state?.phase==='welcome'&&tvSpotifyReady()){
+ if(['welcome','end'].includes(state?.phase)&&tvSpotifyReady()){
   const k=e.key;
   if(k==='ArrowRight'||code===39){e.preventDefault();tvSpotifyAction('next');return;}
   if(k==='ArrowLeft'||code===37){e.preventDefault();tvSpotifyAction('previous');return;}
@@ -1160,7 +1220,7 @@ async function tvSpotifyAction(kind){
    else{
     let dev=tvSpInfo.deviceId?{id:tvSpInfo.deviceId}:await tvSpotifyDevice();
     if(!dev)throw Error('Spotify-App auf dem Fernseher öffnen (gleiches Konto), dann erneut OK.');
-    const music=state?.welcomeMusic;
+    const plan=state?.musicPlan?.[state?.phase==='end'?'end':'welcome'],music=plan?.mode==='spotify'?plan:state?.welcomeMusic;
     try{
      if(!tvSpInfo.track&&music?.id&&['playlist','album','track'].includes(music.type)){
       await sp('/me/player/play?device_id='+encodeURIComponent(dev.id),'PUT',music.type==='track'?{uris:['spotify:track:'+music.id]}:{context_uri:'spotify:'+music.type+':'+music.id});
@@ -1182,12 +1242,33 @@ async function tvSpotifyAction(kind){
  finally{tvSpBusy=false;}
 }
 function tvSpotifyVisibility(){
- const show=tvSpotifyReady()&&state?.phase==='welcome';
+ const show=tvSpotifyReady()&&['welcome','end'].includes(state?.phase);
  ['tvSpPrev','tvSpToggle','tvSpNext','tvSpDown','tvSpUp'].forEach(id=>{const b=el(id);if(b)b.hidden=!show;});
  const now=el('tvSpNow');if(now&&!show)now.hidden=true;
  const dock=el('tvSpDock');if(dock)dock.hidden=!show;
- if(show&&!tvSpTimer){tvSpotifyRefresh();tvSpTimer=setInterval(()=>{if(role==='tv'&&tvSpotifyReady()&&state?.phase==='welcome')tvSpotifyRefresh();},8000);}
+ if(show&&!tvSpTimer){tvSpotifyRefresh();tvSpTimer=setInterval(()=>{if(role==='tv'&&tvSpotifyReady()&&['welcome','end'].includes(state?.phase))tvSpotifyRefresh();},8000);}
  if(!show&&tvSpTimer){clearInterval(tvSpTimer);tvSpTimer=null;}
+}
+// Musik-Plan: Spotify startet automatisch auf Willkommen bzw. Abschluss und stoppt bei Film/Trailer/Quiz.
+let tvPlanKey='';
+async function tvMusicPlan(old,next){
+ if(!tvSpotifyReady())return;
+ const slot=next.phase==='welcome'?'welcome':next.phase==='end'?'end':null,plan=slot?next.musicPlan?.[slot]:null;
+ const key=slot&&plan?.mode==='spotify'&&plan.id?slot+'|'+plan.type+':'+plan.id:'';
+ if(key===tvPlanKey)return;
+ const hadMusic=!!tvPlanKey;tvPlanKey=key;
+ try{
+  if(key){
+   const dev=tvSpInfo.deviceId?{id:tvSpInfo.deviceId}:await tvSpotifyDevice();
+   if(!dev){tvSpotifyPaint('Spotify-App auf dem Fernseher öffnen – dann startet die Musik.');tvPlanKey='';return;}
+   const body=plan.type==='track'?{uris:['spotify:track:'+plan.id]}:{context_uri:'spotify:'+plan.type+':'+plan.id};
+   try{await window.SpotifyConnect.api('/me/player/play?device_id='+encodeURIComponent(dev.id),'PUT',body);}
+   catch{await window.SpotifyConnect.api('/me/player','PUT',{device_ids:[dev.id],play:false});await new Promise(r=>setTimeout(r,800));await window.SpotifyConnect.api('/me/player/play?device_id='+encodeURIComponent(dev.id),'PUT',body);}
+   tvSpInfo.playing=true;setTimeout(tvSpotifyRefresh,1200);
+  }else if(hadMusic||(old&&['welcome','end'].includes(old.phase)&&tvSpInfo.playing)){
+   tvSpInfo.playing=false;await window.SpotifyConnect.api('/me/player/pause','PUT');
+  }
+ }catch(e){tvSpotifyPaint('Spotify: '+e.message);}
 }
 function tvView(){
  if(!tvKey){app.innerHTML='<div class="wrap page"><h1>Beamer verbinden</h1><p>Bitte den Beamerlink aus der Admin-Ansicht öffnen.</p><label>Beamer-Zugangsschlüssel</label><input type="password" id="tvInput"><p></p><button class="primary" id="tvSubmit">Verbinden</button></div>';el('tvSubmit').onclick=()=>{tvKey=el('tvInput').value;sessionStorage.setItem('touch_tv_key',tvKey);localStorage.setItem('touch_tv_key',tvKey);tvView();};return;}
@@ -1377,7 +1458,7 @@ function syncWelcomeMusic(){
  spotifyWanted=false;spotifyUri='';
  const oldSpotifyButton=el('tvSpotifyPlay');if(oldSpotifyButton)oldSpotifyButton.hidden=true;
  const audio=el('tvWelcomeAudio');
- const enabled=state?.phase==='welcome'&&state?.welcomeMusic?.on===true;
+ const enabled=(state?.phase==='welcome'&&state?.welcomeMusic?.on===true)||(state?.phase==='end'&&state?.musicPlan?.end?.mode==='touch');
  if(audio){
   if(!enabled){
    if(!audio.paused){try{audio.pause();audio.currentTime=0;}catch{}}
@@ -1812,6 +1893,7 @@ function router(){
  if(role==='tv'&&query.get('key')){tvKey=query.get('key');sessionStorage.setItem('touch_tv_key',tvKey);localStorage.setItem('touch_tv_key',tvKey);history.replaceState({},'',location.pathname+'#tv');}
  if(role==='remote'){location.replace('/host'+(remoteKey?'?key='+encodeURIComponent(remoteKey):''));return;}
  document.body.classList.toggle('studentEntry',role==='join');
+ document.body.classList.remove('rgHome');
  if(role!=='join'&&role!=='teacher')document.body.classList.remove('touchStudent');
  renderSignature='';state=null;mediaType='';
  window.__touchBooted=true;
@@ -1858,8 +1940,8 @@ async function poll(force=false){
  if(role==='join')refreshStudentScoreBadge();
  if(role==='tv'&&old&&old.phase!==next.phase&&['film','trailer'].includes(next.phase)&&window.SpotifyConnect?.webPlayerActive?.())window.SpotifyConnect.pauseWebPlayer().catch(()=>{});
  if(next.spotifyClientId&&window.SpotifyConnect?.setDefaultClientId)window.SpotifyConnect.setDefaultClientId(next.spotifyClientId);
- if((role==='admin'||role==='control')&&window.SpotifyConnect?.connected?.())spotifyServerLink();
- if(role==='tv'){tvSpotifyVisibility();if(old&&old.phase==='welcome'&&['film','trailer'].includes(next.phase)&&tvSpInfo.playing&&tvSpotifyReady()){tvSpInfo.playing=false;window.SpotifyConnect.api('/me/player/pause','PUT').catch(()=>{});}}
+ if((role==='admin'||role==='control')&&(window.SpotifyConnect?.connected?.()||next.spotifyLinked))spotifyServerLink();
+ if(role==='tv'){tvSpotifyVisibility();tvMusicPlan(old,next);}
  if(role==='tv'){tvDisplay();
    const signal=Number(state.tvReloadRequest||0);
    if(window.__touchTVReloadSeen===undefined)window.__touchTVReloadSeen=signal;
@@ -1872,7 +1954,7 @@ async function poll(force=false){
   document.querySelectorAll('[data-mobile-sound]').forEach(btn=>{const field=btn.dataset.mobileSound;const enabled=next.soundtrack?.[field]!==false;btn.dataset.enabled=String(enabled);btn.textContent=field==='pause'?(enabled?'♫ Pausenmusik AN':'♫ Pausenmusik AUS'):(enabled?'🏆 Ergebnismusik AN':'🏆 Ergebnismusik AUS');});
  }
  if(role==='remote'){const status=el('remoteStatus');if(status)status.textContent='Live: '+next.phase.toUpperCase()+' · '+secText(next.time)+' · '+next.participants+' Teilnehmende · '+(next.playing?'Video läuft':'Video pausiert');}
- if(role==='admin'){refreshAdminVideoControls();if(el('adminStatus'))el('adminStatus').textContent='Status: '+state.phase.toUpperCase()+' · Filmzeit: '+secText(state.time)+' · '+state.participants+' Teilnehmende · '+(state.video.type==='none'?'kein Film':state.video.type);if(el('adminParticipants'))el('adminParticipants').textContent=state.participants+' Teilnehmende';if(el('adminTime'))el('adminTime').textContent=secText(state.time);if(el('adminRanking')&&adminInfo){el('adminRanking').textContent='Live-Regie aktiv. Für vollständige Teilnehmerantworten nutze den Ergebnis-Modus.';}if(el('adminFeedback'))el('adminFeedback').textContent=String(state.feedbackCount);}
+ if(role==='admin'){if(window.__paintMusicPlan&&el('musicPlanCard'))window.__paintMusicPlan();refreshAdminVideoControls();if(el('adminStatus'))el('adminStatus').textContent='Status: '+state.phase.toUpperCase()+' · Filmzeit: '+secText(state.time)+' · '+state.participants+' Teilnehmende · '+(state.video.type==='none'?'kein Film':state.video.type);if(el('adminParticipants'))el('adminParticipants').textContent=state.participants+' Teilnehmende';if(el('adminTime'))el('adminTime').textContent=secText(state.time);if(el('adminRanking')&&adminInfo){el('adminRanking').textContent='Live-Regie aktiv. Für vollständige Teilnehmerantworten nutze den Ergebnis-Modus.';}if(el('adminFeedback'))el('adminFeedback').textContent=String(state.feedbackCount);}
  }catch(e){const x=el('adminStatus');if(x)x.textContent='Verbindung unterbrochen: '+e.message;}
 }
 // Automatically use the newest published design on the TV without changing its link.
