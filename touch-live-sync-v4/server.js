@@ -13,6 +13,9 @@ if(!process.env.ADMIN_KEY)console.log('TOUCH LIVE ADMIN_KEY: '+ADMIN);
 if(!process.env.TV_KEY)console.log('TOUCH LIVE TV_KEY: '+TV);
 fs.mkdirSync(DIR,{recursive:true});
 const TRAILER_FILE=path.join(DIR,'touchscreen-trailer.mp4');
+// Fester Trailer im Projekt (touch-live-sync-v4/trailer.mp4) übersteht jeden Render-Neustart.
+const BUNDLED_TRAILER=path.join(ROOT,'trailer.mp4');
+const trailerPath=()=>fs.existsSync(TRAILER_FILE)?TRAILER_FILE:fs.existsSync(BUNDLED_TRAILER)?BUNDLED_TRAILER:null;
 const BUNDLED_SUB_FILE=path.join(ROOT,'untertitel.vtt');
 const SPOTIFY_FILE=path.join(DIR,'spotify-token.json');
 const USERS_FILE=path.join(DIR,'users.json'),STATE_FILE=path.join(DIR,'live-state.json'), VIDEO_FILE=path.join(DIR,'touchscreen.mp4'), SUB_FILE=path.join(DIR,'untertitel.vtt'), QUESTIONS_FILE=path.join(DIR,'custom-questions.json');
@@ -195,7 +198,7 @@ function publicState(id){
   ?Math.max(0,Math.ceil(GESTURE_MISSION_SECONDS-(s.time-(s.gestureOverlayStartTime||0))))
   :s.phase==='gesture'?Math.max(0,Math.ceil(GESTURE_MISSION_SECONDS-(Date.now()-(s.gestureStartTime||Date.now()))/1000)):0;
  const gestureActive=gestureSeconds>0&&(s.phase==='gesture'||(s.phase==='film'&&s.gestureOverlay));
- return {homeUnlocked:!!s.homeUnlocked,trailerAvailable:fs.existsSync(TRAILER_FILE),trailerPlaying:!!s.trailerPlaying,trailerSerial:s.trailerSerial||0,trailerRevision:s.trailerRevision||0,tvAudio:Date.now()-tvAudioReport.updated<25000?{connected:true,playing:tvAudioReport.playing,blocked:tvAudioReport.blocked,error:tvAudioReport.error}:{connected:false,playing:false,blocked:false,error:''},phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},spotifyClientId:s.spotifyClientId||'',spotifyLinked:!!spotifyAuth?.refreshToken,soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
+ return {homeUnlocked:!!s.homeUnlocked,trailerAvailable:!!trailerPath(),trailerPlaying:!!s.trailerPlaying,trailerSerial:s.trailerSerial||0,trailerRevision:s.trailerRevision||0,tvAudio:Date.now()-tvAudioReport.updated<25000?{connected:true,playing:tvAudioReport.playing,blocked:tvAudioReport.blocked,error:tvAudioReport.error}:{connected:false,playing:false,blocked:false,error:''},phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},spotifyClientId:s.spotifyClientId||'',spotifyLinked:!!spotifyAuth?.refreshToken,soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
   quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,a:q.a,duration:q.type==='zoom'?ZOOM_MISSION_SECONDS:((s.phase==='demo'||s.demoOverlay)?45:30),remaining:a.remaining,accepting:a.accepting,foundCount:q.type==='zoom'?[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length:0,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
   player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)||fs.existsSync(BUNDLED_SUB_FILE)};
 }
@@ -282,7 +285,7 @@ async function handler(req,res){
   res.writeHead(status,headers);
   return m==='HEAD'?res.end():res.end(wav.subarray(first,last+1));
  }
- if(m==='GET'&&(p==='/app.js'||p==='/style.css'||p==='/quiz-polish.css'||p==='/handout.css'||p==='/spotify-connect.js'||p==='/touch-soundtrack.js'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
+ if(m==='GET'&&(p==='/app.js'||p==='/style.css'||p==='/quiz-polish.css'||p==='/handout.css'||p==='/spotify-connect.js'||p==='/touch-soundtrack.js'||p==='/chess.js'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
  if(m==='GET'&&p==='/touchscreen-motiv.svg')return serve(res,path.join(ROOT,'touchscreen-motiv.svg'),'image/svg+xml');
  if(m==='GET'&&p==='/easter-scene.svg')return serve(res,path.join(ROOT,'easter-scene.svg'),'image/svg+xml');
  if(m==='GET'&&(p==='/easter-game.js'||p==='/easter-game.css'||p==='/finger-mission.js'||p==='/finger-mission.css'))return serve(res,path.join(ROOT,p.slice(1)),p.endsWith('.js')?'application/javascript; charset=utf-8':'text/css; charset=utf-8');
@@ -292,7 +295,7 @@ async function handler(req,res){
  if(m==='GET'&&(p==='/watch'||p==='/host'))return serve(res,path.join(ROOT,'party.html'),'text/html; charset=utf-8');
  if(m==='GET'&&(p==='/party.js'||p==='/party.css'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
   if(m==='GET'&&p==='/host-upload.js')return serve(res,path.join(ROOT,'host-upload.js'),'application/javascript; charset=utf-8');
- if(m==='GET'&&p==='/api/trailer/status')return send(res,200,{available:fs.existsSync(TRAILER_FILE),homeUnlocked:!!s.homeUnlocked,temporary:!S3.enabled});
+ if(m==='GET'&&p==='/api/trailer/status')return send(res,200,{available:!!trailerPath(),homeUnlocked:!!s.homeUnlocked,temporary:!S3.enabled});
  if(m==='POST'&&p==='/api/trailer/access'){
   if(!isAdmin(req))return unauthorized(res);
   const b=await read(req,1000);if(typeof b.unlocked!=='boolean')return send(res,400,{error:'Freigabe muss true oder false sein'});
@@ -323,7 +326,7 @@ async function handler(req,res){
   }catch(e){await fsp.unlink(tmp).catch(()=>{});if(!res.headersSent&&!res.destroyed)return send(res,400,{error:e.message});return;}
  }
  if((m==='GET'||m==='HEAD')&&p==='/api/trailer/video'){
-  let st;try{st=await fsp.stat(TRAILER_FILE);}catch{return send(res,404,{error:'Kein Trailer auf dem Server. Bitte neu hochladen.'});}
+  const tfile=trailerPath();let st;try{st=await fsp.stat(tfile||TRAILER_FILE);}catch{return send(res,404,{error:'Kein Trailer auf dem Server. Bitte neu hochladen.'});}
   const size=st.size,etag='"'+Math.round(st.mtimeMs).toString(36)+'-'+size.toString(36)+'"';
   const headers={'Content-Type':'video/mp4','Accept-Ranges':'bytes','Cache-Control':'private, max-age=86400','ETag':etag,'X-Content-Type-Options':'nosniff'};
   if(req.headers['if-none-match']===etag&&!req.headers.range){res.writeHead(304,headers);return res.end();}
@@ -340,7 +343,7 @@ async function handler(req,res){
   headers['Content-Length']=last-first+1;
   res.writeHead(status,headers);
   if(m==='HEAD')return res.end();
-  return fs.createReadStream(TRAILER_FILE,{start:first,end:last,highWaterMark:1024*1024}).pipe(res);
+  return fs.createReadStream(tfile,{start:first,end:last,highWaterMark:1024*1024}).pipe(res);
  }
  if(m==='POST'&&p==='/api/spotify/link'){
   if(!isAdmin(req))return unauthorized(res);
@@ -563,7 +566,7 @@ async function handler(req,res){
  if(['trailerStart','trailerPause','trailerResume','trailerStop'].includes(cmd)){
   if(p!=='/api/admin')return unauthorized(res);
   if(cmd==='trailerStart'){
-   if(!fs.existsSync(TRAILER_FILE))return send(res,404,{error:'Bitte zuerst den Trailer im Admin hochladen.'});
+   if(!trailerPath())return send(res,404,{error:'Bitte zuerst den Trailer im Admin hochladen.'});
    if(!['welcome','end','handout','trailer'].includes(s.phase))return send(res,409,{error:'Trailer nur vor oder nach dem Hauptfilm starten.'});
    s.phase='trailer';s.trailerPlaying=true;s.trailerSerial=(s.trailerSerial||0)+1;s.playing=false;
    if(s.welcomeMusic)s.welcomeMusic.on=false;

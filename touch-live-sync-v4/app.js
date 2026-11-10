@@ -23,11 +23,165 @@ function wrap(body){
 }
 function page(title,tag,sub){return '<div class="page"><span class="eyebrow">'+tag+'</span><h1>'+title+'</h1><p>'+sub+'</p></div>';}
 function home(){
-if(!state?.homeUnlocked){
- wrap('<section class="hero touchHeroCinema touchHeroLocked"><div class="touchHeroText"><span class="eyebrow">TOUCH LIVE · LIVE IM UNTERRICHT</span><h1>Die Zukunft<br><em>liegt in deinen Händen.</em></h1><p class="lead">Die Dokumentation läuft auf dem Beamer. Die Fragen erscheinen automatisch auf deinem iPad. Nach der Siegerehrung gibt die Regie die vollständige Seite frei.</p><a class="btn primary" href="/join">🎮 Quiz jetzt öffnen</a><p class="small">7 Kapitel · 17 Fragen · 2 Mitmach-Spiele</p></div><div class="touchPhotoFrame"><img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cc/Smartphone-mobile-hand-technology-internet-finger.jpg/960px-Smartphone-mobile-hand-technology-internet-finger.jpg" alt="Echte Fotografie einer Hand auf dem Touchscreen eines Smartphones" loading="lazy"><div class="touchPhotoOverlay"><b>TOUCH IM ALLTAG</b><span>Ein Fingertipp löst eine Aktion aus</span></div></div></section><p class="touchPhotoCredit"><a href="https://commons.wikimedia.org/wiki/File:Smartphone-mobile-hand-technology-internet-finger.jpg" target="_blank" rel="noopener noreferrer">Foto: Wikimedia Commons · CC0 (gemeinfrei)</a></p>');
- return;
+const afterDoc=['results','end','handout'].includes(state?.phase);
+if(!state?.homeUnlocked&&!afterDoc){
+ wrap('<section class="hero touchHeroCinema touchHeroLocked"><div class="touchHeroText"><span class="eyebrow">TOUCH LIVE · LIVE IM UNTERRICHT</span><h1>Die Zukunft<br><em>liegt in deinen Händen.</em></h1><p class="lead">Die Dokumentation läuft auf dem Beamer. Die Fragen erscheinen automatisch auf deinem iPad. Nach der Siegerehrung gibt die Regie die vollständige Seite frei.</p><a class="btn primary" href="/join">🎮 Quiz jetzt öffnen</a><p class="small">7 Kapitel · 17 Fragen · 2 Mitmach-Spiele</p></div>'+(state?.trailerAvailable?'<div class="clsPlayer"><video id="clsTrailer" controls playsinline preload="metadata" src="/api/trailer/video?v='+encodeURIComponent(state.trailerRevision||0)+'#t=0.5"></video><button type="button" class="clsPlay" id="clsTrailerPlay" aria-label="Trailer abspielen"><span>▶</span><b>Trailer ansehen</b><small>mit Ton</small></button></div>':'<div class="touchPhotoFrame"><img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cc/Smartphone-mobile-hand-technology-internet-finger.jpg/960px-Smartphone-mobile-hand-technology-internet-finger.jpg" alt="Echte Fotografie einer Hand auf dem Touchscreen eines Smartphones" loading="lazy"><div class="touchPhotoOverlay"><b>TOUCH IM ALLTAG</b><span>Ein Fingertipp löst eine Aktion aus</span></div></div>')+'</section><p class="touchPhotoCredit"><a href="https://commons.wikimedia.org/wiki/File:Smartphone-mobile-hand-technology-internet-finger.jpg" target="_blank" rel="noopener noreferrer">Foto: Wikimedia Commons · CC0 (gemeinfrei)</a></p>');
+ bindTrailerCard();return;
 }
-wrap('<section class="hero homeHero"><div class="homeHeroCopy"><span class="eyebrow">DOKUMENTATION · TOUCHSCREEN · 2026</span><h1>Berühren.<br><em>Verstehen.</em><br>Mitmachen.</h1><p class="lead">Der Film läuft vorne auf dem Beamer. Auf deinem iPad erscheinen genau im richtigen Moment die Quizfragen, das Gesten-Spiel und am Ende die Ergebnisse.</p><div class="flex"><a href="/join" class="btn primary">Als Schüler teilnehmen</a><a href="#teacher" class="btn">Lehreransicht öffnen</a><a href="/watch" class="btn">🎬 Gemeinsam online schauen</a><a href="/easter-demo" class="btn">🔎 Easter Egg ausprobieren</a></div><p class="small">17 Fragen · 7 Kapitel · 2 Mitmach-Spiele · Ohne Anmeldung</p></div><div class="homeHeroPreview touchPhotoFrame"><img src="https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cc/Smartphone-mobile-hand-technology-internet-finger.jpg/960px-Smartphone-mobile-hand-technology-internet-finger.jpg" alt="Foto einer Hand, die einen Smartphone-Touchscreen bedient" loading="eager"><span class="homePreviewTag">ECHTE TOUCHSCREEN-TECHNIK <b>Vom Sensor zur Interaktion</b></span></div></section><p class="touchPhotoCredit"><a href="https://commons.wikimedia.org/wiki/File:Smartphone-mobile-hand-technology-internet-finger.jpg" target="_blank" rel="noopener noreferrer">Foto: Wikimedia Commons · CC0 (gemeinfrei)</a></p><section class="card touchTrailerCard"><span class="label">🎬 TOUCHSCREEN-TRAILER</span><h2>Der Trailer zur Dokumentation</h2>'+(state?.trailerAvailable?'<video controls playsinline preload="metadata" style="width:100%;max-height:540px;border-radius:14px" src="/api/trailer/video"></video>':'<p>Der Trailer ist derzeit nicht hochgeladen. Die Regie kann ihn im Adminbereich hinzufügen.</p>')+'</section><section class="cards"><div class="card"><span class="label">01 / WILLKOMMEN</span><h2>Alle sind dabei.</h2><p>Ein Link für die Klasse. Du gibst deinen Namen ein und wartest auf den Start.</p></div><div class="card"><span class="label">02 / LIVE</span><h2>Film & Mitmachen</h2><p>Solange der Film läuft, schaust du auf den Beamer. Bei den passenden Zeitmarken geht dein Quiz auf.</p></div><div class="card"><span class="label">03 / ABSCHLUSS</span><h2>Ergebnisse & Handout</h2><p>Am Ende gibt es eine gemeinsame Rangliste und ein Handout mit Apple-Pencil-Feld und PDF-Export.</p></div></section><section class="page"><span class="eyebrow">SIEBEN KAPITEL</span><h1>Von 1965 bis heute.</h1><div class="chapter-list">'+CH.map((v,i)=>'<div><b>0'+(i+1)+'</b>'+esc(v)+'</div>').join('')+'</div></section>');
+const trailer=state?.trailerAvailable?'<div class="clsPlayer"><video id="clsTrailer" controls playsinline preload="metadata" src="/api/trailer/video?v='+encodeURIComponent(state.trailerRevision||0)+'#t=0.5"></video><button type="button" class="clsPlay" id="clsTrailerPlay" aria-label="Trailer abspielen"><span>▶</span><b>Trailer ansehen</b><small>mit Ton</small></button></div>':'<div class="clsPlayer clsPlayerEmpty"><div><span>🎬</span><b>Der Trailer kommt gleich.</b><small>Die Regie lädt ihn im Admin hoch.</small></div></div>';
+ wrap('<section class="clsHero"><div class="clsHeroText"><span class="eyebrow">TOUCH LIVE · FÜR DIE KLASSE</span><h1>Berühren.<br><em>Verstehen.</em><br>Ausprobieren.</h1><p class="lead">Die Doku ist vorbei – jetzt seid ihr dran. Schaut euch den Trailer noch einmal an, testet eure Finger im Touch-Labor und füllt das Handout aus.</p><div class="flex"><button type="button" class="btn primary" id="clsToLab">🖐️ Zum Touch-Labor</button><a href="#handout" class="btn">📝 Handout</a><a href="/watch" class="btn">🎬 Doku nochmal ansehen</a></div></div>'+trailer+'</section>'+
+  '<section class="clsLab" id="lab"><div class="clsLabHead"><div><span class="eyebrow">NACH DER DOKU · TOUCH-LABOR</span><h2>Fünf Spiele. Echte Messwerte.</h2><p>Alles läuft direkt im Browser – am besten auf dem iPad mit den Fingern. Dein Gerät misst dabei, was der Touchscreen erkennt.</p></div></div>'+
+  '<div class="clsTabs" role="tablist">'+[['chess','♟️','Schach gegen Bot','Leicht · Mittel · Schwer'],['egg','🔎','Easter Egg','Zoomen, Verschieben, Tippen'],['finger','🖐️','Finger-Messlabor','Abstand, Zoom, Drehwinkel'],['react','⚡','Reaktionstest','Wie schnell tippst du?'],['multi','✋','Multitouch-Zähler','Wie viele Finger erkennt dein Gerät?']].map(([id,ic,t,sub])=>'<button type="button" role="tab" data-lab="'+id+'"><span>'+ic+'</span><b>'+t+'</b><small>'+sub+'</small></button>').join('')+'</div>'+
+  '<div class="clsStage" id="labStage"></div></section>'+
+  '<section class="clsBottom"><a class="clsHandout" href="#handout"><span class="eyebrow">ZUM ABSCHLUSS</span><h3>Handout ausfüllen</h3><p>Wissen, Arbeitsblatt und Feedbackbogen – tippen oder mit dem Apple Pencil schreiben.</p><b>Handout öffnen →</b></a><div class="clsChapters"><span class="eyebrow">DIE DOKU IN SIEBEN KAPITELN</span><ol>'+CH.map(v=>'<li>'+esc(v)+'</li>').join('')+'</ol></div></section>');
+ const toLab=el('clsToLab');if(toLab)toLab.onclick=()=>el('lab')?.scrollIntoView({behavior:'smooth'});
+ bindTrailerCard();
+ initHomeLab();
+}
+function bindTrailerCard(){
+ const v=el('clsTrailer'),pb=el('clsTrailerPlay');
+ if(v&&pb){pb.onclick=()=>{v.muted=false;v.play().catch(()=>{});};v.addEventListener('play',()=>pb.hidden=true);v.addEventListener('pause',()=>{if(!v.seeking)pb.hidden=false;});v.addEventListener('ended',()=>pb.hidden=false);}
+}
+// ---------- Touch-Labor auf der Klassenseite (nach der Doku) ----------
+let labTimer=null,labGame=null;
+function initHomeLab(){
+ const stage=el('labStage');if(!stage)return;
+ let current='';try{current=sessionStorage.getItem('touch_lab')||'egg';}catch{current='egg';}
+ document.querySelectorAll('[data-lab]').forEach(b=>b.onclick=()=>openLab(b.dataset.lab));
+ openLab(current);
+}
+function openLab(id){
+ const stage=el('labStage');if(!stage)return;
+ clearInterval(labTimer);labTimer=null;if(labGame?.stop)labGame.stop();labGame=null;
+ try{sessionStorage.setItem('touch_lab',id);}catch{}
+ document.querySelectorAll('[data-lab]').forEach(b=>{const on=b.dataset.lab===id;b.classList.toggle('on',on);b.setAttribute('aria-selected',String(on));});
+ const restart='<button type="button" class="clsRestart" id="labRestart">↻ Neu starten</button>';
+ const countdown=(seconds,update)=>{let left=seconds;update(left);labTimer=setInterval(()=>{left=Math.max(0,left-1);update(left);if(!left){clearInterval(labTimer);labTimer=null;}},1000);};
+ if(id==='egg'){
+  stage.innerHTML='<div id="labMount"></div>'+restart;
+  if(window.EasterGame){labGame=window.EasterGame.mount(el('labMount'),{remaining:30,duration:30,onFind:async()=>({ok:true})});countdown(30,r=>labGame?.update?.({remaining:r,disabled:r<=0}));}
+ }else if(id==='finger'){
+  stage.innerHTML='<div id="labMount"></div>'+restart;
+  if(window.FingerMission){labGame=window.FingerMission.mount(el('labMount'),{remaining:30});countdown(30,r=>labGame?.update?.({remaining:r,disabled:r<=0}));}
+ }else if(id==='chess')labChess(stage);
+ else if(id==='react')labReaction(stage,restart);
+ else labMultitouch(stage);
+ const r=el('labRestart');if(r)r.onclick=()=>openLab(id);
+}
+// ---------- Schach gegen den Bot ----------
+// Beide Farben nutzen die ausgefüllten Symbole – Weiß wird per CSS hell eingefärbt.
+const CHESS_GLYPH={K:'♚',Q:'♛',R:'♜',B:'♝',N:'♞',P:'♟',k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
+function labChess(stage){
+ const C=window.TouchChess;
+ if(!C){stage.innerHTML='<p class="labMsg">Schach wird geladen … bitte Seite neu laden.</p>';return;}
+ let level='medium',human='w',s=C.initial(),history=[],sel=-1,targets=[],last=null,thinking=false,timer=null,moves=[],over=null;
+ try{const saved=JSON.parse(localStorage.getItem('touch_chess')||'null');if(saved&&saved.s&&Array.isArray(saved.s.b)&&saved.s.b.length===64){({level,human,s,moves}=saved);history=saved.history||[];last=saved.last||null;}}catch{}
+ let stats={};try{stats=JSON.parse(localStorage.getItem('touch_chess_stats')||'{}');}catch{}
+ const names={easy:'Leicht',medium:'Mittel',hard:'Schwer'};
+ stage.innerHTML='<div class="chessWrap"><div class="chessBoardCol"><div class="chessBar chessBarTop"><span id="chBotName">🤖 Bot</span><span class="chessCaps" id="chCapsTop"></span></div>'+
+  '<div class="chessBoard" id="chBoard" role="grid" aria-label="Schachbrett"></div>'+
+  '<div class="chessBar"><span>🧑 Du</span><span class="chessCaps" id="chCapsBottom"></span></div></div>'+
+  '<aside class="chessSide"><div class="chessStatus" id="chStatus" role="status"></div>'+
+  '<label class="chessLabel">Schwierigkeit</label><div class="chessSeg" id="chLevel">'+['easy','medium','hard'].map(l=>'<button type="button" data-level="'+l+'">'+names[l]+'</button>').join('')+'</div>'+
+  '<label class="chessLabel">Deine Farbe</label><div class="chessSeg" id="chColor"><button type="button" data-color="w">♔ Weiß</button><button type="button" data-color="b">♚ Schwarz</button></div>'+
+  '<div class="chessBtns"><button type="button" class="primary" id="chNew">♟ Neues Spiel</button><button type="button" id="chUndo">↶ Zug zurück</button><button type="button" id="chHint">💡 Tipp</button></div>'+
+  '<div class="chessMoves" id="chMoves" aria-label="Zugliste"></div><div class="chessStats" id="chStats"></div>'+
+  '<p class="small">Tippe eine Figur an, dann das Zielfeld. Bauern werden automatisch zur Dame.</p></aside></div>';
+ const board=el('chBoard');
+ function save(){try{localStorage.setItem('touch_chess',JSON.stringify({level,human,s,moves,history,last}));}catch{}}
+ function paintStats(){const t=stats[level]||{w:0,l:0,d:0};el('chStats').innerHTML='Gegen <b>'+names[level]+'</b>: '+t.w+' Siege · '+t.d+' Remis · '+t.l+' Niederlagen';}
+ function caps(){
+  const start={p:8,n:2,b:2,r:2,q:1},cnt={};for(const p of s.b)if(p)cnt[p]=(cnt[p]||0)+1;
+  const lost=c=>Object.keys(start).map(t=>{const k=c==='w'?t.toUpperCase():t;return CHESS_GLYPH[k].repeat(Math.max(0,start[t]-(cnt[k]||0)));}).join('');
+  // oben: was der Bot geschlagen hat (= deine verlorenen Figuren)
+  el('chCapsTop').textContent=lost(human);el('chCapsBottom').textContent=lost(human==='w'?'b':'w');
+ }
+ function paint(){
+  const st=C.status(s);over=st.over?st:null;
+  const order=[...Array(64).keys()];if(human==='b')order.reverse();
+  const checkSq=!st.over&&st.check?C.kingSq(s,s.turn):(st.over&&st.reason==='Schachmatt'?C.kingSq(s,s.turn):-1);
+  board.innerHTML=order.map(i=>{const p=s.b[i],dark=((i>>3)+(i&7))%2===1,isT=targets.some(m=>m.to===i);
+   const cls='chSq '+(dark?'dk':'lt')+(i===sel?' sel':'')+(last&&(last.from===i||last.to===i)?' last':'')+(i===checkSq?' check':'')+(isT?(p?' cap':' dot'):'');
+   const coord=(human==='w'?((i&7)===0):((i&7)===7))?'<i class="rk">'+(8-(i>>3))+'</i>':'';
+   const fileLbl=(human==='w'?(i>>3)===7:(i>>3)===0)?'<i class="fl">'+'abcdefgh'[i&7]+'</i>':'';
+   return '<button type="button" class="'+cls+'" data-sq="'+i+'" aria-label="'+C.sqName(i)+(p?' '+p:'')+'">'+(p?'<span class="pc '+(C.colorOf(p)==='w'?'pw':'pb')+'">'+CHESS_GLYPH[p]+'︎</span>':'')+coord+fileLbl+'</button>';}).join('');
+  document.querySelectorAll('#chLevel [data-level]').forEach(b=>b.classList.toggle('on',b.dataset.level===level));
+  document.querySelectorAll('#chColor [data-color]').forEach(b=>b.classList.toggle('on',b.dataset.color===human));
+  el('chBotName').textContent='🤖 Bot · '+names[level];
+  const msg=el('chStatus');
+  if(over){const youWin=over.result===human,draw=over.result==='draw';msg.innerHTML=(draw?'🤝 Remis':youWin?'🏆 Gewonnen!':'🤖 Der Bot gewinnt')+' <small>'+over.reason+'</small>';msg.className='chessStatus '+(draw?'':youWin?'win':'lose');}
+  else{msg.textContent=thinking?'🤖 Bot denkt nach …':s.turn===human?(st.check?'⚠️ Schach! Du bist am Zug.':'Du bist am Zug.'):'🤖 Bot ist am Zug.';msg.className='chessStatus'+(thinking?' think':'');}
+  const list=el('chMoves');list.innerHTML=moves.length?moves.map((m,i)=>(i%2===0?'<span class="nr">'+(i/2+1)+'.</span>':'')+'<span>'+esc(m)+'</span>').join(''):'<span class="small">Noch keine Züge.</span>';list.scrollTop=list.scrollHeight;
+  caps();paintStats();
+ }
+ function finishCheck(){
+  const st=C.status(s);if(!st.over)return;
+  const key=st.result==='draw'?'d':st.result===human?'w':'l';
+  stats[level]=stats[level]||{w:0,l:0,d:0};stats[level][key]++;try{localStorage.setItem('touch_chess_stats',JSON.stringify(stats));}catch{}
+ }
+ function play(m){history.push({s,moves:moves.slice(),last});moves.push(C.san(s,m));s=C.make(s,m);last={from:m.from,to:m.to};sel=-1;targets=[];save();finishCheck();}
+ function botMove(){
+  if(C.status(s).over||s.turn===human)return;
+  thinking=true;paint();
+  timer=setTimeout(()=>{ // kurz warten, damit der Hinweis sichtbar ist
+   const m=C.bestMove(s,level);thinking=false;if(m)play(m);paint();
+  },level==='easy'?350:120);
+ }
+ board.onclick=e=>{
+  const b=e.target.closest('[data-sq]');if(!b||thinking||over||s.turn!==human)return;
+  const i=Number(b.dataset.sq),p=s.b[i];
+  const mv=targets.find(m=>m.to===i);
+  if(mv){const pick=targets.filter(m=>m.to===i);play(pick.find(m=>!m.promo||m.promo.toLowerCase()==='q')||mv);paint();botMove();return;}
+  if(p&&C.colorOf(p)===human){sel=i;targets=C.legal(s).filter(m=>m.from===i);}else{sel=-1;targets=[];}
+  paint();
+ };
+ el('chLevel').onclick=e=>{const b=e.target.closest('[data-level]');if(!b||thinking)return;level=b.dataset.level;save();paint();};
+ el('chColor').onclick=e=>{const b=e.target.closest('[data-color]');if(!b||thinking)return;human=b.dataset.color;newGame();};
+ function newGame(){clearTimeout(timer);thinking=false;s=C.initial();history=[];moves=[];last=null;sel=-1;targets=[];save();paint();botMove();}
+ el('chNew').onclick=newGame;
+ el('chUndo').onclick=()=>{if(thinking)return;let h=history.pop();if(h&&h.s.turn!==human)h=history.pop()||h;if(!h)return;({s,moves,last}=h);sel=-1;targets=[];save();paint();};
+ el('chHint').onclick=()=>{if(thinking||over||s.turn!==human)return;const m=C.bestMove(s,'medium');if(!m)return;sel=m.from;targets=[m];paint();el('chStatus').textContent='💡 Tipp: '+C.san(s,m);};
+ labGame={stop:()=>clearTimeout(timer)};
+ paint();botMove();
+}
+function labReaction(stage,restart){
+ const ROUNDS=10;let round=0,times=[],shownAt=0,wait=null,misses=0;
+ stage.innerHTML='<div class="labReact"><div class="labStats"><div><small>Runde</small><strong id="rxRound">0 / '+ROUNDS+'</strong></div><div><small>Letzte Zeit</small><strong id="rxLast">–</strong></div><div><small>Durchschnitt</small><strong id="rxAvg">–</strong></div><div><small>Bestzeit</small><strong id="rxBest">–</strong></div></div>'+
+  '<div class="labArena" id="rxArena"><button type="button" class="labStart" id="rxStart">⚡ Start</button><button type="button" class="labTarget" id="rxTarget" hidden aria-label="Ziel antippen"></button><p class="labMsg" id="rxMsg">Tippe so schnell wie möglich auf den leuchtenden Kreis. 10 Runden.</p></div>'+restart+'</div>';
+ const arena=el('rxArena'),target=el('rxTarget'),msg=el('rxMsg');
+ const ms=n=>Math.round(n)+' ms';
+ function next(){
+  if(round>=ROUNDS){const avg=times.reduce((a,b)=>a+b,0)/times.length;msg.innerHTML='Fertig! Durchschnitt <b>'+ms(avg)+'</b> · Bestzeit <b>'+ms(Math.min(...times))+'</b>'+(misses?' · '+misses+'× daneben':'')+'.<br><small>Zum Vergleich: Ein Touchscreen mit 120 Hz misst alle 8,3 ms – deine Reaktion ist viel langsamer als der Sensor.</small>';target.hidden=true;return;}
+  target.hidden=true;msg.textContent='Warte auf den Kreis …';
+  wait=setTimeout(()=>{const r=arena.getBoundingClientRect(),size=Math.max(56,Math.min(90,r.width/8));
+   target.style.width=target.style.height=size+'px';target.style.left=(Math.random()*(r.width-size))+'px';target.style.top=(Math.random()*(r.height-size))+'px';
+   target.hidden=false;shownAt=performance.now();msg.textContent='Jetzt!';},600+Math.random()*1400);
+ }
+ target.onpointerdown=e=>{e.preventDefault();const t=performance.now()-shownAt;times.push(t);round++;
+  el('rxRound').textContent=round+' / '+ROUNDS;el('rxLast').textContent=ms(t);el('rxAvg').textContent=ms(times.reduce((a,b)=>a+b,0)/times.length);el('rxBest').textContent=ms(Math.min(...times));next();};
+ arena.onpointerdown=e=>{if(e.target===arena&&!target.hidden){misses++;}};
+ el('rxStart').onclick=()=>{el('rxStart').hidden=true;round=0;times=[];misses=0;next();};
+ labGame={stop:()=>clearTimeout(wait)};
+}
+function labMultitouch(stage){
+ stage.innerHTML='<div class="labMulti"><div class="labStats"><div><small>Finger jetzt</small><strong id="mtNow">0</strong></div><div><small>Maximum</small><strong id="mtMax">0</strong></div><div><small>Größter Abstand</small><strong id="mtSpan">–</strong></div><div><small>Gerät meldet</small><strong id="mtDev">'+(navigator.maxTouchPoints||0)+' Punkte</strong></div></div>'+
+  '<div class="labArena labTouchPad" id="mtPad"><p class="labMsg" id="mtMsg">Lege so viele Finger wie möglich gleichzeitig auf die Fläche.</p></div><button type="button" class="clsRestart" id="mtReset">↻ Zurücksetzen</button></div>';
+ const pad=el('mtPad'),pts=new Map();let max=0,span=0;
+ const colors=['#6de0d6','#f5ce8c','#75bfff','#ff8a80','#b39ddb','#a5d6a7','#ffcc80','#80deea','#f48fb1','#e6ee9c','#90caf9'];
+ function draw(){
+  pad.querySelectorAll('.mtDot').forEach(d=>{if(!pts.has(Number(d.dataset.id)))d.remove();});
+  let i=0;const r=pad.getBoundingClientRect();
+  for(const [id,p] of pts){let d=pad.querySelector('.mtDot[data-id="'+id+'"]');if(!d){d=document.createElement('div');d.className='mtDot';d.dataset.id=id;pad.appendChild(d);}
+   d.style.left=(p.x-r.left)+'px';d.style.top=(p.y-r.top)+'px';d.style.setProperty('--c',colors[i%colors.length]);d.textContent=++i;}
+  const list=[...pts.values()];for(const a of list)for(const b of list)span=Math.max(span,Math.hypot(a.x-b.x,a.y-b.y));
+  max=Math.max(max,pts.size);el('mtNow').textContent=pts.size;el('mtMax').textContent=max;el('mtSpan').textContent=span?Math.round(span)+' px':'–';
+  el('mtMsg').hidden=pts.size>0;
+ }
+ const down=e=>{if(e.pointerType==='mouse'&&e.buttons!==1)return;e.preventDefault();pad.setPointerCapture?.(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});draw();};
+ const move=e=>{if(!pts.has(e.pointerId))return;e.preventDefault();pts.set(e.pointerId,{x:e.clientX,y:e.clientY});draw();};
+ const up=e=>{pts.delete(e.pointerId);draw();};
+ pad.addEventListener('pointerdown',down);pad.addEventListener('pointermove',move);['pointerup','pointercancel','pointerleave'].forEach(t=>pad.addEventListener(t,up));
+ el('mtReset').onclick=()=>{max=0;span=0;pts.clear();draw();};
 }
 function paintQuizTimer(q){
  if(!q||q.type==='zoom')return;
@@ -100,7 +254,7 @@ function userPage(){
   else if(q){const hide=p.hide||[],jk=p.jokers||{},canJ=q.jokers&&q.accepting&&!answered;
   const jbar=q.jokers?'<div class="jokers">'+(jk.fifty?'':'<button class="joker" data-joker="fifty" '+(canJ?'':'disabled')+'>50:50</button>')+(jk.hint?'':'<button class="joker" data-joker="hint" '+(canJ?'':'disabled')+'>💡 Tipp</button>')+(jk.fifty&&jk.hint?'<span class="small">Alle Joker eingesetzt</span>':'<span class="small">Jeder Joker nur einmal im ganzen Abschlussquiz</span>')+'</div>':'';
   body='<div class="card quiz quizCinematic"><div class="between"><span class="chip">'+(q.jokers?'ABSCHLUSSQUIZ · ':'')+'FRAGE '+(q.index+1)+' / '+q.total+'</span><div class="quizTimerHud"><div id="liveTimer" class="timer">'+q.remaining+' s</div><div class="quizTimeTrack" aria-hidden="true"><i id="quizTimeFill"></i></div><small class="quizTimerCaption" id="quizTimerCaption">⏱ Zeit für deine Antwort</small></div></div>'+jbar+'<h2>'+esc(q.q)+'</h2>'+(p.hint?'<div class="hintbox">💡 '+esc(p.hint)+'</div>':'')+'<div class="answers">'+q.a.map((v,i)=>'<button class="answer'+(answered&&p.choice===i?' chosen':'')+(hide.includes(i)?' gone':'')+'" style="--answer-index:'+i+'" data-choice="'+i+'" '+(answered||!q.accepting||hide.includes(i)?'disabled':'')+'><b>'+String.fromCharCode(65+i)+'</b><span>'+esc(v)+'</span></button>').join('')+'</div><p class="small" style="margin-top:17px">'+(answered?'Deine Antwort ist gespeichert. Dein Punktestand oben wird automatisch aktualisiert. Schau jetzt wieder auf den Film.':q.accepting?'Wähle eine Antwort. Jede Frage kann nur einmal beantwortet werden.':'Antwortzeit vorbei. Bitte wieder auf den Beamer schauen.')+'</p></div>';}
- else if(state.phase==='results'||state.phase==='end'||state.phase==='handout')body='<div class="card"><span class="eyebrow">ABSCHLUSS</span><h2>Danke für deine Rückmeldung!</h2><p>Dein Punktestand</p><div class="values">'+(p.score||0)+'</div>'+prizeCard()+zoomSolution()+'<h3>Gemeinsame Rangliste</h3>'+ranking()+'<div class="flex" style="margin-top:23px"><a href="/#handout" class="btn primary">Handout ausfüllen & PDF speichern</a></div></div>';
+ else if(state.phase==='results'||state.phase==='end'||state.phase==='handout')body='<div class="card"><span class="eyebrow">ABSCHLUSS</span><h2>Danke für deine Rückmeldung!</h2><p>Dein Punktestand</p><div class="values">'+(p.score||0)+'</div>'+prizeCard()+zoomSolution()+'<h3>Gemeinsame Rangliste</h3>'+ranking()+'<div class="flex" style="margin-top:23px"><a href="/#handout" class="btn primary">Handout ausfüllen & PDF speichern</a><a href="/" class="btn">🎮 Touch-Labor & Schach</a></div></div>';
  else body=waiting('Bitte auf den Beamer schauen.','Die Dokumentation läuft. Die nächste Frage erscheint automatisch.','◉');
  // Film + subtitles on every device (phone, iPad, laptop) via the synchronized /watch page.
  const onlineFilm=state.video&&['youtube','url','upload'].includes(state.video.type)||state.remoteVideo&&state.remoteVideo.type!=='none';
@@ -1619,7 +1773,7 @@ async function loadAdminInfo(){if(!adminKey)return;try{
 }
 async function poll(force=false){
  if(role==='home'){
-  try{const next=await api('/api/state');const changed=!state||state.homeUnlocked!==next.homeUnlocked||state.trailerAvailable!==next.trailerAvailable;state=next;if(changed||force)home();}catch(e){if(!state){const node=el('app');if(node&&node.querySelector('.loader'))home();}}
+  try{const next=await api('/api/state');const AD=['results','end','handout'],changed=!state||state.homeUnlocked!==next.homeUnlocked||state.trailerAvailable!==next.trailerAvailable||AD.includes(state.phase)!==AD.includes(next.phase);state=next;if(changed||force)home();}catch(e){if(!state){const node=el('app');if(node&&node.querySelector('.loader'))home();}}
   return;
  }
  if(role==='handout')return;
