@@ -837,6 +837,14 @@ function tvRemoteKeydown(e){
   if(start&&!start.hidden)start.click();else tvEnablePlayback();
   return;
  }
+ if(state?.phase==='welcome'&&tvSpotifyReady()){
+  const k=e.key;
+  if(k==='ArrowRight'||code===39){e.preventDefault();tvSpotifyAction('next');return;}
+  if(k==='ArrowLeft'||code===37){e.preventDefault();tvSpotifyAction('previous');return;}
+  if(k==='ArrowUp'||code===38){e.preventDefault();tvSpotifyAction('up');return;}
+  if(k==='ArrowDown'||code===40){e.preventDefault();tvSpotifyAction('down');return;}
+  if(['MediaPlay','MediaPlayPause','MediaPause'].includes(k)||[415,19,179].includes(code)){e.preventDefault();tvSpotifyAction('toggle');return;}
+ }
  if(state?.phase==='welcome'&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;
  // Film and quiz are distraction-free. Only the exceptional audio-unlock button
  // can be focused by the TV remote after autoplay restrictions.
@@ -924,6 +932,7 @@ async function tvSpotifyRefresh(){
 function tvSpotifyPaint(msg){
  const t=el('tvSpToggle'),now=el('tvSpNow');
  if(t)t.textContent=tvSpInfo.playing?'⏸ Spotify':'♫ Spotify ▶';
+ const dockNow=el('tvSpDockNow');if(dockNow)dockNow.textContent=msg||(tvSpInfo.track?(tvSpInfo.playing?'▶ ':'Ⅱ ')+tvSpInfo.track:'Play/Pause drücken, um Musik zu starten');
  if(now){now.textContent=msg||(tvSpInfo.track?(tvSpInfo.playing?'♫ ':'Ⅱ ')+tvSpInfo.track+(tvSpInfo.device?' · '+tvSpInfo.device:''):'Spotify bereit – OK auf „♫ Spotify ▶“');now.hidden=false;}
 }
 async function tvSpotifyAction(kind){
@@ -960,12 +969,13 @@ function tvSpotifyVisibility(){
  const show=tvSpotifyReady()&&state?.phase==='welcome';
  ['tvSpPrev','tvSpToggle','tvSpNext','tvSpDown','tvSpUp'].forEach(id=>{const b=el(id);if(b)b.hidden=!show;});
  const now=el('tvSpNow');if(now&&!show)now.hidden=true;
+ const dock=el('tvSpDock');if(dock)dock.hidden=!show;
  if(show&&!tvSpTimer){tvSpotifyRefresh();tvSpTimer=setInterval(()=>{if(role==='tv'&&tvSpotifyReady()&&state?.phase==='welcome')tvSpotifyRefresh();},8000);}
  if(!show&&tvSpTimer){clearInterval(tvSpTimer);tvSpTimer=null;}
 }
 function tvView(){
  if(!tvKey){app.innerHTML='<div class="wrap page"><h1>Beamer verbinden</h1><p>Bitte den Beamerlink aus der Admin-Ansicht öffnen.</p><label>Beamer-Zugangsschlüssel</label><input type="password" id="tvInput"><p></p><button class="primary" id="tvSubmit">Verbinden</button></div>';el('tvSubmit').onclick=()=>{tvKey=el('tvInput').value;sessionStorage.setItem('touch_tv_key',tvKey);localStorage.setItem('touch_tv_key',tvKey);tvView();};return;}
- app.innerHTML='<div id="tvApp"><audio id="tvWelcomeAudio" src="/welcome-music.wav" preload="auto" loop playsinline style="display:none"></audio><div id="tvScene" class="tvScene"></div><video id="tvTrailer" playsinline preload="auto" controls style="display:none;position:fixed;inset:0;width:100vw;height:100vh;background:#000;object-fit:contain;z-index:50"></video><button id="tvTrailerUnlock" type="button" hidden style="position:fixed;bottom:8%;left:50%;transform:translateX(-50%);z-index:60;max-width:90%;padding:17px 25px;background:#59d8d2;color:#07222b;border-radius:14px;font-size:18px;font-weight:700">▶ Trailer mit Ton starten (OK)</button><div id="tvTrailerMessage" hidden style="position:fixed;top:4%;left:10%;right:10%;z-index:60;padding:12px;background:#07222bcc;color:white;border-radius:12px;text-align:center"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><iframe id="cloudFrame" title="Google Drive Filmvorschau" allow="autoplay; fullscreen; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvLocalChoose" type="button" tabindex="0" hidden>📁 MP4 vom Windows-PC wählen</button><input id="tvLocalFile" type="file" accept=".mp4,video/mp4" hidden><span id="tvLocalStatus" role="status" style="font-size:13px;max-width:400px" hidden>MP4 bitte lokal auswählen.</span><button id="tvFullscreen" type="button" tabindex="0" autofocus>⛶ Vollbild – OK</button><button id="tvSoundtrackUnlock" type="button" tabindex="0">♫ Musik-Ton aktivieren</button><button id="tvSpotifyPlay" type="button" tabindex="0" hidden>♫ Willkommensmusik ▶</button><button id="tvSpotifyPc" type="button" tabindex="0" hidden>♫ Spotify auf diesem PC</button><button id="tvSpPrev" type="button" tabindex="0" hidden title="Vorheriger Titel">⏮</button><button id="tvSpToggle" type="button" tabindex="0" hidden>♫ Spotify ▶</button><button id="tvSpNext" type="button" tabindex="0" hidden title="Nächster Titel">⏭</button><button id="tvSpDown" type="button" tabindex="0" hidden title="Leiser">🔉</button><button id="tvSpUp" type="button" tabindex="0" hidden title="Lauter">🔊</button><span id="tvSpNow" class="tvSpNow" hidden></span><button id="tvCloudOpen" type="button" tabindex="0" hidden>☁ iCloud-Datei öffnen</button><button id="tvCaptionSync" type="button" tabindex="0" hidden>⏱ Untertitel synchronisieren</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div id="tvCinemaSetup" class="tvCinemaSetup"><button id="tvCinemaStart" type="button" class="tvCinemaStart">⛶ Vollbild &amp; Ton aktivieren (OK)</button><button id="tvCinemaPick" type="button" class="tvCinemaPick" hidden>📁 HDMI-MP4 auswählen</button><span>Einmal OK drücken. Danach mit dem Handy steuern.</span></div><div id="tvAutoHint" class="tvAutoHint" hidden></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><button id="tvFilmUnlock" class="tvFilmUnlock" type="button" hidden>🔊 Filmton mit OK einschalten</button><div id="tvWelcomeMusicStatus" class="tvWelcomeMusicStatus" hidden aria-live="polite"></div><div id="tvSpotifyDock" class="tvSpotifyDock" hidden aria-label="Spotify-Vorschau auf LG deaktiviert"></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
+ app.innerHTML='<div id="tvApp"><audio id="tvWelcomeAudio" src="/welcome-music.wav" preload="auto" loop playsinline style="display:none"></audio><div id="tvScene" class="tvScene"></div><div id="tvSpDock" class="tvSpDock" hidden aria-live="polite"><b>♫ Spotify</b><span id="tvSpDockNow">bereit</span><small>⏯ Play/Pause · ◀ ▶ Titel · ▲ ▼ Lautstärke</small></div><video id="tvTrailer" playsinline preload="auto" controls style="display:none;position:fixed;inset:0;width:100vw;height:100vh;background:#000;object-fit:contain;z-index:50"></video><button id="tvTrailerUnlock" type="button" hidden style="position:fixed;bottom:8%;left:50%;transform:translateX(-50%);z-index:60;max-width:90%;padding:17px 25px;background:#59d8d2;color:#07222b;border-radius:14px;font-size:18px;font-weight:700">▶ Trailer mit Ton starten (OK)</button><div id="tvTrailerMessage" hidden style="position:fixed;top:4%;left:10%;right:10%;z-index:60;padding:12px;background:#07222bcc;color:white;border-radius:12px;text-align:center"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><iframe id="cloudFrame" title="Google Drive Filmvorschau" allow="autoplay; fullscreen; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvLocalChoose" type="button" tabindex="0" hidden>📁 MP4 vom Windows-PC wählen</button><input id="tvLocalFile" type="file" accept=".mp4,video/mp4" hidden><span id="tvLocalStatus" role="status" style="font-size:13px;max-width:400px" hidden>MP4 bitte lokal auswählen.</span><button id="tvFullscreen" type="button" tabindex="0" autofocus>⛶ Vollbild – OK</button><button id="tvSoundtrackUnlock" type="button" tabindex="0">♫ Musik-Ton aktivieren</button><button id="tvSpotifyPlay" type="button" tabindex="0" hidden>♫ Willkommensmusik ▶</button><button id="tvSpotifyPc" type="button" tabindex="0" hidden>♫ Spotify auf diesem PC</button><button id="tvSpPrev" type="button" tabindex="0" hidden title="Vorheriger Titel">⏮</button><button id="tvSpToggle" type="button" tabindex="0" hidden>♫ Spotify ▶</button><button id="tvSpNext" type="button" tabindex="0" hidden title="Nächster Titel">⏭</button><button id="tvSpDown" type="button" tabindex="0" hidden title="Leiser">🔉</button><button id="tvSpUp" type="button" tabindex="0" hidden title="Lauter">🔊</button><span id="tvSpNow" class="tvSpNow" hidden></span><button id="tvCloudOpen" type="button" tabindex="0" hidden>☁ iCloud-Datei öffnen</button><button id="tvCaptionSync" type="button" tabindex="0" hidden>⏱ Untertitel synchronisieren</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div id="tvCinemaSetup" class="tvCinemaSetup"><button id="tvCinemaStart" type="button" class="tvCinemaStart">⛶ Vollbild &amp; Ton aktivieren (OK)</button><button id="tvCinemaPick" type="button" class="tvCinemaPick" hidden>📁 HDMI-MP4 auswählen</button><span>Einmal OK drücken. Danach mit dem Handy steuern.</span></div><div id="tvAutoHint" class="tvAutoHint" hidden></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><button id="tvFilmUnlock" class="tvFilmUnlock" type="button" hidden>🔊 Filmton mit OK einschalten</button><div id="tvWelcomeMusicStatus" class="tvWelcomeMusicStatus" hidden aria-live="polite"></div><div id="tvSpotifyDock" class="tvSpotifyDock" hidden aria-label="Spotify-Vorschau auf LG deaktiviert"></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
  videoEl=el('tvVideo');
  const trailerVideo=el('tvTrailer'),trailerUnlock=el('tvTrailerUnlock'),trailerMessage=el('tvTrailerMessage');
  if(trailerVideo&&trailerUnlock){
@@ -1370,104 +1380,107 @@ function updateCaption(){
 async function fetchCaptions(){try{const response=await fetch('/captions.vtt');if(!response.ok)return;subtitles=parseVTT(await response.text());}catch{}}
 function parseVTT(txt){return txt.replace(/\r/g,'').split(/\n\n+/).map(block=>{const lines=block.split('\n'),i=lines.findIndex(x=>x.includes('-->'));if(i<0)return null;const times=lines[i].split('-->');const toSeconds=x=>{const v=x.trim().split(/[.:]/).map(Number);return v.length===4?v[0]*3600+v[1]*60+v[2]+v[3]/1000:v[0]*60+v[1]+(v[2]||0)/1000;};return{start:toSeconds(times[0]),end:toSeconds(times[1]),text:lines.slice(i+1).join('\n')};}).filter(Boolean);}
 function handout(){
- // 10-point LF14 evaluation sheet with automatic sum and average.
- // Student data stays local until the person explicitly sends feedback.
- const criteria=[
-  ['Einstieg & Verständlichkeit','Hat der Einstieg neugierig gemacht?'],
-  ['Geschichte der Touchscreens','Waren wichtige Entwicklungen nachvollziehbar?'],
-  ['Funktionsweise','Hast du verstanden, wie die Berührung erkannt wird?'],
-  ['Touchscreen-Techniken','Konntest du die verschiedenen Arten unterscheiden?'],
-  ['Multitouch & Gesten','Wurden Zoomen, Wischen und Drehen klar erklärt?'],
-  ['Beispiele aus dem Alltag','Waren die Beispiele sinnvoll und anschaulich?'],
-  ['Bilder & Animationen','Haben die Bilder das Lernen unterstützt?'],
-  ['Ton & Untertitel','War alles gut zu hören und zu lesen?'],
-  ['Quiz & Mitmach-Spiele','Haben Quiz und Spiele Spaß gemacht?'],
-  ['Gesamteindruck','Wie fandest du die Dokumentation insgesamt?']
+ // Handout zur Präsentation (A4, 2 Seiten): Seite 1 Wissen + Aufgabe mit Rechnung,
+ // Seite 2 anonymer Feedbackbogen. Bewertung × Gewichtung wird live berechnet.
+ const types=[
+  ['Resistiv','Zwei leitende Folien werden durch Druck aneinandergepresst.','Stift und Handschuh gehen, günstig','kein echtes Multitouch, Bild etwas trüber','Kartenterminal, ältere Navis'],
+  ['Kapazitiv','Der Finger verändert das elektrische Feld (Kapazität) im Sensorgitter.','Multitouch, sehr genau, robustes Glas','nur leitfähiger Finger, Wasser stört','Smartphone, Tablet'],
+  ['Infrarot','Ein Lichtgitter aus IR-LEDs am Rand wird vom Finger unterbrochen.','jeder Gegenstand, riesige Flächen','Rahmen nötig, Sonne und Staub stören','interaktive Tafel, Kiosk'],
+  ['Oberflächenwellen','Ultraschall läuft über das Glas, der Finger dämpft die Welle.','sehr klares Bild','empfindlich bei Schmutz und Wasser','Info-Terminal'],
+  ['Optisch','Kameras erkennen Finger oder Schatten auf der Fläche.','sehr große Displays möglich','teuer, braucht Platz','Touch-Tisch, Messe']
  ];
- const choices='<option value="">Bitte wählen</option>'+Array.from({length:10},(_,i)=>'<option value="'+(i+1)+'">'+(i+1)+' / 10</option>').join('');
- const rows=criteria.map(([title,help],i)=>{
-  const number=i+1,key='ho10_'+String(number).padStart(2,'0');
-  return '<tr><th scope="row"><span class="ho10Index">'+number+'</span><div><b>'+esc(title)+'</b><small>'+esc(help)+'</small></div></th>'+
-   '<td><select aria-label="Bewertung '+number+': '+esc(title)+'" data-save="'+key+'">'+choices+'</select></td></tr>';
- }).join('');
- const sheet='<article class="paper hoSheet ho10Sheet" id="paper">'+
-  '<header class="hoHead ho10Header"><div class="ho10HeaderCopy"><span class="eyebrow">LERNFELD 14 · TOUCH LIVE 2026</span><h2>Mein <em>Touchscreen-Handout</em></h2><p>Rückblick, Bewertung und eine kleine Rechenaufgabe. Gib deine eigene Einschätzung ab.</p></div>'+
-  '<div class="ho10HeaderArtwork" aria-label="Echte Touchscreen-Technik"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/Capacitive_touchscreen.jpg?width=520" alt="Fotografie der Leiterbahnen eines kapazitiven Touchscreens"></div></header>'+
-  '<section class="ho10Identity"><label>Name<input data-save="ho_name" autocomplete="name" placeholder="Vor- und Nachname"></label>'+
-  '<label>Klasse<input data-save="ho_class" placeholder="Klasse"></label>'+
-  '<label>Datum<input type="date" data-save="ho_date"></label></section>'+
-  '<section class="ho10Section"><div class="ho10SectionTop"><span class="ho10Step">01</span><div><h3>Das habe ich gelernt</h3><p>Drei wichtige Punkte aus der Dokumentation.</p></div></div>'+
-  '<div class="ho10Knowledge"><div><b>1965–2007</b><span>Von frühen Touchscreens bis zum Smartphone-Boom.</span></div><div><b>Kapazitiv</b><span>Ein Finger verändert die elektrische Kapazität am Sensor.</span></div><div><b>Multitouch</b><span>Mehrere Berührungen gleichzeitig ermöglichen Gesten.</span></div></div></section>'+
-  '<section class="ho10Section"><div class="ho10SectionTop"><span class="ho10Step">02</span><div><h3>Bewertungstabelle · 1 bis 10</h3><p>Bewerte jeden Bereich von <strong>1 = gar nicht gut</strong> bis <strong>10 = sehr gut</strong>. Die Ergebnisse werden automatisch berechnet.</p></div></div>'+
-  '<div class="ho10TableWrap"><table class="ho10Table"><thead><tr><th scope="col">Kriterium</th><th scope="col">Punkte (1–10)</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
-  '<div class="ho10Results" aria-live="polite"><div><span>Ausgefüllt</span><strong id="hoCount">0 / 10</strong></div><div><span>Summe</span><strong id="hoSum">0 / 100</strong></div><div><span>Durchschnitt</span><strong id="hoAverage">— / 10</strong></div></div>'+
-  '<p class="ho10Note">Berechnung: Summe aller eingetragenen Bewertungen ÷ Anzahl bewerteter Kriterien. Der Durchschnitt bezieht sich nur auf ausgefüllte Zeilen.</p></section>'+
-  '<section class="ho10Section"><div class="ho10SectionTop"><span class="ho10Step">03</span><div><h3>Kleine Rechenaufgabe aus dem Film</h3><p>Ein Auto fährt <strong>50 km/h</strong>. Du schaust <strong>2 Sekunden</strong> auf den Touchscreen. Wie viele Meter fährt das Auto in dieser Zeit?</p></div></div>'+
-  '<div class="ho10Calc"><label>Dein Ergebnis in Metern<input data-save="ho_calc" type="text" inputmode="decimal" placeholder="z. B. 27,8" aria-describedby="hoCalcFeedback"></label>'+
-  '<button type="button" class="ho10CalcButton noPrint" id="hoCheckCalc">Ergebnis prüfen</button><p id="hoCalcFeedback" role="status" aria-live="polite">Tipp: km/h ÷ 3,6 = m/s. Dann mit der Zeit multiplizieren.</p></div></section>'+
-  '<section class="ho10Section ho10Reflection"><div class="ho10SectionTop"><span class="ho10Step">04</span><div><h3>Meine Meinung</h3><p>Kurze Stichpunkte reichen aus.</p></div></div>'+
-  '<div class="ho10Thoughts"><label>Das hat mir besonders gefallen<textarea data-save="ho_good" rows="3" maxlength="600" placeholder="Das fand ich gut, weil …"></textarea></label>'+
-  '<label>Das würde ich verbessern<textarea data-save="ho_better" rows="3" maxlength="600" placeholder="Das könnte man ändern …"></textarea></label></div></section>'+
-  '<footer class="hoFoot ho10Foot"><span>TOUCH LIVE · Interaktive Touchscreen-Dokumentation</span><a href="https://commons.wikimedia.org/wiki/File:Capacitive_touchscreen.jpg" target="_blank" rel="noopener noreferrer">Foto: Medvedev · CC BY 3.0</a></footer></article>';
- wrap(page('Dein Handout.','TOUCH LIVE · LERNFELD 14','Tippe deine Bewertungen ein. Deine Angaben werden auf diesem Gerät gespeichert, und du kannst das Blatt als PDF ausdrucken.')+
-  '<div class="flex noPrint lf14SimpleActions ho10Actions"><button type="button" class="primary" id="sendHandout">📨 An die Lehrkraft senden</button><button type="button" id="printHandout">📄 Als PDF speichern</button><button type="button" id="clearHandout">↺ Zurücksetzen</button><span class="lf14SavedState" id="lf14SavedState" aria-live="polite">Eingaben werden gespeichert.</span></div>'+sheet);
+ const facts=[
+  ['Display und Touch sind zwei Teile.','Das Display (LCD/OLED) macht das Bild, der durchsichtige Sensor darüber erkennt den Finger.'],
+  ['Kapazitiv braucht Leitfähigkeit.','Normale Handschuhe leiten nicht – Touch-Handschuhe haben leitende Fäden in den Fingerspitzen.'],
+  ['Wasser leitet auch.','Darum lösen Tropfen auf dem Display manchmal eine Berührung aus.'],
+  ['Multitouch = mehrere Punkte gleichzeitig.','Aus den Punkten berechnet die Software Zoomen, Drehen und Wischen.'],
+  ['Haptisches Feedback','ist eine kurze Vibration als Antwort – man „spürt“ den Klick.'],
+  ['Im Auto gefährlich:','Weg = Geschwindigkeit × Zeit. 50 km/h ≈ 13,9 m/s → 2 s Blick aufs Display ≈ 28 m blind gefahren.']
+ ];
+ const task=[['glove','Bedienung mit Handschuh',30],['clean','robust und leicht zu reinigen',25],['multi','Multitouch (Zoomen, Wischen)',20],['cost','Kosten',25]];
+ const taskCols=[['res','Resistiv'],['cap','Kapazitiv'],['ir','Infrarot']];
+ const crit=[['inhalt','Inhalt der Doku',25],['verst','Verständlichkeit',20],['inter','Interaktivität (Quiz & Spiele)',25],['technik','Technik & Ablauf',10],['handout','Handout',10],['auftritt','Präsentation (Form, Sprache)',10]];
+ const opt=max=>'<option value=""></option>'+Array.from({length:max+1},(_,i)=>'<option>'+i+'</option>').join('');
+ const opt15='<option value=""></option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>';
+ // Schnitt durch einen kapazitiven Touchscreen (schematisch, nicht maßstäblich).
+ const layers='<figure class="hxFig"><svg viewBox="0 0 300 132" role="img" aria-label="Aufbau: Deckglas, Sensor, Display">'+
+  '<rect x="8" y="14" width="196" height="16" fill="#e8f1f0" stroke="#5b7f7c"/><text x="214" y="26">Deckglas</text>'+
+  '<rect x="8" y="34" width="196" height="10" fill="#fff" stroke="#0b6e69"/>'+Array.from({length:12},(_,i)=>'<line x1="'+(16+i*16)+'" y1="34" x2="'+(16+i*16)+'" y2="44" stroke="#0b6e69" stroke-width="1"/>').join('')+'<text x="214" y="43">Sensorgitter</text>'+
+  '<rect x="8" y="48" width="196" height="34" fill="#dfe5ea" stroke="#71808c"/><text x="214" y="69">Display (LCD/OLED)</text>'+
+  '<rect x="8" y="86" width="196" height="12" fill="#c9d0d6" stroke="#71808c"/><text x="214" y="95">Elektronik</text>'+
+  '<path d="M96 0 C96 6 100 10 106 12" fill="none" stroke="#18232b" stroke-width="1.4"/><circle cx="106" cy="11" r="3" fill="#18232b"/>'+
+  '<text x="8" y="120" class="hxFigCap">Finger → Feld im Gitter ändert sich → Controller berechnet x/y</text></svg></figure>';
+ const head=(kicker,title,sub)=>'<header class="hxHead"><div><div class="hxKicker">'+kicker+'</div><h1 class="hxTitle">'+title+'</h1><div class="hxSub">'+sub+'</div></div><div class="hxMeta"><span>Lernfeld 14</span><span>Friedrich-Dessauer-Schule Limburg</span><label class="hxDate">Datum <input data-save="hx_date" aria-label="Datum"></label></div></header>';
+ const sec=(n,title)=>'<h2 class="hxH"><span class="hxNum">'+n+'</span>'+title+'</h2>';
+ const page1='<section class="hxPage">'+
+  head('Handout zur Präsentation','Touchscreens','Interaktive Dokumentation „TOUCH LIVE“ · Präsentation von Marlon Bonsels')+
+  '<div class="hxIntro"><p class="hxDef"><b>Touchscreen</b> – ein Bildschirm, der zugleich Eingabegerät ist. Ein durchsichtiger Sensor über dem Display erkennt, <i>wo</i> er berührt wird, und meldet diese Position an das Gerät.</p>'+layers+'</div>'+
+  sec(1,'Fünf Arten im Vergleich')+
+  '<table class="hxTable"><thead><tr><th>Technik</th><th>So funktioniert’s</th><th>Stärke</th><th>Schwäche</th><th>typisch für</th></tr></thead><tbody>'+
+   types.map(r=>'<tr><td><b>'+esc(r[0])+'</b></td><td>'+esc(r[1])+'</td><td>'+esc(r[2])+'</td><td>'+esc(r[3])+'</td><td>'+esc(r[4])+'</td></tr>').join('')+'</tbody></table>'+
+  '<p class="hxTimeline"><span><b>1965</b> E. A. Johnson beschreibt den kapazitiven Touch</span><span><b>1972</b> Bent Stumpe, CERN</span><span><b>1983</b> HP-150 mit Infrarot-Touch</span><span><b>1994</b> IBM Simon – erstes Touch-Smartphone</span><span><b>2007</b> iPhone: Multitouch für alle</span></p>'+
+  sec(2,'Das musst du wissen')+
+  '<ol class="hxKey">'+facts.map(([a,b])=>'<li><b>'+esc(a)+'</b> '+esc(b)+'</li>').join('')+'</ol>'+
+  sec(3,'Aufgabe: Welcher Touchscreen passt?')+
+  '<p class="hxText"><b>Die Kfz-Werkstatt.</b> Die Mitarbeiter tragen Arbeitshandschuhe, der Bildschirm wird schmutzig und muss oft gereinigt werden. Vergebt zu zweit <b>1 bis 5 Punkte</b> pro Technik. Punkte × Gewicht wird addiert – der höchste Nutzwert gewinnt.</p>'+
+  '<table class="hxTable hxCalc"><thead><tr><th>Kriterium</th><th class="r">Gewicht</th>'+taskCols.map(c=>'<th class="c">'+c[1]+'</th>').join('')+'</tr></thead><tbody>'+
+   task.map(([k,l,w])=>'<tr><td>'+esc(l)+'</td><td class="r">'+w+' %</td>'+taskCols.map(([c])=>'<td class="c"><select data-save="hx_t_'+k+'_'+c+'" data-task="'+c+'" data-weight="'+w+'" aria-label="'+esc(l)+' '+c+'">'+opt15+'</select></td>').join('')+'</tr>').join('')+
+   '<tr class="hxSum"><td>Nutzwert</td><td class="r">100 %</td>'+taskCols.map(([c])=>'<td class="c" id="hxTask_'+c+'">–</td>').join('')+'</tr></tbody></table>'+
+  '<div class="hxLine"><span>Unsere Entscheidung und warum:</span><input data-save="hx_decision" aria-label="Unsere Entscheidung"></div>'+
+  '<footer class="hxFoot"><span>Touchscreens · Handout · Marlon Bonsels</span><span>1 / 2</span></footer></section>';
+ const page2='<section class="hxPage hxBreak">'+
+  head('Feedbackbogen · anonym','Wie war die Präsentation?','Touchscreens · Interaktive Dokumentation „TOUCH LIVE“')+
+  '<p class="hxText">So geht’s: Gib jedem Kriterium eine <b>Bewertung von 0 bis 10</b> (10 = sehr gut). Bewertung × Gewichtung wird gerechnet und addiert – heraus kommt eine Note von 0 bis 10.</p>'+
+  '<table class="hxTable hxCalc hxFeedback"><thead><tr><th>Kriterium</th><th class="r">Gewichtung</th><th class="c">Bewertung (0–10)</th><th class="r">Bewertung × Gewichtung</th></tr></thead><tbody>'+
+   crit.map(([k,l,w])=>'<tr><td><b>'+esc(l)+'</b></td><td class="r">'+w+' %</td><td class="c"><select data-save="hx_f_'+k+'" data-crit="'+k+'" data-weight="'+w+'" aria-label="Bewertung '+esc(l)+'">'+opt(10)+'</select></td><td class="r" id="hxCrit_'+k+'">–</td></tr>').join('')+
+   '<tr class="hxSum"><td>Summe</td><td class="r">100 %</td><td></td><td class="r"><b id="hxCritTotal">–</b></td></tr></tbody></table>'+
+  '<div class="hxResult" id="hxResult">Noch keine Bewertung.</div>'+
+  '<div class="hxCols3"><label><span class="g">Das war gut</span><textarea data-save="hx_good" rows="5"></textarea></label><label><span class="b">Das war nicht so gut</span><textarea data-save="hx_better" rows="5"></textarea></label><label><span class="c">Das würde ich ändern</span><textarea data-save="hx_change" rows="5"></textarea></label></div>'+
+  '<p class="hxNote">Beispiel: Bewertung 8 bei Interaktivität ergibt 8 × 0,25 = 2,0. Danke fürs Ausfüllen!</p>'+
+  '<footer class="hxFoot"><span>Touchscreens · Feedbackbogen</span><span>2 / 2</span></footer></section>';
+ wrap(page('Handout','LERNFELD 14 · TOUCHSCREENS','Ausfüllen, als PDF speichern oder die Rückmeldung direkt an die Lehrkraft senden. Alles bleibt auf deinem Gerät gespeichert.')+
+  '<div class="hxActions noPrint"><button type="button" class="primary" id="sendHandout">Rückmeldung senden</button><button type="button" id="printHandout">Als PDF speichern</button><button type="button" id="clearHandout">Leeren</button><span id="hxSaved" aria-live="polite"></span></div>'+
+  '<article class="hx" id="paper">'+page1+page2+'</article>');
  const fields=()=>[...document.querySelectorAll('#paper [data-save]')];
- const field=k=>document.querySelector('#paper [data-save="'+k+'"]');
- const value=k=>String(field(k)?.value||'').trim();
- function updateHandout(){
-  let sum=0,count=0;
-  for(let i=1;i<=10;i++){
-   const n=Number(value('ho10_'+String(i).padStart(2,'0')));
-   if(Number.isInteger(n)&&n>=1&&n<=10){sum+=n;count++;}
-  }
-  const avg=count?sum/count:null;
-  el('hoCount').textContent=count+' / 10';
-  el('hoSum').textContent=sum+' / 100';
-  el('hoAverage').textContent=count?avg.toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1})+' / 10':'— / 10';
-  const status=el('lf14SavedState');
-  if(status)status.textContent='✓ '+count+' von 10 Punkten bewertet · lokal gespeichert';
-  return {sum,count,avg};
+ const value=k=>{const n=document.querySelector('#paper [data-save="'+k+'"]');return n?String(n.value||'').trim():'';};
+ const fmt=n=>n.toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
+ function recalc(){
+  const totals={};
+  for(const [c] of taskCols){let sum=0,any=false;document.querySelectorAll('#paper select[data-task="'+c+'"]').forEach(x=>{if(x.value!==''){any=true;sum+=Number(x.value)*Number(x.dataset.weight)/100;}});totals[c]=any?sum:null;const cell=el('hxTask_'+c);if(cell)cell.textContent=any?fmt(sum):'–';}
+  const filled=Object.values(totals).filter(v=>v!==null),best=filled.length?Math.max(...filled):null;
+  for(const [c] of taskCols){const cell=el('hxTask_'+c);if(cell)cell.classList.toggle('hxBest',best!==null&&totals[c]===best);}
+  let total=0,count=0;
+  for(const [k,,w] of crit){const v=value('hx_f_'+k),cell=el('hxCrit_'+k);if(v!==''){const part=Number(v)*w/100;total+=part;count++;if(cell)cell.textContent=fmt(part);}else if(cell)cell.textContent='–';}
+  const t=el('hxCritTotal'),r=el('hxResult');
+  if(t)t.textContent=count?fmt(total):'–';
+  if(r)r.innerHTML=count?(count<crit.length?'Zwischenstand: <b>'+fmt(total)+'</b> – noch '+(crit.length-count)+' Kriterien offen.':'Ergebnis: <b>'+fmt(total)+' von 10 Punkten</b>'):'Noch keine Bewertung.';
+  return {total,count};
  }
- for(const x of fields()){
+ fields().forEach(x=>{
   const key='touch_'+x.dataset.save;
-  try{const saved=localStorage.getItem(key);if(saved!==null)x.value=saved;}catch{}
-  x.addEventListener('input',()=>{try{localStorage.setItem(key,x.value);}catch{}updateHandout();});
-  x.addEventListener('change',()=>{try{localStorage.setItem(key,x.value);}catch{}updateHandout();});
- }
- el('hoCheckCalc').onclick=()=>{
-  const input=value('ho_calc').replace(',','.').replace(/\s/g,''),n=Number(input),out=el('hoCalcFeedback');
-  if(!input||!Number.isFinite(n)){out.textContent='Bitte gib zuerst eine Zahl in Metern ein.';out.dataset.correct='false';return;}
-  const solution=50/3.6*2;
-  if(Math.abs(n-solution)<=.5){out.textContent='✓ Richtig! 50 ÷ 3,6 × 2 = 27,78 Meter (gerundet fast 28 Meter).';out.dataset.correct='true';}
-  else{out.textContent='Noch nicht richtig. Rechne zuerst 50 ÷ 3,6, dann mal 2. Versuche es noch einmal.';out.dataset.correct='false';}
- };
+  try{x.value=localStorage.getItem(key)||'';}catch{}
+  x.oninput=x.onchange=()=>{try{localStorage.setItem(key,x.value);}catch{}recalc();const s=el('hxSaved');if(s)s.textContent='✓ gespeichert';};
+ });
  el('printHandout').onclick=()=>window.print();
  el('clearHandout').onclick=()=>{
-  if(!confirm('Möchtest du alle Eingaben in diesem Handout löschen?'))return;
-  fields().forEach(x=>{try{localStorage.removeItem('touch_'+x.dataset.save);}catch{}x.value='';});
-  const output=el('hoCalcFeedback');output.dataset.correct='';output.textContent='Tipp: km/h ÷ 3,6 = m/s. Dann mit der Zeit multiplizieren.';
-  updateHandout();
+  if(!confirm('Alle Einträge im Handout löschen?'))return;
+  fields().forEach(x=>{try{localStorage.removeItem('touch_'+x.dataset.save);}catch{}x.value='';});recalc();
  };
  el('sendHandout').onclick=async()=>{
-  const result=updateHandout();
-  if(result.count===0&&!value('ho_good')&&!value('ho_better'))return alert('Bewerte zuerst mindestens ein Kriterium oder schreibe deine Rückmeldung.');
-  const lines=['TOUCH LIVE – Handout / Bewertung 1 bis 10','Name: '+value('ho_name'),'Klasse: '+value('ho_class'),'Datum: '+value('ho_date')];
-  criteria.forEach(([title],i)=>{
-   const score=value('ho10_'+String(i+1).padStart(2,'0'));
-   lines.push((i+1)+'. '+title+': '+(score||'—')+'/10');
-  });
-  lines.push('Summe: '+result.sum+'/100');
-  lines.push('Durchschnitt: '+(result.avg===null?'—':result.avg.toFixed(1))+'/10 ('+result.count+'/10 bewertet)');
-  if(value('ho_calc'))lines.push('Rechenaufgabe: '+value('ho_calc')+' m');
-  if(value('ho_good'))lines.push('Gut: '+value('ho_good'));
-  if(value('ho_better'))lines.push('Verbesserung: '+value('ho_better'));
+  const {total,count}=recalc(),lines=[];
+  if(count)lines.push('Bewertung: '+fmt(total)+' von 10'+(count<crit.length?' ('+count+' von '+crit.length+' Kriterien)':''));
+  for(const [k,l] of crit){const v=value('hx_f_'+k);if(v!=='')lines.push(l+': '+v+'/10');}
+  if(value('hx_good'))lines.push('Das war gut: '+value('hx_good'));
+  if(value('hx_better'))lines.push('Nicht so gut: '+value('hx_better'));
+  if(value('hx_change'))lines.push('Ändern: '+value('hx_change'));
+  if(value('hx_decision'))lines.push('Aufgabe – Entscheidung: '+value('hx_decision'));
+  if(!value('hx_good')&&!value('hx_better')&&!value('hx_change')&&!count)return alert('Bitte zuerst den Feedbackbogen ausfüllen.');
   const btn=el('sendHandout');btn.disabled=true;
-  try{await api('/api/feedback','POST',{text:lines.join('\n').slice(0,3000),rating:result.avg===null?0:Math.round(result.avg)});btn.textContent='✓ Gesendet';}
-  catch(e){btn.disabled=false;alert('Senden fehlgeschlagen: '+e.message);}
+  try{await api('/api/feedback','POST',{text:lines.join('\n').slice(0,3000),rating:Math.round(total)});btn.textContent='✓ Gesendet – danke!';}
+  catch(err){btn.disabled=false;alert('Senden fehlgeschlagen: '+err.message);}
  };
- updateHandout();
+ recalc();
 }
-
 function setupCanvas(id){const c=el(id),ctx=c.getContext('2d');let drawing=false;ctx.lineCap='round';ctx.lineJoin='round';ctx.lineWidth=2.5;ctx.strokeStyle='#123e58';const saved=localStorage.getItem('touch_'+id);if(saved){const img=new Image();img.onload=()=>ctx.drawImage(img,0,0);img.src=saved;}
  function coords(e){const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height};}
  c.onpointerdown=e=>{e.preventDefault();drawing=true;c.setPointerCapture(e.pointerId);const p=coords(e);ctx.beginPath();ctx.moveTo(p.x,p.y);};

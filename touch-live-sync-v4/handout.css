@@ -1,192 +1,89 @@
-
-/* ===== Handout 2026-11 (Rückmeldung statt Tabelle) ===== */
-.hoSheet{max-width:960px;padding:0;overflow:hidden;border-radius:18px}
-.hoHead{display:flex;flex-wrap:wrap;gap:22px;justify-content:space-between;align-items:flex-end;padding:34px 40px 28px;background:linear-gradient(135deg,#0b2a40 0%,#114a5e 60%,#1c7d78 100%);color:#fff}
-.hoHead .eyebrow{color:#9ef0e6;letter-spacing:.14em;font-size:12px}
-.hoHead h2{margin:6px 0 6px;font-size:clamp(28px,4vw,42px);line-height:1.05;color:#fff;letter-spacing:.02em}
-.hoHead h2 em{font-style:normal;color:#6de0d6}
-.hoHead p{margin:0;color:#d5eef2;max-width:460px}
-.hoWho{display:grid;grid-template-columns:1fr 90px 150px;gap:10px;min-width:min(100%,420px)}
-.hoWho label{color:#bfe6ec;margin:0;font-size:12px}
-.hoWho input{background:#ffffff1a;border-color:#ffffff40;color:#fff;min-height:40px}
-.hoBlock{padding:26px 40px 8px}
-.hoBlock h3{display:flex;align-items:center;gap:12px;margin:0 0 14px;font-size:21px;color:#0d2b3e}
-.hoBlock h3 span{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#0f4a5c;color:#fff;font-size:15px}
-.hoIntro{margin:-4px 0 16px;color:#46606f}
-.hoFacts{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
-.hoFact{display:flex;gap:12px;background:#f2f8fa;border:1px solid #dbe9ee;border-radius:14px;padding:14px 16px}
-.hoFact h4{margin:0 0 4px;font-size:15px;color:#0d2b3e}
-.hoFact p{margin:0;font-size:14px;line-height:1.5;color:#2f4a59}
-.hoFactNr{flex:none;font-weight:800;font-size:13px;color:#13827b;background:#dff4f1;border-radius:8px;padding:4px 7px;height:fit-content}
-.hoArea{border:1px solid #dbe6ec;border-radius:16px;padding:16px 18px 18px;margin-bottom:16px;break-inside:avoid;page-break-inside:avoid}
-.hoArea header{display:flex;gap:12px;align-items:center;margin-bottom:10px}
-.hoArea h4{margin:0;font-size:17px;color:#0d2b3e}
-.hoArea small{color:#5b7482}
-.hoAreaIcon{font-size:26px}
-.hoMood{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}
-.hoMood label{margin:0;cursor:pointer}
-.hoMood input{position:absolute;opacity:0;width:1px;height:1px}
-.hoMood span{display:flex;align-items:center;gap:6px;border:1px solid #cfdde4;border-radius:999px;padding:6px 12px;font-size:18px;color:#24404f;background:#fff;transition:.15s}
-.hoMood span small{font-size:12px;font-weight:700;color:#4b6573}
-.hoMood input:checked+span{background:#0f4a5c;border-color:#0f4a5c;color:#fff;box-shadow:0 4px 12px #0f4a5c40}
-.hoMood input:checked+span small{color:#d9f6f3}
-.hoMood input:focus-visible+span{outline:2px solid #13827b;outline-offset:2px}
-.hoTrio{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.hoTrio label{margin:0;color:#0d2b3e;font-size:13px}
-.hoTrio b{display:block;margin-bottom:6px}
-.paper .hoTrio textarea,.paper .hoTrio select,.paper .hoWho input{width:100%}
-.paper .hoTrio textarea,.paper .hoTrio select{background:#fbfdfe;border:1px solid #cfdde4;color:#132a3a;border-radius:10px;resize:vertical;min-height:84px}
-.paper .hoTrio select{min-height:44px}
-.hoGood textarea{border-left:4px solid #3fb07e!important}
-.hoBad textarea{border-left:4px solid #e0795f!important}
-.hoChange textarea{border-left:4px solid #e7b545!important}
-.hoFinal{padding-bottom:24px}
-.hoFoot{padding:14px 40px;background:#f2f8fa;color:#5b7482;font-size:12px;border-top:1px solid #dbe9ee}
+/* TOUCH LIVE – Handout: gedrucktes A4-Layout, Serifen-Überschriften, eine Akzentfarbe (Petrol). */
+.hx{--ink:#18232b;--soft:#5f6d77;--line:#d6dcdf;--acc:#0b6e69;--tint:#eef4f3;--paper:#fffefb;
+ max-width:880px;margin:0 auto 60px;color:var(--ink);font-family:"Source Sans 3","Segoe UI",Roboto,Arial,sans-serif;font-size:14.5px;line-height:1.5}
+.hxPage{background:var(--paper);border-radius:3px;box-shadow:0 18px 50px rgba(0,0,0,.35);padding:52px 64px 30px 64px;margin-bottom:28px;position:relative}
+.hxPage::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--acc)}
+.hxHead{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;padding-bottom:14px;border-bottom:3px double var(--ink);margin-bottom:20px}
+.hxKicker{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--acc)}
+.hxTitle{font-family:Georgia,"Times New Roman",serif;font-weight:700;font-size:40px;line-height:1.05;letter-spacing:-.01em;margin:6px 0 6px;color:var(--ink)}
+.hxSub{color:var(--soft);font-size:13.5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.hxMeta{display:flex;flex-direction:column;align-items:flex-end;gap:2px;font-size:11px;color:var(--soft);text-align:right;white-space:nowrap}
+.hxMeta span:first-child{font-weight:700;color:var(--ink);letter-spacing:.08em;text-transform:uppercase}
+.hxIntro{display:grid;grid-template-columns:1fr 300px;gap:26px;align-items:center;margin-bottom:6px}
+.hxDef{margin:0;font-family:Georgia,"Times New Roman",serif;font-size:16px;line-height:1.55}
+.hxDef b{font-family:"Source Sans 3","Segoe UI",Arial,sans-serif;color:var(--acc);letter-spacing:.02em}
+.hxFig{margin:0}
+.hxFig svg{width:100%;height:auto;display:block}
+.hxFig text{font:600 9.5px "Source Sans 3","Segoe UI",Arial,sans-serif;fill:var(--ink)}
+.hxFig .hxFigCap{font-weight:400;font-size:9px;fill:var(--soft)}
+.hxH{position:relative;font-family:Georgia,"Times New Roman",serif;font-size:19px;font-weight:700;margin:24px 0 10px;color:var(--ink)}
+.hxNum{position:absolute;left:-46px;top:-6px;width:30px;text-align:right;font-size:30px;line-height:1;color:var(--acc);font-weight:400}
+.hxText{margin:0 0 12px}
+.hxNote{font-size:12px;color:var(--soft);margin:10px 0 0}
+.hxTable{width:100%;border-collapse:collapse;font-size:13px}
+.hxTable th{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--soft);text-align:left;padding:7px 8px;border-bottom:1.5px solid var(--ink)}
+.hxTable td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.hxTable tbody tr:nth-child(even) td{background:#f7f9f8}
+.hxTable .r{text-align:right;white-space:nowrap}.hxTable .c{text-align:center}
+.hxCalc td{vertical-align:middle}
+.hxCalc .hxSum td{font-weight:700;border-top:1.5px solid var(--ink);border-bottom:0;background:transparent!important}
+.hxCalc td.hxBest{color:#fff;background:var(--acc)!important;border-radius:3px;font-weight:800}
+.hxTimeline{display:flex;flex-wrap:wrap;gap:4px 0;margin:10px 0 0;font-size:11.5px;color:var(--soft)}
+.hxTimeline span{padding:0 10px;border-left:1px solid var(--line)}
+.hxTimeline span:first-child{padding-left:0;border-left:0}
+.hxTimeline b{color:var(--acc)}
+.hxKey{columns:2;column-gap:30px;margin:0;padding:0 0 0 18px}
+.hxKey li{break-inside:avoid;margin:0 0 7px;padding-left:2px}
+.hxKey li::marker{color:var(--acc);font-weight:700;font-family:Georgia,serif}
+.hx select,.hx input,.hx textarea{font:inherit;color:var(--ink);background:transparent;border:0;border-bottom:1px solid #9aa9b3;border-radius:0;min-height:0;padding:3px 4px;width:100%;box-shadow:none}
+.hx select{width:62px;text-align:center;cursor:pointer;appearance:auto;background:#fff;border:1px solid var(--line);border-radius:4px;padding:3px}
+.hx input:focus,.hx textarea:focus,.hx select:focus{outline:2px solid rgba(11,110,105,.35);outline-offset:1px}
+.hxDate{display:flex;align-items:flex-end;gap:6px;margin:4px 0 0;font-size:11px;font-weight:400;color:var(--soft)}
+.hxDate input{width:110px!important;padding:0 2px!important}
+.hxLine{display:flex;gap:10px;align-items:flex-end;margin-top:16px;font-size:13.5px}
+.hxLine span{white-space:nowrap;font-weight:700}
+.hxResult{margin:14px 0 4px;padding:10px 14px;border:1px solid var(--acc);background:var(--tint);border-radius:4px;font-size:14px}
+.hxResult b{color:var(--acc)}
+.hxCols3{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:24px}
+.hxCols3 label{display:block;margin:0;color:var(--ink);font-size:13.5px;font-weight:700}
+.hxCols3 label span{display:block;margin-bottom:4px;padding-bottom:3px;border-bottom:2px solid var(--line)}
+.hxCols3 label span.g{border-color:#3a9a62}.hxCols3 label span.b{border-color:#c2573f}.hxCols3 label span.c{border-color:var(--acc)}
+.hx textarea{resize:vertical;font-weight:400;line-height:28px;padding:0 4px;border:0;background:repeating-linear-gradient(transparent,transparent 27px,#b3bfc7 27px,#b3bfc7 28px);min-height:168px}
+.hxFoot{display:flex;justify-content:space-between;margin-top:28px;padding-top:9px;border-top:1px solid var(--line);font-size:10.5px;color:var(--soft);letter-spacing:.04em}
+.hxActions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;max-width:880px;margin:0 auto 18px}
+.hxActions #hxSaved{font-size:13px;color:var(--muted,#9bb5c6)}
 .hoFeedbackList{display:grid;gap:10px;max-height:460px;overflow:auto}
 .hoFeedbackItem{background:#0b1f2f;border:1px solid #28445a;border-radius:12px;padding:12px 14px}
 .hoFeedbackItem pre{white-space:pre-wrap;margin:6px 0 0;font:inherit;font-size:14px;color:#d9e8f0}
-@media (max-width:720px){.hoHead,.hoBlock{padding-left:18px;padding-right:18px}.hoWho{grid-template-columns:1fr 1fr}.hoTrio{grid-template-columns:1fr}}
-@media print{.hoSheet{border-radius:0}.hoHead,.hoBlock h3 span,.hoMood input:checked+span,.hoFact,.hoFactNr{-webkit-print-color-adjust:exact;print-color-adjust:exact}.hoHead h2,.hoHead p,.hoHead .eyebrow{color:#fff!important}.hoHead h2 em{color:#6de0d6!important}.hoWho input{color:#fff!important}.paper .hoTrio textarea{height:62px!important;min-height:0}.hoBlock{padding:14px 18px 4px}.hoMood span small{display:none}}
-
-/* LG-TV: einmal OK drücken, dann steuert das Handy */
-.tvAutoHint{position:fixed;left:50%;bottom:7%;transform:translateX(-50%);z-index:70;background:#071827e6;border:1px solid #59d8d2;color:#e9fbff;border-radius:16px;padding:16px 26px;font-size:clamp(15px,1.7vw,24px);text-align:center;max-width:90vw;box-shadow:0 12px 40px #0008;animation:tvHintPulse 2.4s ease-in-out infinite}
-.tvAutoHint[hidden]{display:none}
-@keyframes tvHintPulse{0%,100%{box-shadow:0 12px 40px #0008,0 0 0 0 #59d8d255}50%{box-shadow:0 12px 40px #0008,0 0 0 14px #59d8d200}}
-html:has(#tvApp),html:has(#tvApp) body{overflow:hidden;background:#000}
-.paper.hoSheet .hoHead p{color:#d5eef2!important}.paper.hoSheet .hoHead h2{color:#fff!important}.paper.hoSheet .hoHead h2 em{color:#6de0d6!important}.paper.hoSheet .hoHead .eyebrow{color:#9ef0e6!important}.paper.hoSheet{padding:0!important}
-
-
-/* LF14 2026 — refreshed printable 10-part handout */
-#paper.ho10Sheet{
- max-width:980px;background:#fff;color:#132a3a;overflow:hidden;
- border:1px solid #d5e5e9;border-radius:22px;padding:0!important;
- box-shadow:0 25px 60px #0006;font-family:Arial,Helvetica,sans-serif
-}
-#paper.ho10Sheet .ho10Header{
- display:grid;grid-template-columns:minmax(0,1fr) minmax(160px,.58fr);
- align-items:center;gap:25px;padding:36px 40px;
- background:radial-gradient(circle at 14% 10%,#30bba728,transparent 52%),linear-gradient(125deg,#0a2536,#16516a 74%,#0e746b);
- color:white
-}
-#paper.ho10Sheet .ho10Header h2{font-size:clamp(28px,3.9vw,46px);line-height:1.06;letter-spacing:-.045em;color:#fff!important}
-#paper.ho10Sheet .ho10Header h2 em{color:#75efdc!important;font-style:normal}
-#paper.ho10Sheet .ho10Header p{max-width:490px;color:#d1eced!important;font-size:15px;line-height:1.5}
-#paper.ho10Sheet .ho10HeaderArtwork{
- height:190px;overflow:hidden;border-radius:17px;
- border:1px solid #84eada77;box-shadow:0 15px 35px #0005;background:#15374b
-}
-#paper.ho10Sheet .ho10HeaderArtwork img{display:block;width:100%;height:100%;object-fit:cover}
-#paper.ho10Sheet .ho10Identity{display:grid;grid-template-columns:1fr .55fr .6fr;gap:14px;padding:23px 40px 4px}
-#paper.ho10Sheet label{color:#16394b;font-size:13px;font-weight:750}
-#paper.ho10Sheet input,#paper.ho10Sheet textarea,#paper.ho10Sheet select{
- color:#112d40;background:#fff;border:1px solid #bdd2d9;
- border-radius:10px;box-sizing:border-box;min-height:43px;box-shadow:none
-}
-#paper.ho10Sheet .ho10Identity input{display:block;width:100%;margin-top:7px;padding:8px 10px}
-#paper.ho10Sheet .ho10Section{padding:23px 40px 5px}
-#paper.ho10Sheet .ho10SectionTop{display:flex;align-items:flex-start;gap:14px;margin-bottom:15px}
-#paper.ho10Sheet .ho10Step{
- flex:none;display:grid;place-items:center;width:37px;height:37px;border-radius:11px;
- background:linear-gradient(140deg,#0d5360,#137f73);color:#fff;font-size:14px;font-weight:900
-}
-#paper.ho10Sheet .ho10Section h3{margin:0 0 6px;font-size:20px;letter-spacing:-.025em;color:#102e40}
-#paper.ho10Sheet .ho10SectionTop p{margin:0;color:#486878;font-size:13px;line-height:1.55}
-#paper.ho10Sheet .ho10Knowledge{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
-#paper.ho10Sheet .ho10Knowledge div{
- display:grid;gap:6px;align-content:start;padding:14px 13px;
- background:linear-gradient(145deg,#e9f8f5,#f5fbff);
- border:1px solid #d0e9e4;border-radius:13px
-}
-#paper.ho10Sheet .ho10Knowledge b{color:#106b67;font-size:16px}
-#paper.ho10Sheet .ho10Knowledge span{color:#405d6b;font-size:12px;line-height:1.5}
-#paper.ho10Sheet .ho10TableWrap{overflow-x:auto;border:1px solid #cbdfe4;border-radius:14px}
-#paper.ho10Sheet .ho10Table{border-collapse:collapse;width:100%;font-size:13px}
-#paper.ho10Sheet .ho10Table thead{background:#113c50;color:#efffff}
-#paper.ho10Sheet .ho10Table th,#paper.ho10Sheet .ho10Table td{
- border-bottom:1px solid #d6e5e9;padding:9px 12px;text-align:left;vertical-align:middle
-}
-#paper.ho10Sheet .ho10Table thead th{color:white!important;font-size:12px;text-transform:uppercase;letter-spacing:.09em}
-#paper.ho10Sheet .ho10Table thead th:last-child{width:170px}
-#paper.ho10Sheet .ho10Table tbody tr:nth-child(even){background:#f5fafb}
-#paper.ho10Sheet .ho10Table tbody tr:last-child th,#paper.ho10Sheet .ho10Table tbody tr:last-child td{border-bottom:none}
-#paper.ho10Sheet .ho10Table tbody th{display:table-cell;vertical-align:middle;font-weight:600}
-#paper.ho10Sheet .ho10Table tbody th .ho10Index{display:inline-grid;vertical-align:middle;margin-right:11px}
-#paper.ho10Sheet .ho10Table tbody th>div{display:inline-block;vertical-align:middle;max-width:calc(100% - 48px)}
-#paper.ho10Sheet .ho10Table tbody b{display:block;color:#133849;font-size:13px}
-#paper.ho10Sheet .ho10Table tbody small{display:block;color:#69818c;font-weight:400;line-height:1.45;font-size:11px}
-#paper.ho10Sheet .ho10Index{
- width:28px;height:28px;flex:none;border-radius:9px;
- display:grid;place-items:center;background:#def5f1;color:#16796e;font-weight:900
-}
-#paper.ho10Sheet .ho10Table select{
- width:100%;max-width:164px;padding:8px 12px;cursor:pointer;font-weight:800;
- background:#f9ffff;min-height:42px;color:#14505b
-}
-#paper.ho10Sheet .ho10Table tr:focus-within{background:#e6fbf7}
-#paper.ho10Sheet .ho10Results{
- display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:15px
-}
-#paper.ho10Sheet .ho10Results div{
- border:1px solid #cce9e3;background:#ecfaf5;border-radius:12px;
- padding:12px 14px;display:grid;gap:4px
-}
-#paper.ho10Sheet .ho10Results span{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#496f6a;font-weight:800}
-#paper.ho10Sheet .ho10Results strong{font-size:clamp(17px,2vw,24px);letter-spacing:-.02em;color:#0b504a}
-#paper.ho10Sheet .ho10Note{font-size:11px;color:#637b86;line-height:1.5;margin:12px 0 0}
-#paper.ho10Sheet .ho10Calc{
- display:grid;grid-template-columns:minmax(160px,1fr) auto;gap:12px;
- align-items:end;background:#eff7fa;border:1px solid #cfe0e8;
- border-radius:14px;padding:16px
-}
-#paper.ho10Sheet .ho10Calc label{display:grid;gap:6px}
-#paper.ho10Sheet .ho10Calc input{width:100%;max-width:260px;padding:8px 11px}
-#paper.ho10Sheet .ho10CalcButton{min-height:44px;background:#16766d;border:0;color:white;border-radius:10px;font-weight:800;padding:10px 20px}
-#paper.ho10Sheet #hoCalcFeedback{grid-column:1/-1;font-size:12px;color:#4a6674;line-height:1.5;margin:0}
-#paper.ho10Sheet #hoCalcFeedback[data-correct=true]{color:#08765d;font-weight:800}
-#paper.ho10Sheet .ho10Thoughts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-#paper.ho10Sheet .ho10Thoughts label{display:grid;gap:7px}
-#paper.ho10Sheet .ho10Thoughts textarea{width:100%;min-height:86px;resize:vertical;padding:11px 12px;font:inherit;font-size:13px}
-#paper.ho10Sheet .ho10Foot{
- display:flex;justify-content:space-between;align-items:center;gap:12px;
- margin-top:24px;padding:15px 40px;background:#edf6f7;font-size:11px;color:#426071
-}
-#paper.ho10Sheet .ho10Foot a{color:#426071}
-.ho10Actions{margin:12px 0 24px}
-@media(max-width:760px){
- #paper.ho10Sheet .ho10Header{grid-template-columns:1fr;padding:25px 20px;gap:16px}
- #paper.ho10Sheet .ho10HeaderArtwork{height:150px}
- #paper.ho10Sheet .ho10Identity{grid-template-columns:1fr 1fr;padding:20px 18px 0}
- #paper.ho10Sheet .ho10Section{padding:20px 18px 2px}
- #paper.ho10Sheet .ho10Knowledge{grid-template-columns:1fr}
- #paper.ho10Sheet .ho10Thoughts{grid-template-columns:1fr}
- #paper.ho10Sheet .ho10Table th,#paper.ho10Sheet .ho10Table td{padding:9px 6px}
- #paper.ho10Sheet .ho10Table thead th:last-child{width:120px}
- #paper.ho10Sheet .ho10Calc{grid-template-columns:1fr}
- #paper.ho10Sheet .ho10Foot{padding:14px 18px;flex-wrap:wrap}
+@media (max-width:760px){
+ .hxPage{padding:30px 18px 22px 24px}
+ .hxHead{flex-direction:column;align-items:flex-start}.hxMeta{align-items:flex-start;text-align:left}
+ .hxTitle{font-size:30px}
+ .hxIntro{grid-template-columns:1fr}
+ .hxNum{position:static;margin-right:8px;font-size:22px}
+ .hxKey{columns:1}
+ .hxCols3{grid-template-columns:1fr;gap:16px}
+ .hxTable{font-size:12px;display:block;overflow-x:auto}
+ .hxTable th,.hxTable td{padding:6px 5px}
 }
 @media print{
- @page{size:A4 portrait;margin:10mm}
- #paper.ho10Sheet{width:100%!important;max-width:none!important;border:0!important;
-  border-radius:0!important;box-shadow:none!important;overflow:visible!important;padding:0!important}
- #paper.ho10Sheet .ho10Header{padding:13px 16px!important;grid-template-columns:1fr 130px;gap:10px}
- #paper.ho10Sheet .ho10Header h2{font-size:25px!important}
- #paper.ho10Sheet .ho10Header p{font-size:10px!important}
- #paper.ho10Sheet .ho10HeaderArtwork{height:90px}
- #paper.ho10Sheet .ho10Identity{padding:12px 0 0;gap:9px}
- #paper.ho10Sheet .ho10Section{padding:12px 0 0}
- #paper.ho10Sheet .ho10SectionTop{margin-bottom:8px}
- #paper.ho10Sheet .ho10Section h3{font-size:16px!important}
- #paper.ho10Sheet .ho10Knowledge div{padding:8px}
- #paper.ho10Sheet .ho10Table th,#paper.ho10Sheet .ho10Table td{padding:5px 8px}
- #paper.ho10Sheet .ho10Table select{min-height:24px;height:25px;padding:2px 5px}
- #paper.ho10Sheet .ho10Results{gap:7px;margin-top:8px}
- #paper.ho10Sheet .ho10Results div{padding:6px 9px}
- #paper.ho10Sheet .ho10Results strong{font-size:17px!important}
- #paper.ho10Sheet .ho10Calc{padding:10px;grid-template-columns:1fr}
- #paper.ho10Sheet .ho10Calc input{min-height:27px;height:27px}
- #paper.ho10Sheet .ho10Thoughts textarea{min-height:45px;height:50px!important}
- #paper.ho10Sheet .ho10Foot{padding:9px 0;margin-top:10px}
- #paper.ho10Sheet .ho10Section,#paper.ho10Sheet .ho10Table tr{break-inside:avoid;page-break-inside:avoid}
- #paper.ho10Sheet .ho10Header,#paper.ho10Sheet .ho10Knowledge div,
- #paper.ho10Sheet .ho10Results div{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ @page{size:A4;margin:12mm 14mm 12mm 18mm}
+ html,body{background:#fff!important}
+ .nav,footer,.page,.noPrint,.hxActions,.studentScoreBadge{display:none!important}
+ main.wrap{max-width:none!important;padding:0!important}
+ .hx{max-width:none;margin:0;font-size:10.3px;line-height:1.36}
+ .hxPage{box-shadow:none;padding:0;margin:0;background:#fff}
+ .hxPage::before{left:-8mm;width:2.2mm}
+ .hxBreak{break-before:page}
+ .hxTitle{font-size:28px}.hxHead{margin-bottom:12px;padding-bottom:9px}
+ .hxIntro{grid-template-columns:1fr 62mm;gap:14px}
+ .hxDef{font-size:11.5px}
+ .hxH{font-size:14px;margin:13px 0 6px}.hxNum{position:static;display:inline-block;width:auto;margin-right:7px;font-size:18px}
+ .hxTable{font-size:9.6px}.hxTable th{font-size:8px;padding:4px 5px}.hxTable td{padding:3.5px 5px}
+ .hxTimeline{font-size:8.8px}.hxKey li{margin-bottom:3px}
+ .hx select{width:38px;padding:0;border:1px solid #bbb;-webkit-appearance:none;appearance:none;text-align:center}
+ .hxCols3{margin-top:18px}
+ .hx textarea{min-height:330px;line-height:24px;background:repeating-linear-gradient(transparent,transparent 23px,#9aa9b3 23px,#9aa9b3 24px)}
+ .hxResult{font-size:10.5px;padding:6px 10px}.hxNote{font-size:9px}.hxFoot{margin-top:12px;font-size:8.5px}
+ .hxPage::before,.hxCalc td.hxBest,.hxTable tbody tr:nth-child(even) td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }

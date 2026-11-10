@@ -903,3 +903,10 @@ body.studentEntry .studentScoreGain{
  .touchPhotoFrame,#tvApp .tvPhotoStage{animation:none!important;transition:none!important}
  .touchPhotoFrame:hover img{transform:none!important}
 }
+
+/* Spotify-Anzeige am Fernseher (Bedienung nur über die Fernbedienungstasten) */
+#tvApp .tvSpDock{position:fixed;right:max(24px,3vw);top:max(22px,3vh);z-index:70;display:flex;flex-direction:column;gap:3px;max-width:min(42vw,520px);padding:12px 18px;border-radius:14px;background:rgba(5,18,27,.86);border:1px solid rgba(29,185,84,.55);box-shadow:0 12px 36px #0008;color:#e9fff1;font-size:clamp(13px,1.15vw,17px)}
+#tvApp .tvSpDock[hidden]{display:none!important}
+#tvApp .tvSpDock b{color:#1db954;letter-spacing:.04em}
+#tvApp .tvSpDock span{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#tvApp .tvSpDock small{opacity:.7;font-size:.8em}
