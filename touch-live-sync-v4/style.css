@@ -1156,3 +1156,25 @@ body.rgIntroOn .rgHero .rgKicker,body.rgIntroOn .rgHero .rgTitle,body.rgIntroOn 
 .rgTile{clip-path:inset(0)}
 .rgTile .rgTileText h3{transition:letter-spacing .5s ease}.rgTile:hover .rgTileText h3{letter-spacing:.02em}
 @media (prefers-reduced-motion:reduce){.rgIntro{display:none}.rgGrain{display:none}.rgReveal,.rgHero *{opacity:1!important;transform:none!important;animation:none!important;transition:none!important}}
+
+/* ---------- Handy-Optimierung ---------- */
+.mpMini{margin:8px 0 12px}.mpMini b{display:block;margin-bottom:2px}.mpMini .mpSeg{margin:6px 0 4px}.mpMiniNow{color:var(--muted)}
+@media (max-width:700px){
+ #adminRoot{padding-bottom:30px}
+ body:has(#adminRoot) .page{padding:16px 0 6px}
+ body:has(#adminRoot) .page h1{font-size:28px;margin:4px 0 0}
+ body:has(#adminRoot) .page>p{display:none}
+ .adminStickyStatus{font-size:13px;padding:9px 12px!important;top:0;border-radius:0 0 12px 12px!important}
+ .adminTabs{display:flex!important;overflow-x:auto;gap:8px;margin:0 -16px 16px;padding:0 16px 4px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+ .adminTabs::-webkit-scrollbar{display:none}
+ .adminTabs button{flex:0 0 auto;scroll-snap-align:start;padding:10px 14px;border-radius:999px}
+ .adminTabs button small{display:none}
+ .adminTabs button:last-child{grid-column:auto}
+ .adminPanels{gap:14px}
+ .adminPanels>.card{padding:16px;border-radius:16px}
+ .control{grid-template-columns:repeat(2,1fr)!important}
+ .control button{min-height:52px}
+ .nav.wrap{padding-top:12px;padding-bottom:12px;padding-left:16px;padding-right:16px}
+ main.wrap{padding-left:16px;padding-right:16px}
+ .navlinks{gap:10px}
+}
