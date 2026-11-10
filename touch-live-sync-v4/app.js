@@ -1370,73 +1370,104 @@ function updateCaption(){
 async function fetchCaptions(){try{const response=await fetch('/captions.vtt');if(!response.ok)return;subtitles=parseVTT(await response.text());}catch{}}
 function parseVTT(txt){return txt.replace(/\r/g,'').split(/\n\n+/).map(block=>{const lines=block.split('\n'),i=lines.findIndex(x=>x.includes('-->'));if(i<0)return null;const times=lines[i].split('-->');const toSeconds=x=>{const v=x.trim().split(/[.:]/).map(Number);return v.length===4?v[0]*3600+v[1]*60+v[2]+v[3]/1000:v[0]*60+v[1]+(v[2]||0)/1000;};return{start:toSeconds(times[0]),end:toSeconds(times[1]),text:lines.slice(i+1).join('\n')};}).filter(Boolean);}
 function handout(){
- // Reflection handout (no table): key facts from the documentary + what was good,
- // what was not so good and what could be changed – per area. Saved on the device,
- // printable as PDF and optionally sent to the teacher (admin feedback list).
- const facts=[
-  ['01','Geschichte','1965 beschrieb E. A. Johnson den ersten kapazitiven Touchscreen. In den 1970ern folgte der resistive Touchscreen. Mit dem Smartphone-Boom ab 2007 wurde Multitouch alltäglich.'],
-  ['02','Funktionsweise','Der Bildschirm erkennt, wo eine Berührung das elektrische Feld (kapazitiv) oder den Druck zwischen zwei Schichten (resistiv) verändert, und meldet diese Position an das Gerät.'],
-  ['03','Touchscreen-Arten','Resistiv, kapazitiv, Infrarot, Oberflächenwellen und optisch. Jede Technik hat Vor- und Nachteile bei Preis, Genauigkeit, Haltbarkeit und Bedienung mit Handschuh oder Stift.'],
-  ['04','Multitouch','Mehrere Finger gleichzeitig ermöglichen Gesten wie Zoomen, Wischen und Drehen – das macht die Bedienung schnell und intuitiv.'],
-  ['05','Alltag','Smartphone, Tablet, Kasse, Fahrkartenautomat, Auto, Industrie-Bedienfeld oder Arztpraxis: Touchscreens sind fast überall.'],
-  ['06','Probleme & Zukunft','Fingerabdrücke, Nässe, Handschuhe, Bruchgefahr und Barrierefreiheit sind Herausforderungen. Zukunft: faltbare Displays und spürbares (haptisches) Feedback.']
+ // 10-point LF14 evaluation sheet with automatic sum and average.
+ // Student data stays local until the person explicitly sends feedback.
+ const criteria=[
+  ['Einstieg & Verständlichkeit','Hat der Einstieg neugierig gemacht?'],
+  ['Geschichte der Touchscreens','Waren wichtige Entwicklungen nachvollziehbar?'],
+  ['Funktionsweise','Hast du verstanden, wie die Berührung erkannt wird?'],
+  ['Touchscreen-Techniken','Konntest du die verschiedenen Arten unterscheiden?'],
+  ['Multitouch & Gesten','Wurden Zoomen, Wischen und Drehen klar erklärt?'],
+  ['Beispiele aus dem Alltag','Waren die Beispiele sinnvoll und anschaulich?'],
+  ['Bilder & Animationen','Haben die Bilder das Lernen unterstützt?'],
+  ['Ton & Untertitel','War alles gut zu hören und zu lesen?'],
+  ['Quiz & Mitmach-Spiele','Haben Quiz und Spiele Spaß gemacht?'],
+  ['Gesamteindruck','Wie fandest du die Dokumentation insgesamt?']
  ];
- const areas=[
-  ['doku','🎬','Die Dokumentation','Inhalt, Erklärungen, Länge, Bild und Ton'],
-  ['quiz','🎮','Quiz & Spiele','Fragen, Zeit, Easter Egg, Finger-Mission'],
-  ['technik','📺','Technik & Präsentation','Beamer, Handy-Zugang, Untertitel, Ablauf'],
-  ['lernen','🧠','Mein Lernerfolg','Was habe ich verstanden und behalten?']
- ];
- const moods=[['5','😀','Sehr gut'],['4','🙂','Gut'],['3','😐','Okay'],['2','🙁','Eher nicht'],['1','😞','Gar nicht']];
- const factCards=facts.map(([nr,title,text])=>'<div class="hoFact"><span class="hoFactNr">'+nr+'</span><div><h4>'+esc(title)+'</h4><p>'+esc(text)+'</p></div></div>').join('');
- const areaCards=areas.map(([key,icon,title,help])=>'<section class="hoArea"><header><span class="hoAreaIcon" aria-hidden="true">'+icon+'</span><div><h4>'+esc(title)+'</h4><small>'+esc(help)+'</small></div></header>'+
-  '<div class="hoMood" role="radiogroup" aria-label="Bewertung: '+esc(title)+'">'+moods.map(([v,e,l])=>'<label><input type="radio" name="ho_'+key+'" value="'+v+'" data-save="ho_'+key+'_rate"><span title="'+l+'">'+e+'<small>'+l+'</small></span></label>').join('')+'</div>'+
-  '<div class="hoTrio"><label class="hoGood"><b>👍 Das fand ich gut</b><textarea data-save="ho_'+key+'_good" rows="3" placeholder="z. B. die Erklärung mit den zwei Schichten …"></textarea></label>'+
-  '<label class="hoBad"><b>👎 Das war nicht so gut</b><textarea data-save="ho_'+key+'_bad" rows="3" placeholder="z. B. zu schnell, schwer zu lesen …"></textarea></label>'+
-  '<label class="hoChange"><b>💡 Das würde ich ändern</b><textarea data-save="ho_'+key+'_change" rows="3" placeholder="Mein Verbesserungsvorschlag …"></textarea></label></div></section>').join('');
- const sheet='<article class="paper hoSheet" id="paper">'+
-  '<header class="hoHead"><div><span class="eyebrow">FRIEDRICH-DESSAUER-SCHULE · LERNFELD 14</span><h2>TOUCHSCREEN <em>Handout</em></h2><p>Das Wichtigste aus der Doku – und deine ehrliche Rückmeldung. Kein Rechnen, keine Tabelle.</p></div>'+
-  '<div class="hoWho"><label>Name<input data-save="ho_name" autocomplete="name"></label><label>Klasse<input data-save="ho_class"></label><label>Datum<input data-save="ho_date" type="date"></label></div></header>'+
-  '<section class="hoBlock"><h3><span>1</span> Das Wichtigste auf einen Blick</h3><div class="hoFacts">'+factCards+'</div></section>'+
-  '<section class="hoBlock"><h3><span>2</span> Meine Rückmeldung – Bereich für Bereich</h3><p class="hoIntro">Wähle ein Gesicht und schreib zu jedem Bereich, was gut war, was nicht so gut war und was man ändern kann. Stichwörter reichen.</p>'+areaCards+'</section>'+
-  '<section class="hoBlock hoFinal"><h3><span>3</span> Zum Schluss</h3><div class="hoTrio"><label><b>⭐ Mein wichtigstes Ergebnis</b><textarea data-save="ho_take" rows="3" placeholder="Das nehme ich mit …"></textarea></label><label><b>❓ Das ist mir noch unklar</b><textarea data-save="ho_open" rows="3" placeholder="Diese Frage habe ich noch …"></textarea></label><label><b>🏁 Gesamtnote für TOUCH LIVE</b><select data-save="ho_total"><option value="">Bitte wählen</option><option value="10">1 – sehr gut</option><option value="8">2 – gut</option><option value="6">3 – befriedigend</option><option value="4">4 – ausreichend</option><option value="2">5 – mangelhaft</option><option value="0">6 – ungenügend</option></select></label></div></section>'+
-  '<footer class="hoFoot">TOUCH LIVE · Interaktive Dokumentation, Quiz und Multitouch-Mission · 2026</footer></article>';
- wrap(page('Handout · Lernfeld 14','DOKU · RÜCKMELDUNG · VERBESSERUNG','Lies die Zusammenfassung und gib zu jedem Bereich deine Rückmeldung. Alles wird auf deinem Gerät gespeichert.')+
-  '<div class="flex noPrint lf14SimpleActions"><button type="button" class="primary" id="sendHandout">📨 Rückmeldung an die Lehrkraft senden</button><button type="button" id="printHandout">📄 Als PDF speichern</button><button type="button" id="clearHandout">Zurücksetzen</button><span class="lf14SavedState" id="lf14SavedState" aria-live="polite">Eingaben werden gespeichert.</span></div>'+sheet);
- const status=el('lf14SavedState');
+ const choices='<option value="">Bitte wählen</option>'+Array.from({length:10},(_,i)=>'<option value="'+(i+1)+'">'+(i+1)+' / 10</option>').join('');
+ const rows=criteria.map(([title,help],i)=>{
+  const number=i+1,key='ho10_'+String(number).padStart(2,'0');
+  return '<tr><th scope="row"><span class="ho10Index">'+number+'</span><div><b>'+esc(title)+'</b><small>'+esc(help)+'</small></div></th>'+
+   '<td><select aria-label="Bewertung '+number+': '+esc(title)+'" data-save="'+key+'">'+choices+'</select></td></tr>';
+ }).join('');
+ const sheet='<article class="paper hoSheet ho10Sheet" id="paper">'+
+  '<header class="hoHead ho10Header"><div class="ho10HeaderCopy"><span class="eyebrow">LERNFELD 14 · TOUCH LIVE 2026</span><h2>Mein <em>Touchscreen-Handout</em></h2><p>Rückblick, Bewertung und eine kleine Rechenaufgabe. Gib deine eigene Einschätzung ab.</p></div>'+
+  '<div class="ho10HeaderArtwork" aria-label="Echte Touchscreen-Technik"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/Capacitive_touchscreen.jpg?width=520" alt="Fotografie der Leiterbahnen eines kapazitiven Touchscreens"></div></header>'+
+  '<section class="ho10Identity"><label>Name<input data-save="ho_name" autocomplete="name" placeholder="Vor- und Nachname"></label>'+
+  '<label>Klasse<input data-save="ho_class" placeholder="Klasse"></label>'+
+  '<label>Datum<input type="date" data-save="ho_date"></label></section>'+
+  '<section class="ho10Section"><div class="ho10SectionTop"><span class="ho10Step">01</span><div><h3>Das habe ich gelernt</h3><p>Drei wichtige Punkte aus der Dokumentation.</p></div></div>'+
+  '<div class="ho10Knowledge"><div><b>1965–2007</b><span>Von frühen Touchscreens bis zum Smartphone-Boom.</span></div><div><b>Kapazitiv</b><span>Ein Finger verändert die elektrische Kapazität am Sensor.</span></div><div><b>Multitouch</b><span>Mehrere Berührungen gleichzeitig ermöglichen Gesten.</span></div></div></section>'+
+  '<section class="ho10Section"><div class="ho10SectionTop"><span class="ho10Step">02</span><div><h3>Bewertungstabelle · 1 bis 10</h3><p>Bewerte jeden Bereich von <strong>1 = gar nicht gut</strong> bis <strong>10 = sehr gut</strong>. Die Ergebnisse werden automatisch berechnet.</p></div></div>'+
+  '<div class="ho10TableWrap"><table class="ho10Table"><thead><tr><th scope="col">Kriterium</th><th scope="col">Punkte (1–10)</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+  '<div class="ho10Results" aria-live="polite"><div><span>Ausgefüllt</span><strong id="hoCount">0 / 10</strong></div><div><span>Summe</span><strong id="hoSum">0 / 100</strong></div><div><span>Durchschnitt</span><strong id="hoAverage">— / 10</strong></div></div>'+
+  '<p class="ho10Note">Berechnung: Summe aller eingetragenen Bewertungen ÷ Anzahl bewerteter Kriterien. Der Durchschnitt bezieht sich nur auf ausgefüllte Zeilen.</p></section>'+
+  '<section class="ho10Section"><div class="ho10SectionTop"><span class="ho10Step">03</span><div><h3>Kleine Rechenaufgabe aus dem Film</h3><p>Ein Auto fährt <strong>50 km/h</strong>. Du schaust <strong>2 Sekunden</strong> auf den Touchscreen. Wie viele Meter fährt das Auto in dieser Zeit?</p></div></div>'+
+  '<div class="ho10Calc"><label>Dein Ergebnis in Metern<input data-save="ho_calc" type="text" inputmode="decimal" placeholder="z. B. 27,8" aria-describedby="hoCalcFeedback"></label>'+
+  '<button type="button" class="ho10CalcButton noPrint" id="hoCheckCalc">Ergebnis prüfen</button><p id="hoCalcFeedback" role="status" aria-live="polite">Tipp: km/h ÷ 3,6 = m/s. Dann mit der Zeit multiplizieren.</p></div></section>'+
+  '<section class="ho10Section ho10Reflection"><div class="ho10SectionTop"><span class="ho10Step">04</span><div><h3>Meine Meinung</h3><p>Kurze Stichpunkte reichen aus.</p></div></div>'+
+  '<div class="ho10Thoughts"><label>Das hat mir besonders gefallen<textarea data-save="ho_good" rows="3" maxlength="600" placeholder="Das fand ich gut, weil …"></textarea></label>'+
+  '<label>Das würde ich verbessern<textarea data-save="ho_better" rows="3" maxlength="600" placeholder="Das könnte man ändern …"></textarea></label></div></section>'+
+  '<footer class="hoFoot ho10Foot"><span>TOUCH LIVE · Interaktive Touchscreen-Dokumentation</span><a href="https://commons.wikimedia.org/wiki/File:Capacitive_touchscreen.jpg" target="_blank" rel="noopener noreferrer">Foto: Medvedev · CC BY 3.0</a></footer></article>';
+ wrap(page('Dein Handout.','TOUCH LIVE · LERNFELD 14','Tippe deine Bewertungen ein. Deine Angaben werden auf diesem Gerät gespeichert, und du kannst das Blatt als PDF ausdrucken.')+
+  '<div class="flex noPrint lf14SimpleActions ho10Actions"><button type="button" class="primary" id="sendHandout">📨 An die Lehrkraft senden</button><button type="button" id="printHandout">📄 Als PDF speichern</button><button type="button" id="clearHandout">↺ Zurücksetzen</button><span class="lf14SavedState" id="lf14SavedState" aria-live="polite">Eingaben werden gespeichert.</span></div>'+sheet);
  const fields=()=>[...document.querySelectorAll('#paper [data-save]')];
- const value=k=>{const n=document.querySelector('#paper [data-save="'+k+'"]:not([type=radio])');if(n)return n.value.trim();const r=document.querySelector('#paper input[type=radio][data-save="'+k+'"]:checked');return r?r.value:'';};
- function updateHandoutStatus(){
-  const done=areas.filter(([k])=>value('ho_'+k+'_rate')||value('ho_'+k+'_good')||value('ho_'+k+'_bad')||value('ho_'+k+'_change')).length;
-  if(status)status.textContent='✓ '+done+' von '+areas.length+' Bereichen ausgefüllt · auf diesem Gerät gespeichert';
+ const field=k=>document.querySelector('#paper [data-save="'+k+'"]');
+ const value=k=>String(field(k)?.value||'').trim();
+ function updateHandout(){
+  let sum=0,count=0;
+  for(let i=1;i<=10;i++){
+   const n=Number(value('ho10_'+String(i).padStart(2,'0')));
+   if(Number.isInteger(n)&&n>=1&&n<=10){sum+=n;count++;}
+  }
+  const avg=count?sum/count:null;
+  el('hoCount').textContent=count+' / 10';
+  el('hoSum').textContent=sum+' / 100';
+  el('hoAverage').textContent=count?avg.toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1})+' / 10':'— / 10';
+  const status=el('lf14SavedState');
+  if(status)status.textContent='✓ '+count+' von 10 Punkten bewertet · lokal gespeichert';
+  return {sum,count,avg};
  }
- fields().forEach(x=>{
+ for(const x of fields()){
   const key='touch_'+x.dataset.save;
-  try{const v=localStorage.getItem(key)||'';if(x.type==='radio')x.checked=v===x.value;else x.value=v;}catch{}
-  x.oninput=x.onchange=()=>{try{localStorage.setItem(key,x.value);}catch{}updateHandoutStatus();};
- });
+  try{const saved=localStorage.getItem(key);if(saved!==null)x.value=saved;}catch{}
+  x.addEventListener('input',()=>{try{localStorage.setItem(key,x.value);}catch{}updateHandout();});
+  x.addEventListener('change',()=>{try{localStorage.setItem(key,x.value);}catch{}updateHandout();});
+ }
+ el('hoCheckCalc').onclick=()=>{
+  const input=value('ho_calc').replace(',','.').replace(/\s/g,''),n=Number(input),out=el('hoCalcFeedback');
+  if(!input||!Number.isFinite(n)){out.textContent='Bitte gib zuerst eine Zahl in Metern ein.';out.dataset.correct='false';return;}
+  const solution=50/3.6*2;
+  if(Math.abs(n-solution)<=.5){out.textContent='✓ Richtig! 50 ÷ 3,6 × 2 = 27,78 Meter (gerundet fast 28 Meter).';out.dataset.correct='true';}
+  else{out.textContent='Noch nicht richtig. Rechne zuerst 50 ÷ 3,6, dann mal 2. Versuche es noch einmal.';out.dataset.correct='false';}
+ };
  el('printHandout').onclick=()=>window.print();
  el('clearHandout').onclick=()=>{
-  if(!confirm('Alle Einträge im Handout löschen?'))return;
-  fields().forEach(x=>{try{localStorage.removeItem('touch_'+x.dataset.save);}catch{}if(x.type==='radio')x.checked=false;else x.value='';});
-  updateHandoutStatus();
+  if(!confirm('Möchtest du alle Eingaben in diesem Handout löschen?'))return;
+  fields().forEach(x=>{try{localStorage.removeItem('touch_'+x.dataset.save);}catch{}x.value='';});
+  const output=el('hoCalcFeedback');output.dataset.correct='';output.textContent='Tipp: km/h ÷ 3,6 = m/s. Dann mit der Zeit multiplizieren.';
+  updateHandout();
  };
  el('sendHandout').onclick=async()=>{
-  const lines=[];
-  const who=[value('ho_name'),value('ho_class')].filter(Boolean).join(', ');if(who)lines.push('Von: '+who);
-  for(const [k,,title] of areas){
-   const part=[['Bewertung',value('ho_'+k+'_rate')?value('ho_'+k+'_rate')+'/5':''],['Gut',value('ho_'+k+'_good')],['Nicht so gut',value('ho_'+k+'_bad')],['Ändern',value('ho_'+k+'_change')]].filter(x=>x[1]).map(x=>x[0]+': '+x[1]);
-   if(part.length)lines.push(title+' – '+part.join(' | '));
-  }
-  if(value('ho_take'))lines.push('Wichtigstes Ergebnis: '+value('ho_take'));
-  if(value('ho_open'))lines.push('Noch unklar: '+value('ho_open'));
-  if(!lines.length)return alert('Bitte zuerst mindestens einen Bereich ausfüllen.');
+  const result=updateHandout();
+  if(result.count===0&&!value('ho_good')&&!value('ho_better'))return alert('Bewerte zuerst mindestens ein Kriterium oder schreibe deine Rückmeldung.');
+  const lines=['TOUCH LIVE – Handout / Bewertung 1 bis 10','Name: '+value('ho_name'),'Klasse: '+value('ho_class'),'Datum: '+value('ho_date')];
+  criteria.forEach(([title],i)=>{
+   const score=value('ho10_'+String(i+1).padStart(2,'0'));
+   lines.push((i+1)+'. '+title+': '+(score||'—')+'/10');
+  });
+  lines.push('Summe: '+result.sum+'/100');
+  lines.push('Durchschnitt: '+(result.avg===null?'—':result.avg.toFixed(1))+'/10 ('+result.count+'/10 bewertet)');
+  if(value('ho_calc'))lines.push('Rechenaufgabe: '+value('ho_calc')+' m');
+  if(value('ho_good'))lines.push('Gut: '+value('ho_good'));
+  if(value('ho_better'))lines.push('Verbesserung: '+value('ho_better'));
   const btn=el('sendHandout');btn.disabled=true;
-  try{await api('/api/feedback','POST',{text:lines.join('\n').slice(0,3000),rating:Number(value('ho_total')||0)});btn.textContent='✓ Rückmeldung gesendet – danke!';}
+  try{await api('/api/feedback','POST',{text:lines.join('\n').slice(0,3000),rating:result.avg===null?0:Math.round(result.avg)});btn.textContent='✓ Gesendet';}
   catch(e){btn.disabled=false;alert('Senden fehlgeschlagen: '+e.message);}
  };
- updateHandoutStatus();
+ updateHandout();
 }
+
 function setupCanvas(id){const c=el(id),ctx=c.getContext('2d');let drawing=false;ctx.lineCap='round';ctx.lineJoin='round';ctx.lineWidth=2.5;ctx.strokeStyle='#123e58';const saved=localStorage.getItem('touch_'+id);if(saved){const img=new Image();img.onload=()=>ctx.drawImage(img,0,0);img.src=saved;}
  function coords(e){const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height};}
  c.onpointerdown=e=>{e.preventDefault();drawing=true;c.setPointerCapture(e.pointerId);const p=coords(e);ctx.beginPath();ctx.moveTo(p.x,p.y);};
