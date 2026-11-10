@@ -725,20 +725,12 @@ function tvFocusControl(id='tvFullscreen'){
  if(!node||node.hidden||node.disabled)return;
  try{node.focus({preventScroll:true});}catch{node.focus();}
 }
-function tvControlsVisible(show=true){
- const bar=el('tvRemoteBar'),help=el('tvRemoteHelp');if(!bar)return;
+function tvControlsVisible(){
+ // Keep the full-size remote toolbar out of the LG / projector view.
+ const bar=el('tvRemoteBar'),help=el('tvRemoteHelp');
  if(tvRemoteAutoHide){clearTimeout(tvRemoteAutoHide);tvRemoteAutoHide=null;}
- // Only the welcome screen contains the LG setup bar. During a film, quiz,
- // paused film or awards the video/presentation stays unobstructed.
- const welcomeOnly=!state||state.phase==='welcome';
- const visible=show&&welcomeOnly;
- bar.classList.toggle('tvRemoteHidden',!visible);
- if(help)help.hidden=!visible;
- if(visible&&!bar.dataset.wasShown){
-  // Focus once; polling must not steal focus from LG remote button selection.
-  tvFocusControl('tvFullscreen');
- }
- bar.dataset.wasShown=visible?'1':'0';
+ if(bar){bar.classList.add('tvRemoteHidden');bar.dataset.wasShown='0';}
+ if(help)help.hidden=true;
 }
 function tvFullscreenHint(message){
  const note=el('tvRemoteHelp');
@@ -839,6 +831,13 @@ function tvRemoteKeydown(e){
  if(role!=='tv'||!el('tvApp'))return;
  const code=e.keyCode||e.which;
  const bar=el('tvRemoteBar');if(!bar)return;
+ if(state?.phase==='welcome'&&(e.key==='Enter'||code===13)){
+  e.preventDefault();
+  const start=el('tvCinemaStart');
+  if(start&&!start.hidden)start.click();else tvEnablePlayback();
+  return;
+ }
+ if(state?.phase==='welcome'&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;
  // Film and quiz are distraction-free. Only the exceptional audio-unlock button
  // can be focused by the TV remote after autoplay restrictions.
  if(state?.phase!=='welcome'){
@@ -898,9 +897,11 @@ function tvUnlockAll(){
  if(state?.phase==='welcome'&&state?.welcomeMusic?.on)try{playWelcomeAudio();}catch{}
  const b=el('tvPlay');if(b)b.textContent='✓ Ton & Vollbild aktiv';
  const hint=el('tvAutoHint');if(hint)hint.hidden=true;
- if(first){tvFullscreenHint('✓ Ton und Vollbild sind aktiv. Ab jetzt steuerst du alles mit dem Handy.');setTimeout(()=>{if(state?.phase==='welcome'){tvWelcomeDismissed=true;tvControlsVisible(false);}},4500);}
+ if(first){tvWelcomeDismissed=true;tvControlsVisible(false);}
+ const setup=el('tvCinemaSetup');if(setup)setup.hidden=true;
 }
-['pointerdown','keydown','touchstart'].forEach(type=>window.addEventListener(type,()=>{if(role==='tv')tvUnlockAll();},{capture:true,passive:true}));
+['pointerdown','touchstart'].forEach(type=>window.addEventListener(type,()=>{if(role==='tv')tvUnlockAll();},{capture:true,passive:true}));
+window.addEventListener('keydown',e=>{if(role==='tv'&&(['Enter',' '].includes(e.key)||[13,32,415].includes(e.keyCode||e.which)))tvUnlockAll();},{capture:true});
 // ---- Spotify auf dem LG-Fernseher, gesteuert mit der TV-Fernbedienung ----
 // Die Musik spielt die Spotify-App des Fernsehers (Spotify Connect). Diese Seite
 // schickt nur Befehle; die Anmeldung kommt einmalig vom Handy/Admin über den Server.
@@ -964,7 +965,7 @@ function tvSpotifyVisibility(){
 }
 function tvView(){
  if(!tvKey){app.innerHTML='<div class="wrap page"><h1>Beamer verbinden</h1><p>Bitte den Beamerlink aus der Admin-Ansicht öffnen.</p><label>Beamer-Zugangsschlüssel</label><input type="password" id="tvInput"><p></p><button class="primary" id="tvSubmit">Verbinden</button></div>';el('tvSubmit').onclick=()=>{tvKey=el('tvInput').value;sessionStorage.setItem('touch_tv_key',tvKey);localStorage.setItem('touch_tv_key',tvKey);tvView();};return;}
- app.innerHTML='<div id="tvApp"><audio id="tvWelcomeAudio" src="/welcome-music.wav" preload="auto" loop playsinline style="display:none"></audio><div id="tvScene" class="tvScene"></div><video id="tvTrailer" playsinline preload="auto" controls style="display:none;position:fixed;inset:0;width:100vw;height:100vh;background:#000;object-fit:contain;z-index:50"></video><button id="tvTrailerUnlock" type="button" hidden style="position:fixed;bottom:8%;left:50%;transform:translateX(-50%);z-index:60;max-width:90%;padding:17px 25px;background:#59d8d2;color:#07222b;border-radius:14px;font-size:18px;font-weight:700">▶ Trailer mit Ton starten (OK)</button><div id="tvTrailerMessage" hidden style="position:fixed;top:4%;left:10%;right:10%;z-index:60;padding:12px;background:#07222bcc;color:white;border-radius:12px;text-align:center"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><iframe id="cloudFrame" title="Google Drive Filmvorschau" allow="autoplay; fullscreen; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvLocalChoose" type="button" tabindex="0" hidden>📁 MP4 vom Windows-PC wählen</button><input id="tvLocalFile" type="file" accept=".mp4,video/mp4" hidden><span id="tvLocalStatus" role="status" style="font-size:13px;max-width:400px" hidden>MP4 bitte lokal auswählen.</span><button id="tvFullscreen" type="button" tabindex="0" autofocus>⛶ Vollbild – OK</button><button id="tvSoundtrackUnlock" type="button" tabindex="0">♫ Musik-Ton aktivieren</button><button id="tvSpotifyPlay" type="button" tabindex="0" hidden>♫ Willkommensmusik ▶</button><button id="tvSpotifyPc" type="button" tabindex="0" hidden>♫ Spotify auf diesem PC</button><button id="tvSpPrev" type="button" tabindex="0" hidden title="Vorheriger Titel">⏮</button><button id="tvSpToggle" type="button" tabindex="0" hidden>♫ Spotify ▶</button><button id="tvSpNext" type="button" tabindex="0" hidden title="Nächster Titel">⏭</button><button id="tvSpDown" type="button" tabindex="0" hidden title="Leiser">🔉</button><button id="tvSpUp" type="button" tabindex="0" hidden title="Lauter">🔊</button><span id="tvSpNow" class="tvSpNow" hidden></span><button id="tvCloudOpen" type="button" tabindex="0" hidden>☁ iCloud-Datei öffnen</button><button id="tvCaptionSync" type="button" tabindex="0" hidden>⏱ Untertitel synchronisieren</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div id="tvAutoHint" class="tvAutoHint">Einmal <b>OK</b> drücken – dann laufen Ton und Vollbild. Danach steuerst du alles mit dem Handy.</div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><button id="tvFilmUnlock" class="tvFilmUnlock" type="button" hidden>🔊 Filmton mit OK einschalten</button><div id="tvWelcomeMusicStatus" class="tvWelcomeMusicStatus" hidden aria-live="polite"></div><div id="tvSpotifyDock" class="tvSpotifyDock" hidden aria-label="Spotify-Vorschau auf LG deaktiviert"></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
+ app.innerHTML='<div id="tvApp"><audio id="tvWelcomeAudio" src="/welcome-music.wav" preload="auto" loop playsinline style="display:none"></audio><div id="tvScene" class="tvScene"></div><video id="tvTrailer" playsinline preload="auto" controls style="display:none;position:fixed;inset:0;width:100vw;height:100vh;background:#000;object-fit:contain;z-index:50"></video><button id="tvTrailerUnlock" type="button" hidden style="position:fixed;bottom:8%;left:50%;transform:translateX(-50%);z-index:60;max-width:90%;padding:17px 25px;background:#59d8d2;color:#07222b;border-radius:14px;font-size:18px;font-weight:700">▶ Trailer mit Ton starten (OK)</button><div id="tvTrailerMessage" hidden style="position:fixed;top:4%;left:10%;right:10%;z-index:60;padding:12px;background:#07222bcc;color:white;border-radius:12px;text-align:center"></div><div class="videoLayer" id="videoLayer" style="display:none"><video id="tvVideo" playsinline preload="metadata"></video><div id="youtubeTarget" style="display:none"></div><iframe id="cloudFrame" title="Google Drive Filmvorschau" allow="autoplay; fullscreen; encrypted-media" referrerpolicy="strict-origin-when-cross-origin" style="display:none"></iframe><div id="captionLayer" class="captionLayer" style="display:none"></div></div><div class="tvUnlock tvRemoteBar" id="tvRemoteBar" role="toolbar" aria-label="LG Fernbedienungs-Steuerung"><button id="tvPlay" type="button" tabindex="0">▶ Ton & Vollbild mit OK freigeben</button><button id="tvLocalChoose" type="button" tabindex="0" hidden>📁 MP4 vom Windows-PC wählen</button><input id="tvLocalFile" type="file" accept=".mp4,video/mp4" hidden><span id="tvLocalStatus" role="status" style="font-size:13px;max-width:400px" hidden>MP4 bitte lokal auswählen.</span><button id="tvFullscreen" type="button" tabindex="0" autofocus>⛶ Vollbild – OK</button><button id="tvSoundtrackUnlock" type="button" tabindex="0">♫ Musik-Ton aktivieren</button><button id="tvSpotifyPlay" type="button" tabindex="0" hidden>♫ Willkommensmusik ▶</button><button id="tvSpotifyPc" type="button" tabindex="0" hidden>♫ Spotify auf diesem PC</button><button id="tvSpPrev" type="button" tabindex="0" hidden title="Vorheriger Titel">⏮</button><button id="tvSpToggle" type="button" tabindex="0" hidden>♫ Spotify ▶</button><button id="tvSpNext" type="button" tabindex="0" hidden title="Nächster Titel">⏭</button><button id="tvSpDown" type="button" tabindex="0" hidden title="Leiser">🔉</button><button id="tvSpUp" type="button" tabindex="0" hidden title="Lauter">🔊</button><span id="tvSpNow" class="tvSpNow" hidden></span><button id="tvCloudOpen" type="button" tabindex="0" hidden>☁ iCloud-Datei öffnen</button><button id="tvCaptionSync" type="button" tabindex="0" hidden>⏱ Untertitel synchronisieren</button><button id="tvHideControls" type="button" tabindex="0">Menü ausblenden</button></div><div id="tvCinemaSetup" class="tvCinemaSetup"><button id="tvCinemaStart" type="button" class="tvCinemaStart">⛶ Vollbild &amp; Ton aktivieren (OK)</button><button id="tvCinemaPick" type="button" class="tvCinemaPick" hidden>📁 HDMI-MP4 auswählen</button><span>Einmal OK drücken. Danach mit dem Handy steuern.</span></div><div id="tvAutoHint" class="tvAutoHint" hidden></div><div class="tvRemoteHelp" id="tvRemoteHelp">LG-Fernbedienung: ◀ ▶ auswählen · OK bestätigen · Zurück für das Menü · Lautstärke über TV</div><button id="tvFilmUnlock" class="tvFilmUnlock" type="button" hidden>🔊 Filmton mit OK einschalten</button><div id="tvWelcomeMusicStatus" class="tvWelcomeMusicStatus" hidden aria-live="polite"></div><div id="tvSpotifyDock" class="tvSpotifyDock" hidden aria-label="Spotify-Vorschau auf LG deaktiviert"></div><div class="tvFooter">TOUCH LIVE · Beamer</div></div>';
  videoEl=el('tvVideo');
  const trailerVideo=el('tvTrailer'),trailerUnlock=el('tvTrailerUnlock'),trailerMessage=el('tvTrailerMessage');
  if(trailerVideo&&trailerUnlock){
@@ -1010,6 +1011,8 @@ function tvView(){
  videoEl.muted=false;videoEl.defaultMuted=false;videoEl.volume=1;
  el('tvPlay').onclick=tvEnablePlayback;
  el('tvFilmUnlock').onclick=tvEnablePlayback;
+ el('tvCinemaStart').onclick=()=>{tvEnablePlayback();const setup=el('tvCinemaSetup');if(setup)setup.hidden=true;};
+ el('tvCinemaPick').onclick=()=>{const pick=el('tvLocalFile');if(pick)pick.click();};
  el('tvFullscreen').onclick=()=>{
   tvSoundActivated=true;tvAutoplayMuted=false;
   try{window.TouchSoundtrack?.activate?.();}catch{}
@@ -1082,13 +1085,11 @@ function tvView(){
    tvControlsVisible(true);
   }
  };
- tvControlsVisible(true);
- // On LG, focus the actual button on page load so OK/arrow keys work without Magic Remote pointer.
- tvFocusControl('tvFullscreen');
- // Start the browser-sized cinematic layout immediately; attempt native fullscreen.
- // TV firmware may reject native fullscreen without OK.
+ tvControlsVisible(false);
+ // Fill the browser immediately and request native fullscreen on opening.
+ // When blocked by LG/Chrome, one real OK/click on the small button retries it.
  if(!tvAutoCinemaTried){tvAutoCinemaTried=true;tvRemoteFullscreen(true);}
- // No 6-second disappearing controls. The menu stays accessible for 90 seconds, or until manually closed.
+ const cinemaStart=el('tvCinemaStart');if(cinemaStart)try{cinemaStart.focus({preventScroll:true});}catch{cinemaStart.focus();}
  videoEl.addEventListener('loadedmetadata',()=>{
   videoEl.muted=tvAutoplayMuted;videoEl.volume=state?.videoVolume??1;
   if(state?.video?.type==='local'&&tvLocalObjectURL){tvLocalLoaded=true;announceLocalHDMI();}
@@ -1240,7 +1241,10 @@ function tvDisplay(){
  const tvRoot=el('tvApp');if(tvRoot)tvRoot.classList.toggle('tvPlayingFilm',videoMode);
  if(phase==='welcome'&&tvLastDisplayPhase!=='welcome')tvWelcomeDismissed=false;
  tvLastDisplayPhase=phase;
- tvControlsVisible(phase==='welcome'&&!tvWelcomeDismissed);
+ tvControlsVisible(false);
+ const cinemaSetup=el('tvCinemaSetup'),cinemaPick=el('tvCinemaPick');
+ if(cinemaSetup)cinemaSetup.hidden=phase!=='welcome'||tvSoundActivated;
+ if(cinemaPick)cinemaPick.hidden=phase!=='welcome'||state.video?.type!=='local'||!!tvLocalObjectURL;
  const filmUnlock=el('tvFilmUnlock');
  if(filmUnlock)filmUnlock.hidden=true; // Film must never show a bottom audio/setup overlay.
  const layer=el('videoLayer');if(layer)layer.style.display=videoMode&&state.video.type!=='none'&&(state.video.type!=='local'||!!tvLocalObjectURL)?'block':'none';
