@@ -157,3 +157,12 @@
  .wb-area,.wb-area textarea{height:420px}
  .hxCols3{margin-top:16px}
 }
+
+.hxTasks td{vertical-align:middle}
+.hxTasks td:first-child{width:56%}
+.hxTasks .hxHow{font-family:Georgia,"Times New Roman",serif;font-style:italic;color:var(--acc);white-space:nowrap}
+.hxTasks .c{width:120px}
+.hxTasks .c .wb{max-width:110px}
+.hxTasks small{display:block;font-size:11px;color:var(--soft);margin-top:2px}
+.hxLine>span{white-space:normal!important}
+@media print{.hxTasks td{padding:5px 6px}}

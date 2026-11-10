@@ -1398,8 +1398,6 @@ function handout(){
   ['Haptisches Feedback','ist eine kurze Vibration als Antwort – man „spürt“ den Klick.'],
   ['Im Auto gefährlich:','2 Sekunden Blick aufs Display bei 50 km/h – wie weit fährt man blind? Rechne es unten aus.']
  ];
- const task=[['glove','Bedienung mit Handschuh',30],['clean','robust, leicht zu reinigen',25],['multi','Multitouch',20],['cost','Kosten',25]];
- const taskCols=[['res','Resistiv'],['cap','Kapazitiv'],['ir','Infrarot']];
  const crit=[['inhalt','Inhalt der Doku',25],['verst','Verständlichkeit',20],['inter','Interaktivität (Quiz & Spiele)',25],['technik','Technik & Ablauf',10],['handout','Handout',10],['auftritt','Präsentation (Form, Sprache)',10]];
  // Schreibfeld: getippt (input/textarea) + darüberliegende Stift-Ebene (canvas).
  const wb=(key,kind,label)=>'<div class="wb wb-'+kind+'" data-wb="'+key+'">'+
@@ -1428,13 +1426,16 @@ function handout(){
   sec(3,'Rechnen: Blindflug im Auto')+
   '<div class="hxCalcBox"><p>Ein Auto fährt <b>50 km/h</b>. Die Fahrerin schaut <b>2 Sekunden</b> auf den Touchscreen. Wie viele Meter fährt sie „blind“? <span class="hxHint">Tipp: km/h ÷ 3,6 = m/s · Weg = Geschwindigkeit × Zeit</span></p>'+
   '<div class="hxSteps"><label>Geschwindigkeit in m/s'+wb('hx_car_ms','num','Geschwindigkeit in m/s')+'</label><label>Weg in Metern'+wb('hx_car_m','num','Weg in Metern')+'</label><button type="button" class="hxCheck noPrint" data-check="car">Prüfen</button></div><div class="hxWork"><span>Rechenweg</span>'+wb('hx_car_work','area','Rechenweg')+'</div><p class="hxCheckMsg noPrint" id="hxCheckCar" aria-live="polite"></p></div>'+
-  sec(4,'Aufgabe: Welcher Touchscreen passt in die Werkstatt?')+
-  '<p class="hxText"><b>Die Kfz-Werkstatt.</b> Die Mitarbeiter tragen Arbeitshandschuhe, der Bildschirm wird schmutzig und muss oft gereinigt werden. Gebt zu zweit jeder Technik <b>1 bis 5 Punkte</b>, rechnet <b>Punkte × Gewicht</b> und addiert zum <b>Nutzwert</b>. Der höchste Nutzwert gewinnt.</p>'+
-  '<table class="hxTable hxCalc hxWrite"><thead><tr><th rowspan="2">Kriterium</th><th rowspan="2" class="r">Gewicht</th>'+taskCols.map(c=>'<th colspan="2" class="c hxGroup">'+c[1]+'</th>').join('')+'</tr><tr>'+taskCols.map(()=>'<th class="c">Punkte</th><th class="c">× Gewicht</th>').join('')+'</tr></thead><tbody>'+
-   task.map(([k,l,w])=>'<tr><td>'+esc(l)+'</td><td class="r">'+w+' %</td>'+taskCols.map(([c])=>'<td class="c">'+wb('hx_t_'+k+'_'+c,'num',l+' '+c+' Punkte')+'</td><td class="c">'+wb('hx_tp_'+k+'_'+c,'num',l+' '+c+' Ergebnis')+'</td>').join('')+'</tr>').join('')+
-   '<tr class="hxSum"><td>Nutzwert</td><td class="r">100 %</td>'+taskCols.map(([c])=>'<td></td><td class="c">'+wb('hx_tsum_'+c,'num','Nutzwert '+c)+'</td>').join('')+'</tr></tbody></table>'+
-  '<div class="hxRow"><button type="button" class="hxCheck noPrint" data-check="task">Rechnung prüfen</button><span class="hxCheckMsg noPrint" id="hxCheckTask" aria-live="polite"></span></div>'+
-  '<div class="hxLine"><span>Unsere Entscheidung und warum:</span>'+wb('hx_decision','line','Unsere Entscheidung')+'</div>'+
+  sec(4,'Aufgabe: Rechne wie ein Touch-Controller')+
+  '<p class="hxText">Im Smartphone arbeitet ein kleiner Chip, der <b>Touch-Controller</b>. Er misst ständig das Sensorgitter und meldet dem Gerät, wo dein Finger ist. Rechnet zu zweit – Taschenrechner erlaubt.</p>'+
+  '<table class="hxTable hxCalc hxWrite hxTasks"><thead><tr><th>Aufgabe</th><th>So rechnest du</th><th class="c">Ergebnis</th></tr></thead><tbody>'+
+   '<tr><td><b>a) Sensorgitter</b><br>Ein Display hat <b>30</b> Leiterbahnen längs und <b>16</b> quer. An jeder Kreuzung wird gemessen. Wie viele Messpunkte sind das?</td><td class="hxHow">Längs × Quer</td><td class="c">'+wb('hx_q_grid','num','Messpunkte')+'<small>Punkte</small></td></tr>'+
+   '<tr><td><b>b) Abtastrate</b><br>Der Controller misst <b>120-mal pro Sekunde</b> (120 Hz). Wie viele Millisekunden liegen zwischen zwei Messungen?</td><td class="hxHow">1000 ms ÷ Hz</td><td class="c">'+wb('hx_q_hz120','num','Millisekunden bei 120 Hz')+'<small>ms</small></td></tr>'+
+   '<tr><td>Ein Gaming-Handy misst mit <b>240 Hz</b>. Wie viele Millisekunden sind es da?</td><td class="hxHow">1000 ms ÷ Hz</td><td class="c">'+wb('hx_q_hz240','num','Millisekunden bei 240 Hz')+'<small>ms</small></td></tr>'+
+   '<tr><td><b>c) Pixeldichte</b><br>Ein Smartphone-Display hat <b>2400 × 1080</b> Pixel und eine Diagonale von <b>6,5 Zoll</b>. Wie viele Pixel pro Zoll (ppi) sind das?</td><td class="hxHow">√(2400² + 1080²) ÷ 6,5</td><td class="c">'+wb('hx_q_ppi','num','Pixel pro Zoll')+'<small>ppi</small></td></tr>'+
+  '</tbody></table>'+
+  '<div class="hxRow"><button type="button" class="hxCheck noPrint" data-check="task">Ergebnisse prüfen</button><span class="hxCheckMsg noPrint" id="hxCheckTask" aria-live="polite"></span></div>'+
+  '<div class="hxLine"><span>Was bringt eine höhere Abtastrate beim Bedienen?</span>'+wb('hx_decision','line','Was bringt eine höhere Abtastrate')+'</div>'+
   '<footer class="hxFoot"><span>Touchscreens · Handout · Marlon Bonsels</span><span>2 / 3</span></footer></section>';
  const page2='<section class="hxPage hxBreak">'+
   head('Feedbackbogen · anonym','Wie war die Präsentation?','Touchscreens · Interaktive Dokumentation „TOUCH LIVE“')+
@@ -1525,13 +1526,9 @@ function handout(){
  const mark=(k,ok)=>{const b=paper.querySelector('[data-wb="'+k+'"]');if(b){b.classList.toggle('ok',ok===true);b.classList.toggle('bad',ok===false);}};
  const near=(a,b)=>Math.abs(a-b)<=0.051;
  function checkTask(){
+  const want=[['hx_q_grid',480,0],['hx_q_hz120',1000/120,.05],['hx_q_hz240',1000/240,.05],['hx_q_ppi',Math.hypot(2400,1080)/6.5,2]];
   let right=0,wrong=0,open=0;
-  for(const [c] of taskCols){let sum=0,complete=true;
-   for(const [k,,w] of task){const p=num('hx_t_'+k+'_'+c),x=num('hx_tp_'+k+'_'+c);
-    if(p===null||x===null){complete=false;open++;mark('hx_tp_'+k+'_'+c,null);continue;}
-    const ok=near(p*w/100,x);mark('hx_tp_'+k+'_'+c,ok);ok?right++:wrong++;sum+=x;}
-   const s=num('hx_tsum_'+c);if(s===null||!complete){mark('hx_tsum_'+c,null);if(s===null)open++;}else{const ok=near(sum,s);mark('hx_tsum_'+c,ok);ok?right++:wrong++;}
-  }
+  for(const [k,v,tol] of want){const x=num(k);if(x===null){open++;mark(k,null);continue;}const ok=Math.abs(x-v)<=tol+1e-9;mark(k,ok);ok?right++:wrong++;}
   return {right,wrong,open};
  }
  function checkFeedback(){
@@ -1567,7 +1564,7 @@ function handout(){
   if(value('hx_good'))lines.push('Das war gut: '+value('hx_good'));
   if(value('hx_better'))lines.push('Nicht so gut: '+value('hx_better'));
   if(value('hx_change'))lines.push('Ändern: '+value('hx_change'));
-  if(value('hx_decision'))lines.push('Aufgabe – Entscheidung: '+value('hx_decision'));
+  if(value('hx_decision'))lines.push('Höhere Abtastrate bringt: '+value('hx_decision'));
   const inked=canvases().some(c=>c.parentElement.classList.contains('inked'));
   if(inked)lines.push('(Teile wurden mit dem Stift geschrieben – die sind nur im PDF des Schülers sichtbar.)');
   if(!lines.length)return alert('Bitte zuerst den Feedbackbogen ausfüllen (getippt). Handschrift kannst du als PDF speichern und abgeben.');
