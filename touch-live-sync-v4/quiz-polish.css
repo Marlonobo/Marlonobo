@@ -21,13 +21,14 @@
 .quizCinematic .answer:not(:disabled):active,.quizCinematic .partyAnswer:not(:disabled):active{
  transform:scale(.982)
 }
+/* Neutral markiert: ob richtig oder falsch, zeigt erst die Auflösung nach dem Haken in der Doku. */
 .quizCinematic .answer.chosen,.quizCinematic .partyAnswer.selected{
- border-color:#7affd8!important;
- background:linear-gradient(110deg,#154a47,#153f56)!important;
- box-shadow:inset 0 0 0 1px #9bffe725,0 0 18px #63e0c63c
+ border-color:#c9d8ff!important;
+ background:linear-gradient(110deg,#1f2c4d,#1b2f45)!important;
+ box-shadow:inset 0 0 0 1px #c9d8ff25,0 0 18px #8fa8ff33
 }
 .quizCinematic .answer.chosen::after,.quizCinematic .partyAnswer.selected::after{
- content:"✓";margin-left:auto;color:#b4ffe0;font-size:18px;font-weight:900
+ content:"Deine Wahl";margin-left:auto;color:#dbe5ff;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:4px 8px;border:1px solid #c9d8ff66;border-radius:999px
 }
 @keyframes qlQuestionEnter{from{opacity:0;transform:translateY(18px) scale(.988)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes qlQuestionTitle{from{opacity:0;transform:translateY(11px)}to{opacity:1;transform:translateY(0)}}

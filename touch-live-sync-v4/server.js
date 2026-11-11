@@ -191,14 +191,28 @@ function active(){
 const PODIUM_DIR=path.join(ROOT,'podium-music');
 function podiumFileFor(place){for(const ext of['mp3','ogg','wav','m4a']){const f=path.join(PODIUM_DIR,place+'.'+ext);if(fs.existsSync(f))return f;}return null;}
 function podiumFiles(){const out={};for(const k of['p3','p2','p1']){const f=podiumFileFor(k);if(f)out[k]='/podium-music/'+path.basename(f);}return out;}
+// Auflösung wie in der Doku: Solange eine Frage läuft, bleiben richtig/falsch und Punkte geheim.
+// Erst wenn im Film der Haken kommt (Ende der Frage = close), wird aufgelöst.
+const REVEAL_SECONDS=12;
+function pendingQuestion(a=active()){
+ if(a.index<0)return null;const q=Q[a.index];if(!q||q.type==='zoom')return null;
+ if((s.phase==='demo'||s.demoOverlay)&&!a.accepting)return null;
+ return q;
+}
+function revealQuestion(a=active()){
+ if(a.index>=0){const q=Q[a.index];return q&&q.type!=='zoom'&&!pendingQuestion(a)?q:null;}
+ if(s.phase!=='film')return null;
+ return Q.find(q=>q.type!=='zoom'&&s.time>=q.close+s.quizOffset&&s.time<q.close+s.quizOffset+REVEAL_SECONDS)||null;
+}
+const hiddenPoints=(x,pq)=>pq&&x.answers&&x.answers[pq.id]===pq.correct?100:0;
 function publicState(id){
  const a=active(),q=a.index>=0?Q[a.index]:null,u=users.get(String(id||''));
  if(u)u.lastSeen=Date.now();
  const final=['results','end','handout'].includes(s.phase);
  const rank=[...users.entries()].map(([uid,x])=>({id:uid,name:x.name,role:x.role,score:x.score,answered:Object.keys(x.answers).length})).sort((x,y)=>y.score-x.score||x.name.localeCompare(y.name,'de')).map((x,i)=>({name:x.name,role:x.role,score:x.score,rank:i+1,answered:x.answered}));
- const normal=Q.filter(x=>x.type!=='zoom');
+ const normal=Q.filter(x=>x.type!=='zoom'),pq=pendingQuestion(a),rq=revealQuestion(a);
  let player=null;
- if(u){const jk=u.jokers||{};player={id,role:u.role,name:u.name,score:final?u.score:null,liveScore:u.role==='student'?(Number(u.score)||0):null,choice:q?u.answers[q.id]??null:null,zoomFound:!!(ZOOM()&&Object.hasOwn(u.answers,ZOOM().id)),zoomPoints:final?(u.zoomPoints||0):null,jokers:{fifty:!!jk.fifty,hint:!!jk.hint}};
+ if(u){const jk=u.jokers||{};player={id,role:u.role,name:u.name,score:final?u.score:null,liveScore:u.role==='student'?(Number(u.score)||0)-hiddenPoints(u,pq):null,reveal:rq?{nr:normal.indexOf(rq)+1,q:rq.q,answer:rq.a?.[rq.correct]??'',correct:rq.correct,choice:Object.hasOwn(u.answers,rq.id)?u.answers[rq.id]:null,right:u.answers[rq.id]===rq.correct,points:u.answers[rq.id]===rq.correct?100:0}:null,choice:q?u.answers[q.id]??null:null,zoomFound:!!(ZOOM()&&Object.hasOwn(u.answers,ZOOM().id)),zoomPoints:final?(u.zoomPoints||0):null,jokers:{fifty:!!jk.fifty,hint:!!jk.hint}};
   if(q&&jk.fifty===q.id)player.hide=[0,1,2,3].filter(i=>i!==q.correct&&i!==q.fifty);
   if(q&&jk.hint===q.id)player.hint=q.hint||'';}
  const z=ZOOM();let zoomResult=null;
@@ -396,11 +410,11 @@ async function handler(req,res){
  }
  if(m==='GET'&&p==='/api/teacher/overview'){
   if(!isTeacher(req))return send(res,403,{error:'Lehrer-Code stimmt nicht.'});
-  const list=[...users.values()],a=active(),cur=a.index>=0?Q[a.index]:null;
+  const list=[...users.values()],a=active(),cur=a.index>=0?Q[a.index]:null,pq=pendingQuestion(a);
   const questions=Q.map((q,i)=>{const answered=list.filter(x=>Object.hasOwn(x.answers||{},q.id)),right=answered.filter(x=>x.answers[q.id]===q.correct);
-   return {nr:i+1,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,answer:q.a?.[q.correct]??'',open:q.open,answered:answered.length,correct:right.length};});
-  const players=[...users.entries()].map(([id,x])=>{const ans=Object.entries(x.answers||{});const ok=ans.filter(([qid,c])=>{const q=Q.find(y=>y.id===qid);return q&&c===q.correct;}).length;
-   return {name:x.name,role:x.role,score:x.score||0,correct:ok,wrong:ans.length-ok,online:Number.isFinite(x.lastSeen)&&Date.now()-x.lastSeen<30000};}).sort((p1,p2)=>p2.score-p1.score||p1.name.localeCompare(p2.name,'de'));
+   const hide=pq&&pq.id===q.id;return {nr:i+1,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,answer:hide?'':q.a?.[q.correct]??'',open:q.open,answered:answered.length,correct:hide?null:right.length};});
+  const players=[...users.entries()].map(([id,x])=>{const ans=Object.entries(x.answers||{}).filter(([qid])=>!pq||qid!==pq.id);const ok=ans.filter(([qid,c])=>{const q=Q.find(y=>y.id===qid);return q&&c===q.correct;}).length;
+   return {name:x.name,role:x.role,score:(x.score||0)-hiddenPoints(x,pq),correct:ok,wrong:ans.length-ok,online:Number.isFinite(x.lastSeen)&&Date.now()-x.lastSeen<30000};}).sort((p1,p2)=>p2.score-p1.score||p1.name.localeCompare(p2.name,'de'));
   const fb=feedback.slice(-60);const rated=fb.filter(f=>f.rating>0);
   return send(res,200,{phase:s.phase,time:s.time,playing:s.playing,participants:users.size,
    current:cur?{nr:a.index+1,q:cur.q,type:cur.type||'quiz',remaining:a.remaining,accepting:a.accepting,answered:list.filter(x=>Object.hasOwn(x.answers||{},cur.id)).length}:null,
