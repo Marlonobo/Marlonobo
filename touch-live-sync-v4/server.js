@@ -187,6 +187,10 @@ function active(){
  remaining=Math.max(0,Math.ceil(left));
  return {index:i,remaining,accepting:left>0};
 }
+// Freie Musik für die Siegerehrung (OpenGameArt / Silverman Sound), als Datei im Projekt.
+const PODIUM_DIR=path.join(ROOT,'podium-music');
+function podiumFileFor(place){for(const ext of['mp3','ogg','wav','m4a']){const f=path.join(PODIUM_DIR,place+'.'+ext);if(fs.existsSync(f))return f;}return null;}
+function podiumFiles(){const out={};for(const k of['p3','p2','p1']){const f=podiumFileFor(k);if(f)out[k]='/podium-music/'+path.basename(f);}return out;}
 function publicState(id){
  const a=active(),q=a.index>=0?Q[a.index]:null,u=users.get(String(id||''));
  if(u)u.lastSeen=Date.now();
@@ -203,7 +207,7 @@ function publicState(id){
   ?Math.max(0,Math.ceil(GESTURE_MISSION_SECONDS-(s.time-(s.gestureOverlayStartTime||0))))
   :s.phase==='gesture'?Math.max(0,Math.ceil(GESTURE_MISSION_SECONDS-(Date.now()-(s.gestureStartTime||Date.now()))/1000)):0;
  const gestureActive=gestureSeconds>0&&(s.phase==='gesture'||(s.phase==='film'&&s.gestureOverlay));
- return {homeUnlocked:!!s.homeUnlocked,trailerAvailable:!!trailerPath(),trailerPlaying:!!s.trailerPlaying,trailerSerial:s.trailerSerial||0,trailerRevision:s.trailerRevision||0,tvAudio:Date.now()-tvAudioReport.updated<25000?{connected:true,playing:tvAudioReport.playing,blocked:tvAudioReport.blocked,error:tvAudioReport.error}:{connected:false,playing:false,blocked:false,error:''},phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},musicPlan:s.musicPlan||{welcome:{mode:'touch'},end:{mode:'off'}},podiumPlan:s.podiumPlan||{mode:'own'},spotifyClientId:s.spotifyClientId||'',spotifyLinked:!!spotifyAuth?.refreshToken,soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
+ return {homeUnlocked:!!s.homeUnlocked,trailerAvailable:!!trailerPath(),trailerPlaying:!!s.trailerPlaying,trailerSerial:s.trailerSerial||0,trailerRevision:s.trailerRevision||0,tvAudio:Date.now()-tvAudioReport.updated<25000?{connected:true,playing:tvAudioReport.playing,blocked:tvAudioReport.blocked,error:tvAudioReport.error}:{connected:false,playing:false,blocked:false,error:''},phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},musicPlan:s.musicPlan||{welcome:{mode:'touch'},end:{mode:'off'}},podiumPlan:s.podiumPlan||{mode:'own'},podiumFiles:podiumFiles(),spotifyClientId:s.spotifyClientId||'',spotifyLinked:!!spotifyAuth?.refreshToken,soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
   quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,a:q.a,duration:q.type==='zoom'?ZOOM_MISSION_SECONDS:((s.phase==='demo'||s.demoOverlay)?45:30),remaining:a.remaining,accepting:a.accepting,foundCount:q.type==='zoom'?[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length:0,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
   player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)||fs.existsSync(BUNDLED_SUB_FILE)};
 }
@@ -291,6 +295,13 @@ async function handler(req,res){
   return m==='HEAD'?res.end():res.end(wav.subarray(first,last+1));
  }
  if(m==='GET'&&(p==='/app.js'||p==='/style.css'||p==='/quiz-polish.css'||p==='/handout.css'||p==='/spotify-connect.js'||p==='/touch-soundtrack.js'||p==='/chess.js'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
+ if((m==='GET'||m==='HEAD')&&/^\/podium-music\/p[123]\.(mp3|ogg|wav|m4a)$/.test(p)){
+  const file=path.join(PODIUM_DIR,path.basename(p));let st;try{st=await fsp.stat(file);}catch{return send(res,404,{error:'Datei fehlt'});}
+  const type={mp3:'audio/mpeg',ogg:'audio/ogg',wav:'audio/wav',m4a:'audio/mp4'}[p.split('.').pop()],size=st.size,headers={'Content-Type':type,'Accept-Ranges':'bytes','Cache-Control':'public, max-age=604800'};
+  let first=0,last=size-1,status=200;const rg=/^bytes=(\d+)-(\d*)$/.exec(req.headers.range||'');
+  if(rg){first=Number(rg[1]);if(rg[2])last=Math.min(last,Number(rg[2]));if(first>last||first>=size){res.writeHead(416,{'Content-Range':'bytes */'+size});return res.end();}status=206;headers['Content-Range']='bytes '+first+'-'+last+'/'+size;}
+  headers['Content-Length']=last-first+1;res.writeHead(status,headers);if(m==='HEAD')return res.end();return fs.createReadStream(file,{start:first,end:last}).pipe(res);
+ }
  if((m==='GET'||m==='HEAD')&&/^\/podium\/(drumroll|p1|p2|p3)\.wav$/.test(p)){
   const wav=require('./podium-audio.js')(p.slice(8,-4));if(!wav)return send(res,404,{error:'Fehlt'});
   const range=/^bytes=(\d+)-(\d*)$/.exec(req.headers.range||'');let first=0,last=wav.length-1,status=200;
@@ -737,7 +748,7 @@ async function handler(req,res){
  else if(cmd==='podiumPlan'){
    // Siegerehrung: own = eigene Fanfaren, spotify = je Platz ein Song, classic = alte Ergebnismusik
    const mode=String(b.mode||'');
-   if(!['own','spotify','classic','off'].includes(mode))return send(res,400,{error:'Unbekannte Auswahl.'});
+   if(!['own','free','spotify','classic','off'].includes(mode))return send(res,400,{error:'Unbekannte Auswahl.'});
    const plan={...(s.podiumPlan||{}),mode};
    if(b.place){
     const place=['p3','p2','p1'].includes(b.place)?b.place:null;if(!place)return send(res,400,{error:'Platz unbekannt.'});

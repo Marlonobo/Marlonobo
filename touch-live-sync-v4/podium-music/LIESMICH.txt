@@ -1,0 +1,3 @@
+Hier liegen die frei nutzbaren Musikstücke für die Siegerehrung:
+p3.mp3 = Platz 3, p2.mp3 = Platz 2, p1.mp3 = Platz 1 (auch .ogg/.wav/.m4a).
+Fehlt eine Datei, spielt automatisch die eigene Fanfare.

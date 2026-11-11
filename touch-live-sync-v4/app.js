@@ -281,8 +281,43 @@ function paintQuizTimer(q){
 }
 function waiting(title,desc,icon='◉'){return '<div class="centerstage"><div><div class="symbol">'+icon+'</div><span class="eyebrow">TOUCH LIVE</span><h2>'+title+'</h2><p>'+desc+'</p></div></div>';}
 function podium(){const people=(state?.ranking||[]),rank=n=>people[n-1]||null;
- const card=(n)=>{const u=rank(n);return '<div class="podiumCard podium-rank-'+n+'"><div class="medalIcon">'+(n===1?'👑':n===2?'🥈':'🥉')+'</div><div class="podiumAvatar">'+(u?esc(u.name.slice(0,1).toUpperCase()):'?')+'</div><div class="podiumName">'+(u?esc(u.name):'Noch offen')+'</div><div class="podiumScore">'+(u?u.score+' Punkte':'—')+'</div><div class="podiumBase">'+n+'<span>PLATZ</span></div></div>';};
- return '<section class="podiumWrap" aria-label="Die besten drei Plätze"><div class="podiumCountdown" aria-hidden="true"><span>3</span><span>2</span><span>1</span></div><div class="podiumStage">'+card(2)+card(1)+card(3)+'</div></section>';}
+ const medal={1:'👑',2:'🥈',3:'🥉'};
+ const card=(n)=>{const u=rank(n);return '<div class="podiumCard podium-rank-'+n+'"><div class="pdBeam" aria-hidden="true"></div>'+(n===1?'<div class="pdRays" aria-hidden="true"></div><div class="pdCrown" aria-hidden="true">👑</div>':'<div class="medalIcon">'+medal[n]+'</div>')+'<div class="podiumAvatar">'+(u?esc(u.name.slice(0,1).toUpperCase()):'?')+'</div><div class="podiumName">'+(u?esc(u.name):'Noch offen')+'</div><div class="podiumScore">'+(u?u.score+' Punkte':'—')+'</div><div class="podiumBase">'+n+'<span>PLATZ</span></div></div>';};
+ const banner=n=>'<div class="pdBanner pdBanner'+n+'"><small>'+(n===1?'UND DER SIEG GEHT AN':'AUF PLATZ '+n)+'</small><b>'+(rank(n)?esc(rank(n).name):'Platz '+n)+'</b></div>';
+ return '<div class="pdBanners" aria-hidden="true">'+banner(3)+banner(2)+banner(1)+'</div><section class="podiumWrap" aria-label="Die besten drei Plätze"><canvas class="pdFx" aria-hidden="true"></canvas><div class="pdSpots" aria-hidden="true"><i></i><i></i><i></i></div><div class="pdFlash" aria-hidden="true"></div><div class="podiumCountdown" aria-hidden="true"><span>3</span><span>2</span><span>1</span></div><div class="podiumStage">'+card(2)+card(1)+card(3)+'</div></section>';}
+// Effekte der Siegerehrung: Konfetti-Explosion je Platz, bei Platz 1 Feuerwerk ohne Ende.
+// Läuft synchron zu PODIUM_TIMES – auch wenn der Beamer mitten in der Siegerehrung lädt.
+function podiumFx(){
+ const wrap=document.querySelector('#tvScene .podiumWrap,.podiumWrap');if(!wrap||wrap.__fx)return;wrap.__fx=1;
+ const t0=state?.resultsAt||Date.now(),elapsed=Math.max(0,Math.min(60,(Date.now()-t0)/1000));
+ (wrap.closest('.podiumScene')||wrap).style.setProperty('--t0',elapsed.toFixed(2)+'s');
+ if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+ const cv=wrap.querySelector('.pdFx'),ctx=cv&&cv.getContext&&cv.getContext('2d');if(!ctx)return;
+ let W=0,H=0,dpr=Math.min(2,window.devicePixelRatio||1);
+ const size=()=>{const r=wrap.getBoundingClientRect();W=r.width;H=r.height+120;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);};size();
+ const parts=[],COL={3:['#e9a77b','#ffd1ae','#b86b47','#fff'],2:['#d9f1ff','#9fd4f5','#ffffff','#7fb6d6'],1:['#ffe28a','#ffc93c','#fff6d0','#ff8a3d','#ff5fa2','#5ff0ff']};
+ const xOf=n=>{const c=wrap.querySelector('.podium-rank-'+n);if(!c)return W/2;const a=c.getBoundingClientRect(),b=wrap.getBoundingClientRect();return a.left-b.left+a.width/2;};
+ const burst=(n,x,y,count,power)=>{const cols=COL[n];for(let i=0;i<count;i++){const a=Math.random()*Math.PI*2,v=(.35+Math.random())*power;parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-power*.55,g:.16+Math.random()*.1,life:110+Math.random()*90,age:0,c:cols[i%cols.length],w:4+Math.random()*6,h:3+Math.random()*4,r:Math.random()*6,vr:(Math.random()-.5)*.35,spark:Math.random()<.25});}};
+ const cannons=(n)=>{const x=xOf(n);burst(n,x,H*.55,n===1?260:150,n===1?14:10);burst(n,8,H,n===1?120:60,13);burst(n,W-8,H,n===1?120:60,13);};
+ const firework=()=>{const x=W*(.12+Math.random()*.76),y=H*(.08+Math.random()*.3);burst(1,x,y,70,6.5);};
+ const timers=[],at=(sec,fn)=>{const d=(sec-elapsed)*1000;if(d>=-400)timers.push(setTimeout(fn,Math.max(0,d)));};
+ at(PODIUM_TIMES.p3+.15,()=>cannons(3));at(PODIUM_TIMES.p2+.15,()=>cannons(2));
+ at(PODIUM_TIMES.p1+.1,()=>{cannons(1);setTimeout(()=>cannons(1),650);});
+ let fw=null;const startFw=()=>{fw=setInterval(()=>{if(parts.length<900)firework();},900);};
+ if(elapsed>=PODIUM_TIMES.p1+1)startFw();else at(PODIUM_TIMES.p1+1.4,startFw);
+ const onR=()=>size();addEventListener('resize',onR);
+ const stop=()=>{timers.forEach(clearTimeout);clearInterval(fw);removeEventListener('resize',onR);};
+ (function frame(){
+  if(!wrap.isConnected){stop();return;}
+  ctx.clearRect(0,0,W,H);
+  for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.age++;p.vx*=.985;p.vy=p.vy*.985+p.g;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;
+   if(p.age>p.life||p.y>H+20){parts.splice(i,1);continue;}
+   const o=Math.min(1,(p.life-p.age)/40);ctx.globalAlpha=o;ctx.fillStyle=p.c;
+   if(p.spark){ctx.beginPath();ctx.arc(p.x,p.y,1.8,0,7);ctx.fill();ctx.globalAlpha=o*.35;ctx.beginPath();ctx.arc(p.x,p.y,5,0,7);ctx.fill();}
+   else{ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.scale(1,Math.abs(Math.cos(p.r*1.7))+.15);ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();}}
+  ctx.globalAlpha=1;requestAnimationFrame(frame);
+ })();
+}
 function ranking(){const rows=(state?.ranking||[]).map((x,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(x.name)+(x.role==='teacher'?' · Lehrer':'')+'</td><td>'+x.score+'</td></tr>').join('');return '<table class="rank"><thead><tr><th>Platz</th><th>Name</th><th>Punkte</th></tr></thead><tbody>'+(rows||'<tr><td colspan="3">Noch keine Ergebnisse vorhanden.</td></tr>')+'</tbody></table>';}
 function requestParticipantFullscreen(){
  try{
@@ -512,14 +547,21 @@ function musicPlanCard(){
  });
  paint();window.__paintMusicPlan=paint;
 }
+// Freie Musik (CC0 / CC BY) – Dateien liegen in podium-music/p3|p2|p1.(mp3|ogg|wav).
+const PODIUM_FREE={
+ p3:{title:'Victory',artist:'Umplix',license:'CC0 1.0',licenseUrl:'https://creativecommons.org/publicdomain/zero/1.0/deed.de',page:'https://opengameart.org/node/136916'},
+ p2:{title:'Victory Theme for RPG',artist:'cynicmusic (Alexandr Zhelanov)',license:'CC0 1.0',licenseUrl:'https://creativecommons.org/publicdomain/zero/1.0/deed.de',page:'https://opengameart.org/content/victory-theme-for-rpg'},
+ p1:{title:'The Victory Of Heroes',artist:'Shane Ivers – silvermansound.com',license:'CC BY 4.0',licenseUrl:'https://creativecommons.org/licenses/by/4.0/deed.de',page:'https://www.silvermansound.com'}
+};
 function podiumCard(){
  const root=el('adminRoot');if(!root||el('podiumCard'))return;
  const c=document.createElement('section');c.id='podiumCard';c.className='card';
  const places=[['p3','🥉 Platz 3','Survivor Eye of the Tiger'],['p2','🥈 Platz 2','Queen We Will Rock You'],['p1','👑 Platz 1','Queen We Are The Champions']];
  c.innerHTML='<span class="label">MUSIK-PLAN · SIEGEREHRUNG</span><h2>Musik für Platz 3, 2 und 1</h2>'+
   '<p class="small">Ablauf am Beamer: Trommelwirbel mit 3-2-1-Countdown → Platz 3 (nach 3 s) → Platz 2 (nach 10 s) → Platz 1 (nach 18 s). Jeder Platz bekommt seine eigene Musik.</p>'+
-  '<div class="mpSeg pdMode">'+[['own','🎺 Eigene Fanfaren'],['spotify','Spotify je Platz'],['classic','Alte Ergebnismusik'],['off','Aus']].map(([m,l])=>'<button type="button" data-pmode="'+m+'">'+l+'</button>').join('')+'</div>'+
+  '<div class="mpSeg pdMode">'+[['free','🏆 Freie Musik'],['own','🎺 Eigene Fanfaren'],['spotify','Spotify je Platz'],['classic','Alte Ergebnismusik'],['off','Aus']].map(([m,l])=>'<button type="button" data-pmode="'+m+'">'+l+'</button>').join('')+'</div>'+
   '<div class="pdOwn"><p class="small">Selbst komponiert für TOUCH LIVE – keine fremden Rechte, darf überall verwendet werden. Probehören:</p><div class="flex">'+[['drumroll','🥁 Trommelwirbel'],['p3','🥉 Platz 3'],['p2','🥈 Platz 2'],['p1','👑 Platz 1']].map(([k,l])=>'<button type="button" data-preview="'+k+'">▶ '+l+'</button>').join('')+'</div></div>'+
+  '<div class="pdFree"><p class="small">Frei nutzbare Musik (CC0 / CC BY) – passt zu jeder Präsentation, Quellen stehen automatisch auf der Quellen-Seite.</p>'+['p3','p2','p1'].map(k=>'<div class="mpRow pdFreeRow" data-free="'+k+'"><div class="mpHead"><b>'+{p3:'🥉 Platz 3',p2:'🥈 Platz 2',p1:'👑 Platz 1'}[k]+'</b><small>'+esc(PODIUM_FREE[k].title)+' · '+esc(PODIUM_FREE[k].artist)+' · '+PODIUM_FREE[k].license+'</small></div><div class="flex"><button type="button" class="pdFreePlay">▶ Probehören</button><small class="pdFreeState"></small></div></div>').join('')+'</div>'+
   '<div class="pdSpotify">'+places.map(([k,t,q])=>'<div class="mpRow" data-place="'+k+'"><div class="mpHead"><b>'+t+'</b><small class="pdNow"></small></div>'+
    '<div class="flex mpSearchRow"><input type="search" class="pdQuery" value="'+esc(q)+'"><button type="button" class="pdSearch">🔎 Suchen</button></div><div class="mpResults"></div>'+
    '<div class="flex pdLinkRow"><input type="url" class="pdUrl" placeholder="https://open.spotify.com/track/…"><label class="pdStart">ab Sek. <input type="number" class="pdSec" min="0" max="600" value="0"></label><button type="button" class="pdSave primary">Übernehmen</button><button type="button" class="pdClear" title="Entfernen">✕</button></div></div>').join('')+
@@ -528,9 +570,10 @@ function podiumCard(){
  root.appendChild(c);
  let preview=null;
  c.querySelectorAll('[data-preview]').forEach(b=>b.onclick=()=>{if(preview){preview.pause();}preview=new Audio('/podium/'+b.dataset.preview+'.wav');preview.play().catch(()=>{});});
+ c.querySelectorAll('[data-free]').forEach(r=>r.querySelector('.pdFreePlay').onclick=()=>{const f=state?.podiumFiles?.[r.dataset.free];if(preview)preview.pause();preview=new Audio(f||'/podium/'+r.dataset.free+'.wav');preview.play().catch(()=>{});});
  const paint=()=>{const plan=state?.podiumPlan||{mode:'own'};
   c.querySelectorAll('[data-pmode]').forEach(b=>b.classList.toggle('on',b.dataset.pmode===plan.mode));
-  c.querySelector('.pdOwn').hidden=!(plan.mode==='own'||plan.mode==='spotify');c.querySelector('.pdSpotify').hidden=plan.mode!=='spotify';
+  c.querySelector('.pdOwn').hidden=!(plan.mode==='own'||plan.mode==='spotify');c.querySelector('.pdFree').hidden=plan.mode!=='free';c.querySelectorAll('[data-free]').forEach(r=>{const f=state?.podiumFiles?.[r.dataset.free];r.querySelector('.pdFreeState').textContent=f?'✓ Datei bereit':'Datei fehlt noch – solange spielt die eigene Fanfare';});c.querySelector('.pdSpotify').hidden=plan.mode!=='spotify';
   c.querySelectorAll('[data-place]').forEach(r=>{const t=plan[r.dataset.place];r.querySelector('.pdNow').textContent=t?'♫ '+(t.title||t.url)+(t.start?' · ab '+t.start+' s':''):'eigene Fanfare';const u=r.querySelector('.pdUrl');if(t&&document.activeElement!==u)u.value=t.url;const sec=r.querySelector('.pdSec');if(t&&document.activeElement!==sec)sec.value=t.start||0;});};
  const save=async body=>{try{await api('/api/admin','POST',{cmd:'podiumPlan',mode:state?.podiumPlan?.mode||'own',...body},adminKey);await poll(true);paint();}catch(e){alert(e.message);}};
  c.querySelectorAll('[data-pmode]').forEach(b=>b.onclick=()=>save({mode:b.dataset.pmode}));
@@ -1360,10 +1403,10 @@ function podiumStop(){
  if(podiumSpotify&&tvSpotifyReady()){podiumSpotify=false;window.SpotifyConnect.api('/me/player/pause','PUT').catch(()=>{});}
  podiumActive=false;
 }
-function podiumOwn(name){
+function podiumOwn(name,src){
  if(podiumSpotify&&tvSpotifyReady()){podiumSpotify=false;window.SpotifyConnect.api('/me/player/pause','PUT').catch(()=>{});}
- if(podiumAudio){try{podiumAudio.pause();}catch{}}
- const a=new Audio('/podium/'+name+'.wav');a.volume=1;podiumAudio=a;const p=a.play();if(p?.catch)p.catch(()=>{});
+ if(podiumAudio){const old=podiumAudio;let v=old.volume;const f=setInterval(()=>{v-=.12;if(v<=0){clearInterval(f);try{old.pause();}catch{}}else old.volume=v;},60);}
+ const a=new Audio(src||'/podium/'+name+'.wav');a.volume=1;podiumAudio=a;const p=a.play();if(p?.catch)p.catch(()=>{});
 }
 async function podiumTrack(t){
  if(podiumAudio){try{podiumAudio.pause();}catch{}podiumAudio=null;}
@@ -1388,7 +1431,8 @@ function podiumMusic(old,next){
   if(next2-elapsed<=0)continue;
   podiumTimers.push(setTimeout(()=>{
    const track=key!=='drumroll'&&plan.mode==='spotify'&&plan[key]&&plan[key].type==='track'?plan[key]:null;
-   if(track&&tvSpotifyReady())podiumTrack(track);else podiumOwn(key);
+   const file=key!=='drumroll'&&plan.mode==='free'?next.podiumFiles?.[key]:null;
+   if(track&&tvSpotifyReady())podiumTrack(track);else podiumOwn(key,file);
   },Math.max(0,at*1000)));
  }
 }
@@ -1709,7 +1753,7 @@ function tvDisplay(){
  else if(phase==='gesture'){scene.style.display='flex';tvScene('<div><span class="eyebrow">KAPITEL 04 / MULTITOUCH</span><h1><em>Gesten üben.</em></h1><p>Auf den iPads verschieben, vergrößern und drehen!</p></div>');pauseTV();}
  else if(phase==='zoom'){scene.style.display='flex';const q=state.quiz;tvScene('<div class="egg-projector"><div><span class="eyebrow">KAPITEL 04 · MULTITOUCH LIVE-EXPERIMENT</span><h1>Die <em>Touch-Challenge!</em></h1><p>So funktioniert Multitouch in der Praxis: Vergrößert das digitale Bild mit zwei Fingern, verschiebt es und tippt auf das versteckte Easter Egg.</p><div class="egg-tv-counter"><strong>'+(q?q.remaining:0)+' s</strong><span>⏱ Zeit übrig<br>🔎 '+(q?q.foundCount:0)+' von '+state.participants+' haben das Easter Egg gefunden</span></div><p class="small" style="margin-top:22px">Pinch-to-Zoom = zwei Finger auseinanderziehen · Pan = verschieben · Tap = antippen.</p></div><img class="egg-tv-art" src="/easter-scene.svg" alt="Panorama mit Berghütte als Easter-Egg-Spiel"></div>');pauseTV();}
  else if(phase==='demo'){scene.style.display='flex';tvScene('<div><span class="eyebrow">LIVE-QUIZ · PROBELAUF</span><h1>Frage '+(state.quiz?.index+1||'')+'</h1><h2>'+esc(state.quiz?.q||'Bereit für die erste Frage?')+'</h2><p>Antwortet auf euren iPads · '+(state.quiz?.remaining||0)+' Sekunden</p></div>');pauseTV();}
- else if(phase==='results'){scene.style.display='flex';tvScene('<div class="resultshow podiumScene"><span class="eyebrow">TOUCH LIVE · DIE GROSSE SIEGEREHRUNG</span><h1>Das sind eure <em>Top 3!</em></h1>'+podium()+'<p class="podiumFoot">Herzlichen Glückwunsch! · '+state.participants+' Teilnehmende</p></div>');pauseTV();}
+ else if(phase==='results'){scene.style.display='flex';tvScene('<div class="resultshow podiumScene"><span class="eyebrow">TOUCH LIVE · DIE GROSSE SIEGEREHRUNG</span><h1>Das sind eure <em>Top 3!</em></h1>'+podium()+'<p class="podiumFoot">Herzlichen Glückwunsch! · '+state.participants+' Teilnehmende</p></div>');podiumFx();pauseTV();}
  else if(phase==='handout'){scene.style.display='flex';tvScene('<div class="endArtwork"><img src="/touchscreen-motiv.svg" alt="Touchscreen"><div><span class="eyebrow">LERNFELD 14 · ZUM ABSCHLUSS</span><h1>Jetzt seid <em>ihr</em> dran!</h1><p>Öffnet das Handout auf eurem iPad. Bewertet die zehn Kriterien von 1 bis 10. Summe und Durchschnitt werden automatisch berechnet.</p></div></div>');pauseTV();}
  else if(phase==='end'){scene.style.display='flex';tvScene('<div class="endArtwork tvGrandEnding"><div class="tvCinematicLights" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div><img src="/touchscreen-motiv.svg" alt="Touchscreen"><div class="tvEndCopy"><span class="eyebrow">TOUCH LIVE · DAS FINALE</span><span class="tvOutroLine">7 KAPITEL · 17 FRAGEN · 2 MISSIONEN</span><h1>Vielen Dank für eure <em>Aufmerksamkeit!</em></h1><p>Das war meine Dokumentation <strong>„'+esc(state.videoTitle||'TOUCHSCREEN')+'“</strong>.</p><p class="closingLine">Fragen? Ideen? Jetzt seid ihr dran!</p><span class="tvEndSignature">✦ TOUCH LIVE 2026 ✦</span></div></div>');pauseTV();}
  else if(phase==='film'){if(state.video.type==='local'&&!tvLocalObjectURL){
@@ -1832,6 +1876,7 @@ async function sourcesPage(){
   '<section class="srcSec"><h2>🎬 Trailer &amp; Dokumentation</h2><ul>'+li('<b>Trailer „TOUCHSCREEN“</b> und Dokumentation','Eigenproduktion für TOUCH LIVE · Lernfeld 14, Friedrich-Dessauer-Schule Limburg')+li('Untertitel, Quizfragen, Handout und Aufgaben','eigene Erstellung')+'</ul></section>'+
   '<section class="srcSec"><h2>🎵 Musik</h2><ul>'+
    li('<b>Siegerehrung</b>: Trommelwirbel und Fanfaren für Platz 3, 2 und 1','Eigenkomposition, per Programm erzeugt (keine Samples, keine Rechte Dritter) – frei verwendbar')+
+   ['p3','p2','p1'].filter(k=>st?.podiumFiles?.[k]).map(k=>{const c=PODIUM_FREE[k];return li('<b>Siegerehrung · Platz '+k[1]+'</b>: „'+esc(c.title)+'“ von '+esc(c.artist),'Lizenz '+link(c.licenseUrl,c.license)+' · Quelle: '+link(c.page,c.page.replace(/^https?:\/\/(www\.)?/,''))+(c.license.startsWith('CC BY')?' · Musik gekürzt für die Siegerehrung':''));}).join('')+
    li('<b>Willkommensmelodie</b>, Pausen- und Ergebnismusik','Eigenkomposition, per Programm erzeugt – frei verwendbar')+
    (spotify.length?spotify.map(([w,t,u])=>li('<b>'+esc(w)+'</b>: '+link(u,t),'Wiedergabe über Spotify (Premium) im Unterricht · Rechte bei den jeweiligen Künstlern und Labels · die Musik wird nicht kopiert oder gespeichert')).join(''):li('Spotify-Titel','derzeit keine ausgewählt – sobald im Admin Songs gewählt werden, erscheinen sie hier automatisch'))+
   '</ul></section>'+
