@@ -89,7 +89,8 @@
  function determine(s){
   if(!s)return 'off';
   if(s.phase==='welcome'&&s.welcomeMusic?.on===true)return 'welcome';
-  if(s.phase==='results'&&settings.results)return 'results';
+  // Neue Siegerehrung (eigene Fanfaren/Spotify je Platz) ersetzt die alte Ergebnismusik.
+  if(s.phase==='results'&&settings.results&&(s.podiumPlan?.mode||'own')==='classic')return 'results';
   if(s.phase==='film'&&!s.playing&&settings.pause)return 'pause';
   return 'off';
  }

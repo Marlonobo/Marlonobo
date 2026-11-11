@@ -1409,3 +1409,24 @@ html.lightMode body.rgTheme main .rgHero .rgBtn{background:transparent;border:2p
 html.lightMode body.rgTheme main .rgHero .rgBtn.rgBtnMain,html.lightMode body.rgTheme main .rgHero .rgBtn:hover{background:#f3f6f8;color:#05090d}
 html.lightMode body.rgTheme main .rgLocked .rgBtn{border-color:#0d1418;color:#0d1418}
 html.lightMode body.rgTheme main .rgLocked .rgBtn.rgBtnMain{background:#0d1418;color:#fff}
+
+/* Siegerehrung: mehr Zeit pro Platz, passend zur Musik */
+.podium-rank-3{animation-delay:3.2s}.podium-rank-2{animation-delay:10s}.podium-rank-1{animation-delay:18s}
+
+.pdMode{grid-template-columns:repeat(4,1fr)}
+.pdOwn .flex{gap:8px;flex-wrap:wrap}
+.pdLinkRow{gap:8px;flex-wrap:wrap!important;margin-top:8px}.pdLinkRow .pdUrl{flex:1 1 220px}
+.pdStart{display:flex;align-items:center;gap:6px;margin:0;font-size:13px;white-space:nowrap}.pdStart input{width:80px}
+.pdClear{min-width:44px;padding:0}
+@media (max-width:700px){.pdMode{grid-template-columns:1fr 1fr}}
+
+/* Quellen-Seite */
+.srcPage{max-width:980px;margin:0 auto;padding-bottom:40px}
+.srcSec{border-top:1px solid #ffffff1a;padding:22px 0}
+html.lightMode .srcSec{border-top-color:#d7dee2}
+.srcSec h2{font-family:"Arial Narrow","Roboto Condensed",Arial,sans-serif;font-weight:900;text-transform:uppercase;font-size:clamp(22px,2.6vw,30px);margin:0 0 12px}
+.srcSec ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.srcSec li{padding:12px 14px;background:#0b1218;border:1px solid #ffffff12;border-radius:2px}
+html.lightMode .srcSec li{background:#fff;border-color:#d7dee2}
+.srcSec li span{display:block;font-size:13px;color:var(--muted);margin-top:3px}
+footer a{color:inherit}

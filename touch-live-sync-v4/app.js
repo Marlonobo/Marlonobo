@@ -22,8 +22,8 @@ function wrap(body){
   app.innerHTML='<div class="studentPortal"><header class="studentBrand" aria-label="TOUCH LIVE Schülerbereich"><div class="logo rgLogo">TOUCH<b>LIVE</b></div><div class="studentBrandRight"><button type="button" class="themeToggle" data-theme-toggle aria-label="Hell- oder Dunkelmodus" title="Hell / Dunkel"><span class="tMoon">☾</span><span class="tSun">☀︎</span></button><span class="studentLiveDot" aria-hidden="true"></span> LIVE-MITMACHEN · LERNFELD 14</div></header><main class="wrap studentMain">'+body+'</main></div>';
   return;
  }
- const cur=role==='admin'?'admin':role==='teacher'?'teacher':role==='handout'?'handout':'';
- app.innerHTML='<header class="nav wrap rgBar2"><a class="logo rgLogo" href="/">TOUCH<b>LIVE</b></a><nav class="navlinks rgLinks"><a href="/">Start</a><a href="/join">Quiz</a><a href="#handout"'+(cur==='handout'?' class="on"':'')+'>Handout</a><a href="#teacher"'+(cur==='teacher'?' class="on"':'')+'>Lehrer</a>'+(cur==='admin'?'<a href="#admin" class="on">Regie</a>':'')+'</nav><button type="button" class="themeToggle" data-theme-toggle aria-label="Hell- oder Dunkelmodus" title="Hell / Dunkel"><span class="tMoon">☾</span><span class="tSun">☀︎</span></button></header><main class="wrap">'+body+'</main><footer>TOUCH LIVE · Friedrich-Dessauer-Schule Limburg · 2026</footer>';
+ const cur=role==='admin'?'admin':role==='teacher'?'teacher':role==='handout'?'handout':role==='quellen'?'quellen':'';
+ app.innerHTML='<header class="nav wrap rgBar2"><a class="logo rgLogo" href="/">TOUCH<b>LIVE</b></a><nav class="navlinks rgLinks"><a href="/">Start</a><a href="/join">Quiz</a><a href="#handout"'+(cur==='handout'?' class="on"':'')+'>Handout</a><a href="#teacher"'+(cur==='teacher'?' class="on"':'')+'>Lehrer</a><a href="/quellen"'+(cur==='quellen'?' class="on"':'')+'>Quellen</a>'+(cur==='admin'?'<a href="#admin" class="on">Regie</a>':'')+'</nav><button type="button" class="themeToggle" data-theme-toggle aria-label="Hell- oder Dunkelmodus" title="Hell / Dunkel"><span class="tMoon">☾</span><span class="tSun">☀︎</span></button></header><main class="wrap">'+body+'</main><footer>TOUCH LIVE · Friedrich-Dessauer-Schule Limburg · 2026 · <a href="/quellen">Quellen &amp; Lizenzen</a></footer>';
 }
 function page(title,tag,sub){return '<div class="page"><span class="eyebrow">'+tag+'</span><h1>'+title+'</h1><p>'+sub+'</p></div>';}
 // Bilder mit freier Lizenz (Wikimedia Commons) – Quelle steht direkt am Bild.
@@ -70,7 +70,7 @@ function home(){
  const nav='<header class="rgNav" id="rgNav"><a class="rgLogo" href="/" aria-label="TOUCH LIVE Start">TOUCH<b>LIVE</b></a>'+
   '<nav class="rgMenu" id="rgMenu" aria-label="Hauptmenü">'+
    '<button type="button" data-go="trailer">Trailer</button><button type="button" data-go="doku">Die Doku</button>'+
-   '<a href="/join">Quiz</a><button type="button" data-go="lab">Touch-Labor</button><a href="#handout">Handout</a><a href="#teacher">Lehrer</a></nav>'+
+   '<a href="/join">Quiz</a><button type="button" data-go="lab">Touch-Labor</button><a href="#handout">Handout</a><a href="#teacher">Lehrer</a><a href="/quellen">Quellen</a></nav>'+
   '<button type="button" class="themeToggle" data-theme-toggle aria-label="Hell- oder Dunkelmodus" title="Hell / Dunkel"><span class="tMoon">☾</span><span class="tSun">☀︎</span></button>'+'<button type="button" class="rgNavCta" data-go="trailer">▶ Trailer ansehen</button>'+
   '<button type="button" class="rgBurger" id="rgBurger" aria-label="Menü öffnen" aria-expanded="false"><span></span><span></span><span></span></button></header>';
  const hero=nav+'<section class="rgHero" id="rgTop">'+media+'<div class="rgShade"></div>'+
@@ -462,6 +462,7 @@ function showAdmin(){
  if(!open){el('unlockAdmin').onsubmit=async e=>{e.preventDefault();adminKey=el('adminPassword').value;sessionStorage.setItem('touch_admin_key',adminKey);try{adminInfo=await api('/api/admin-info','GET',undefined,adminKey);showAdmin();}catch(err){alert(err.message);adminKey='';sessionStorage.removeItem('touch_admin_key');}};return;}
  bindAdmin();
  musicPlanCard();
+ podiumCard();
  organizeAdmin();
 }
 // Admin in übersichtliche Reiter gliedern. Die Karten werden nur verschoben/ein- und
@@ -510,6 +511,41 @@ function musicPlanCard(){
    }catch(e){out.innerHTML='<p class="small">Suche nicht möglich: '+esc(e.message)+'</p>';}};
  });
  paint();window.__paintMusicPlan=paint;
+}
+function podiumCard(){
+ const root=el('adminRoot');if(!root||el('podiumCard'))return;
+ const c=document.createElement('section');c.id='podiumCard';c.className='card';
+ const places=[['p3','🥉 Platz 3','Survivor Eye of the Tiger'],['p2','🥈 Platz 2','Queen We Will Rock You'],['p1','👑 Platz 1','Queen We Are The Champions']];
+ c.innerHTML='<span class="label">MUSIK-PLAN · SIEGEREHRUNG</span><h2>Musik für Platz 3, 2 und 1</h2>'+
+  '<p class="small">Ablauf am Beamer: Trommelwirbel mit 3-2-1-Countdown → Platz 3 (nach 3 s) → Platz 2 (nach 10 s) → Platz 1 (nach 18 s). Jeder Platz bekommt seine eigene Musik.</p>'+
+  '<div class="mpSeg pdMode">'+[['own','🎺 Eigene Fanfaren'],['spotify','Spotify je Platz'],['classic','Alte Ergebnismusik'],['off','Aus']].map(([m,l])=>'<button type="button" data-pmode="'+m+'">'+l+'</button>').join('')+'</div>'+
+  '<div class="pdOwn"><p class="small">Selbst komponiert für TOUCH LIVE – keine fremden Rechte, darf überall verwendet werden. Probehören:</p><div class="flex">'+[['drumroll','🥁 Trommelwirbel'],['p3','🥉 Platz 3'],['p2','🥈 Platz 2'],['p1','👑 Platz 1']].map(([k,l])=>'<button type="button" data-preview="'+k+'">▶ '+l+'</button>').join('')+'</div></div>'+
+  '<div class="pdSpotify">'+places.map(([k,t,q])=>'<div class="mpRow" data-place="'+k+'"><div class="mpHead"><b>'+t+'</b><small class="pdNow"></small></div>'+
+   '<div class="flex mpSearchRow"><input type="search" class="pdQuery" value="'+esc(q)+'"><button type="button" class="pdSearch">🔎 Suchen</button></div><div class="mpResults"></div>'+
+   '<div class="flex pdLinkRow"><input type="url" class="pdUrl" placeholder="https://open.spotify.com/track/…"><label class="pdStart">ab Sek. <input type="number" class="pdSec" min="0" max="600" value="0"></label><button type="button" class="pdSave primary">Übernehmen</button><button type="button" class="pdClear" title="Entfernen">✕</button></div></div>').join('')+
+   '<p class="small">Tipp: „ab Sek.“ setzt den Startpunkt – z. B. direkt beim Refrain. Ohne Song spielt für diesen Platz die eigene Fanfare.</p></div>'+
+  '<p class="small"><a href="/quellen" target="_blank" rel="noopener">Quellen &amp; Lizenzen ansehen</a></p>';
+ root.appendChild(c);
+ let preview=null;
+ c.querySelectorAll('[data-preview]').forEach(b=>b.onclick=()=>{if(preview){preview.pause();}preview=new Audio('/podium/'+b.dataset.preview+'.wav');preview.play().catch(()=>{});});
+ const paint=()=>{const plan=state?.podiumPlan||{mode:'own'};
+  c.querySelectorAll('[data-pmode]').forEach(b=>b.classList.toggle('on',b.dataset.pmode===plan.mode));
+  c.querySelector('.pdOwn').hidden=!(plan.mode==='own'||plan.mode==='spotify');c.querySelector('.pdSpotify').hidden=plan.mode!=='spotify';
+  c.querySelectorAll('[data-place]').forEach(r=>{const t=plan[r.dataset.place];r.querySelector('.pdNow').textContent=t?'♫ '+(t.title||t.url)+(t.start?' · ab '+t.start+' s':''):'eigene Fanfare';const u=r.querySelector('.pdUrl');if(t&&document.activeElement!==u)u.value=t.url;const sec=r.querySelector('.pdSec');if(t&&document.activeElement!==sec)sec.value=t.start||0;});};
+ const save=async body=>{try{await api('/api/admin','POST',{cmd:'podiumPlan',mode:state?.podiumPlan?.mode||'own',...body},adminKey);await poll(true);paint();}catch(e){alert(e.message);}};
+ c.querySelectorAll('[data-pmode]').forEach(b=>b.onclick=()=>save({mode:b.dataset.pmode}));
+ c.querySelectorAll('[data-place]').forEach(r=>{const place=r.dataset.place;
+  r.querySelector('.pdSave').onclick=()=>save({mode:'spotify',place,url:r.querySelector('.pdUrl').value.trim(),start:r.querySelector('.pdSec').value,title:r.dataset.title||''});
+  r.querySelector('.pdClear').onclick=()=>save({place,url:''});
+  r.querySelector('.pdSearch').onclick=async()=>{const q=r.querySelector('.pdQuery').value.trim(),out=r.querySelector('.mpResults');
+   if(!window.SpotifyConnect?.api||!(window.SpotifyConnect.connected()||state?.spotifyLinked)){out.innerHTML='<p class="small">Für die Suche erst mit Spotify anmelden (Spotify-Bereich unten). Einen Song-Link kannst du jederzeit einfügen.</p>';return;}
+   out.innerHTML='<p class="small">Suche …</p>';
+   try{const d=await window.SpotifyConnect.api('/search?'+new URLSearchParams({q,type:'track',limit:'5'}));const items=(d.tracks?.items||[]).filter(Boolean);
+    out.innerHTML=items.map((x,i)=>'<button type="button" class="mpItem" data-i="'+i+'"><b>'+esc(x.name)+'</b><small>'+esc((x.artists||[]).map(a=>a.name).join(', '))+'</small></button>').join('')||'<p class="small">Nichts gefunden.</p>';
+    out.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{const x=items[Number(b.dataset.i)];r.dataset.title=x.name+' – '+(x.artists||[]).map(a=>a.name).join(', ');r.querySelector('.pdUrl').value='https://open.spotify.com/track/'+x.id;save({mode:'spotify',place,url:'https://open.spotify.com/track/'+x.id,start:r.querySelector('.pdSec').value,title:r.dataset.title});out.innerHTML='';});
+   }catch(e){out.innerHTML='<p class="small">Suche nicht möglich: '+esc(e.message)+'</p>';}};
+ });
+ paint();window.__paintPodium=paint;
 }
 function organizeAdmin(){
  const root=el('adminRoot');if(!root)return;
@@ -1314,6 +1350,48 @@ function tvSpotifyVisibility(){
  if(show&&!tvSpTimer){tvSpotifyRefresh();tvSpTimer=setInterval(()=>{if(role==='tv'&&tvSpotifyReady()&&['welcome','end'].includes(state?.phase))tvSpotifyRefresh();},8000);}
  if(!show&&tvSpTimer){clearInterval(tvSpTimer);tvSpTimer=null;}
 }
+// ---------- Siegerehrung: Trommelwirbel, dann Musik für Platz 3, 2 und 1 ----------
+// Zeiten passen zur Animation auf dem Beamer (3-2-1-Countdown, dann Platz 3 / 2 / 1).
+const PODIUM_TIMES={drumroll:0,p3:3.2,p2:10,p1:18};
+let podiumTimers=[],podiumAudio=null,podiumActive=false,podiumSpotify=false;
+function podiumStop(){
+ podiumTimers.forEach(clearTimeout);podiumTimers=[];
+ if(podiumAudio){try{podiumAudio.pause();}catch{}podiumAudio=null;}
+ if(podiumSpotify&&tvSpotifyReady()){podiumSpotify=false;window.SpotifyConnect.api('/me/player/pause','PUT').catch(()=>{});}
+ podiumActive=false;
+}
+function podiumOwn(name){
+ if(podiumSpotify&&tvSpotifyReady()){podiumSpotify=false;window.SpotifyConnect.api('/me/player/pause','PUT').catch(()=>{});}
+ if(podiumAudio){try{podiumAudio.pause();}catch{}}
+ const a=new Audio('/podium/'+name+'.wav');a.volume=1;podiumAudio=a;const p=a.play();if(p?.catch)p.catch(()=>{});
+}
+async function podiumTrack(t){
+ if(podiumAudio){try{podiumAudio.pause();}catch{}podiumAudio=null;}
+ try{
+  const dev=tvSpInfo.deviceId?{id:tvSpInfo.deviceId}:await tvSpotifyDevice();if(!dev)throw Error('kein Gerät');
+  await window.SpotifyConnect.api('/me/player/play?device_id='+encodeURIComponent(dev.id),'PUT',{uris:['spotify:track:'+t.id],position_ms:(t.start||0)*1000});
+  podiumSpotify=true;
+ }catch{podiumSpotify=false;}
+}
+function podiumMusic(old,next){
+ const inResults=next.phase==='results';
+ if(!inResults){if(podiumActive)podiumStop();return;}
+ if(podiumActive)return;
+ const plan=next.podiumPlan||{mode:'own'};
+ if(plan.mode==='classic'||plan.mode==='off')return;
+ podiumActive=true;
+ // Mitten in der Siegerehrung geöffnet? Dann ab der passenden Stelle weitermachen.
+ const elapsed=old&&old.phase!=='results'?0:Math.max(0,(Date.now()-(next.resultsAt||Date.now()))/1000);
+ for(const key of['drumroll','p3','p2','p1']){
+  const at=PODIUM_TIMES[key]-elapsed;
+  const next2=key==='drumroll'?PODIUM_TIMES.p3:key==='p1'?99:PODIUM_TIMES[key==='p3'?'p2':'p1'];
+  if(next2-elapsed<=0)continue;
+  podiumTimers.push(setTimeout(()=>{
+   const track=key!=='drumroll'&&plan.mode==='spotify'&&plan[key]&&plan[key].type==='track'?plan[key]:null;
+   if(track&&tvSpotifyReady())podiumTrack(track);else podiumOwn(key);
+  },Math.max(0,at*1000)));
+ }
+}
 // Musik-Plan: Spotify startet automatisch auf Willkommen bzw. Abschluss und stoppt bei Film/Trailer/Quiz.
 let tvPlanKey='';
 async function tvMusicPlan(old,next){
@@ -1741,6 +1819,37 @@ function updateCaption(){
 }
 async function fetchCaptions(){try{const response=await fetch('/captions.vtt');if(!response.ok)return;subtitles=parseVTT(await response.text());}catch{}}
 function parseVTT(txt){return txt.replace(/\r/g,'').split(/\n\n+/).map(block=>{const lines=block.split('\n'),i=lines.findIndex(x=>x.includes('-->'));if(i<0)return null;const times=lines[i].split('-->');const toSeconds=x=>{const v=x.trim().split(/[.:]/).map(Number);return v.length===4?v[0]*3600+v[1]*60+v[2]+v[3]/1000:v[0]*60+v[1]+(v[2]||0)/1000;};return{start:toSeconds(times[0]),end:toSeconds(times[1]),text:lines.slice(i+1).join('\n')};}).filter(Boolean);}
+// ---------- Quellen & Lizenzen ----------
+async function sourcesPage(){
+ let st=state;try{st=await api('/api/state');}catch{}
+ const spotify=[];
+ const mp=st?.musicPlan||{};for(const[k,l]of[['welcome','Willkommen'],['end','Abschluss']])if(mp[k]?.mode==='spotify'&&mp[k].url)spotify.push([l,mp[k].title||mp[k].url,mp[k].url]);
+ const pp=st?.podiumPlan||{};if(pp.mode==='spotify')for(const[k,l]of[['p3','Siegerehrung · Platz 3'],['p2','Siegerehrung · Platz 2'],['p1','Siegerehrung · Platz 1']])if(pp[k]?.url)spotify.push([l,pp[k].title||pp[k].url,pp[k].url]);
+ const li=(a,b)=>'<li>'+a+(b?'<span>'+b+'</span>':'')+'</li>';
+ const link=(u,t)=>'<a href="'+u+'" target="_blank" rel="noopener noreferrer">'+esc(t||u)+'</a>';
+ const imgs=Object.values(HOME_IMG).map(i=>li(link(i.page,i.alt),esc(i.credit)+' · via Wikimedia Commons')).join('');
+ wrap('<div class="srcPage"><div class="page"><span class="eyebrow">TOUCH LIVE · TRANSPARENZ</span><h1>Quellen &amp; Lizenzen</h1><p>Woher Bilder, Musik, Videos und Inhalte dieser Seite stammen. Stand: '+new Date().toLocaleDateString('de-DE')+'.</p></div>'+
+  '<section class="srcSec"><h2>🎬 Trailer &amp; Dokumentation</h2><ul>'+li('<b>Trailer „TOUCHSCREEN“</b> und Dokumentation','Eigenproduktion für TOUCH LIVE · Lernfeld 14, Friedrich-Dessauer-Schule Limburg')+li('Untertitel, Quizfragen, Handout und Aufgaben','eigene Erstellung')+'</ul></section>'+
+  '<section class="srcSec"><h2>🎵 Musik</h2><ul>'+
+   li('<b>Siegerehrung</b>: Trommelwirbel und Fanfaren für Platz 3, 2 und 1','Eigenkomposition, per Programm erzeugt (keine Samples, keine Rechte Dritter) – frei verwendbar')+
+   li('<b>Willkommensmelodie</b>, Pausen- und Ergebnismusik','Eigenkomposition, per Programm erzeugt – frei verwendbar')+
+   (spotify.length?spotify.map(([w,t,u])=>li('<b>'+esc(w)+'</b>: '+link(u,t),'Wiedergabe über Spotify (Premium) im Unterricht · Rechte bei den jeweiligen Künstlern und Labels · die Musik wird nicht kopiert oder gespeichert')).join(''):li('Spotify-Titel','derzeit keine ausgewählt – sobald im Admin Songs gewählt werden, erscheinen sie hier automatisch'))+
+  '</ul></section>'+
+  '<section class="srcSec"><h2>🖼️ Bilder</h2><ul>'+imgs+'</ul><p class="small">Lizenzen: '+link('https://creativecommons.org/licenses/by/2.0/deed.de','CC BY 2.0')+' · '+link('https://creativecommons.org/licenses/by-sa/3.0/deed.de','CC BY-SA 3.0')+' · '+link('https://creativecommons.org/publicdomain/zero/1.0/deed.de','CC0 1.0')+'</p></section>'+
+  '<section class="srcSec"><h2>📚 Inhalte &amp; Fakten</h2><ul>'+
+   li(link('https://de.wikipedia.org/wiki/Touchscreen','Wikipedia: Touchscreen'),'Arten, Funktionsweise, Geschichte')+
+   li(link('https://en.wikipedia.org/wiki/Multi-touch','Wikipedia: Multi-touch'),'Multitouch, CERN 1972, iPhone 2007')+
+   li(link('https://en.wikipedia.org/wiki/HP-150','Wikipedia: HP-150'),'erster Touch-PC 1983')+
+   li(link('https://en.wikipedia.org/wiki/IBM_Simon','Wikipedia: IBM Simon'),'erstes Touch-Smartphone 1994')+
+   li(link('https://commons.wikimedia.org/wiki/File:CERN-Stumpe_Capacitance_Touchscreen.jpg','Wikimedia Commons: CERN-Touchscreen-Prototyp'),'Bent Stumpe / CERN')+
+  '</ul></section>'+
+  '<section class="srcSec"><h2>⚙️ Technik</h2><ul>'+
+   li('Webseite, Quiz, Live-Regie, Touch-Labor und Schach-Engine','eigene Programmierung (Node.js, ohne fremde Bibliotheken)')+
+   li('Umsetzung mit Unterstützung von Claude','KI-Assistent von Anthropic · Inhalte und Fakten geprüft')+
+   li(link('https://developer.spotify.com/documentation/web-api','Spotify Web API / Web Playback SDK'),'Spotify AB – nur zur Steuerung der Musik')+
+   li(link('https://render.com','Render'),'Hosting der Webseite')+
+  '</ul></section></div>');
+}
 function handout(){
  // Handout (A4, 2 Seiten). Jedes Feld kann getippt ODER mit Stift/Finger beschrieben
  // werden (iPad + Apple Pencil). Rechnen machen die Schüler selbst; „Prüfen“ kontrolliert
@@ -1946,11 +2055,12 @@ function router(){
  const h=location.hash.slice(1).split('?'),query=new URLSearchParams(h.slice(1).join('?'));
  const studentPath=location.pathname.replace(/\/+$/,'')==='/join';
  const controlPath=location.pathname.replace(/\/+$/,'')==='/control';
+ const sourcesPath=location.pathname.replace(/\/+$/,'')==='/quellen';
  // Redirect previously shared /#join links into a student-only entry with no navigation.
  if(['join','schueler','student'].includes(h[0])&&!studentPath){history.replaceState({},'',location.origin+'/join');}
   if(h[0]==='lehrer'){history.replaceState({},'',location.origin+'/#teacher');}
  if(studentPath&&location.hash)history.replaceState({},'',location.origin+'/join');
- role=controlPath?'control':(studentPath||['join','schueler','student'].includes(h[0]))?'join':h[0]==='lehrer'?'teacher':h[0]||'home';
+ role=sourcesPath?'quellen':controlPath?'control':(studentPath||['join','schueler','student'].includes(h[0]))?'join':h[0]==='lehrer'?'teacher':h[0]||'home';
  if(role==='remote'&&query.get('key')){remoteKey=query.get('key');sessionStorage.setItem('touch_cohost_key',remoteKey);history.replaceState({},'',location.pathname+'#remote');}
  if(role==='admin'&&query.get('key')){adminKey=query.get('key');sessionStorage.setItem('touch_admin_key',adminKey);history.replaceState({},'',location.pathname+'#admin');}
  if(role==='teacher'&&query.get('key')){try{localStorage.setItem('touch_teacher_key',query.get('key'));}catch{}history.replaceState({},'',location.pathname+'#teacher');}
@@ -1963,7 +2073,7 @@ function router(){
  if(role!=='join'&&role!=='teacher')document.body.classList.remove('touchStudent');
  renderSignature='';state=null;mediaType='';
  window.__touchBooted=true;
- try{if(role==='admin'){showAdmin();loadAdminInfo();}else if(role==='control')controlPage();else if(role==='remote')remotePage();else if(role==='tv')tvView();else if(role==='handout')handout();else if(role==='join'||role==='teacher')userPage();else home();}
+ try{if(role==='admin'){showAdmin();loadAdminInfo();}else if(role==='control')controlPage();else if(role==='remote')remotePage();else if(role==='tv')tvView();else if(role==='handout')handout();else if(role==='quellen')sourcesPage();else if(role==='join'||role==='teacher')userPage();else home();}
  catch(err){
   // Never leave the loading screen: show what failed and offer a clean retry.
   console.error(err);
@@ -1988,7 +2098,7 @@ async function poll(force=false){
   try{const next=await api('/api/state');const AD=['results','end','handout'],changed=!state||state.homeUnlocked!==next.homeUnlocked||state.trailerAvailable!==next.trailerAvailable||AD.includes(state.phase)!==AD.includes(next.phase);state=next;if(changed||force)home();}catch(e){if(!state){const node=el('app');if(node&&node.querySelector('.loader'))home();}}
   return;
  }
- if(role==='handout')return;
+ if(role==='handout'||role==='quellen')return;
  try{
  const rp=role==='join'?'student':role==='teacher'?'teacher':role;
  const id=(rp==='student'||rp==='teacher')?(localStorage.getItem('touch_'+rp+'_id')||''):'';
@@ -2007,7 +2117,7 @@ async function poll(force=false){
  if(role==='tv'&&old&&old.phase!==next.phase&&['film','trailer'].includes(next.phase)&&window.SpotifyConnect?.webPlayerActive?.())window.SpotifyConnect.pauseWebPlayer().catch(()=>{});
  if(next.spotifyClientId&&window.SpotifyConnect?.setDefaultClientId)window.SpotifyConnect.setDefaultClientId(next.spotifyClientId);
  if((role==='admin'||role==='control')&&(window.SpotifyConnect?.connected?.()||next.spotifyLinked))spotifyServerLink();
- if(role==='tv'){tvSpotifyVisibility();tvMusicPlan(old,next);}
+ if(role==='tv'){tvSpotifyVisibility();podiumMusic(old,next);tvMusicPlan(old,next);}
  if(role==='tv'){tvDisplay();
    const signal=Number(state.tvReloadRequest||0);
    if(window.__touchTVReloadSeen===undefined)window.__touchTVReloadSeen=signal;
@@ -2021,7 +2131,7 @@ async function poll(force=false){
   document.querySelectorAll('[data-mobile-sound]').forEach(btn=>{const field=btn.dataset.mobileSound;const enabled=next.soundtrack?.[field]!==false;btn.dataset.enabled=String(enabled);btn.textContent=field==='pause'?(enabled?'♫ Pausenmusik AN':'♫ Pausenmusik AUS'):(enabled?'🏆 Ergebnismusik AN':'🏆 Ergebnismusik AUS');});
  }
  if(role==='remote'){const status=el('remoteStatus');if(status)status.textContent='Live: '+next.phase.toUpperCase()+' · '+secText(next.time)+' · '+next.participants+' Teilnehmende · '+(next.playing?'Video läuft':'Video pausiert');}
- if(role==='admin'){if(window.__paintMusicPlan&&el('musicPlanCard'))window.__paintMusicPlan();refreshAdminVideoControls();if(el('adminStatus'))el('adminStatus').textContent='Status: '+state.phase.toUpperCase()+' · Filmzeit: '+secText(state.time)+' · '+state.participants+' Teilnehmende · '+(state.video.type==='none'?'kein Film':state.video.type);if(el('adminParticipants'))el('adminParticipants').textContent=state.participants+' Teilnehmende';if(el('adminTime'))el('adminTime').textContent=secText(state.time);if(el('adminRanking')&&adminInfo){el('adminRanking').textContent='Live-Regie aktiv. Für vollständige Teilnehmerantworten nutze den Ergebnis-Modus.';}if(el('adminFeedback'))el('adminFeedback').textContent=String(state.feedbackCount);}
+ if(role==='admin'){if(window.__paintMusicPlan&&el('musicPlanCard'))window.__paintMusicPlan();if(window.__paintPodium&&el('podiumCard'))window.__paintPodium();refreshAdminVideoControls();if(el('adminStatus'))el('adminStatus').textContent='Status: '+state.phase.toUpperCase()+' · Filmzeit: '+secText(state.time)+' · '+state.participants+' Teilnehmende · '+(state.video.type==='none'?'kein Film':state.video.type);if(el('adminParticipants'))el('adminParticipants').textContent=state.participants+' Teilnehmende';if(el('adminTime'))el('adminTime').textContent=secText(state.time);if(el('adminRanking')&&adminInfo){el('adminRanking').textContent='Live-Regie aktiv. Für vollständige Teilnehmerantworten nutze den Ergebnis-Modus.';}if(el('adminFeedback'))el('adminFeedback').textContent=String(state.feedbackCount);}
  }catch(e){const x=el('adminStatus');if(x)x.textContent='Verbindung unterbrochen: '+e.message;}
 }
 // Automatically use the newest published design on the TV without changing its link.

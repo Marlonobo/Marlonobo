@@ -55,7 +55,7 @@ if(!fs.existsSync(V4_CUES_MARKER)){
  }catch(e){console.error('V4-Zeitmarken konnten nicht aktualisiert werden:',e.message);}
 }
 
-const def=()=>({homeUnlocked:false,trailerPlaying:false,trailerSerial:0,trailerRevision:0,phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,videoVolume:1,videoTitle:'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{url:'',type:'',id:'',on:false},musicPlan:{welcome:{mode:'touch'},end:{mode:'off'}},spotifyClientId:'',soundtrack:{pause:true,results:true,volume:.25},captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},remoteVideo:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,continuousWatch:false,zoomDismissed:false,zoomOverlay:false,zoomOverlayStartTime:0,demoOverlay:false,gestureOverlay:false,gestureOverlayStartTime:0,gestureStartTime:0,gestureReturnPhase:'welcome',resultsAt:0,clockSource:'tv',lastHostTick:0,seekSerial:0,removedUserIds:[],revision:0});
+const def=()=>({homeUnlocked:false,trailerPlaying:false,trailerSerial:0,trailerRevision:0,phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,videoVolume:1,videoTitle:'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{url:'',type:'',id:'',on:false},musicPlan:{welcome:{mode:'touch'},end:{mode:'off'}},podiumPlan:{mode:'own'},spotifyClientId:'',soundtrack:{pause:true,results:true,volume:.25},captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},remoteVideo:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,continuousWatch:false,zoomDismissed:false,zoomOverlay:false,zoomOverlayStartTime:0,demoOverlay:false,gestureOverlay:false,gestureOverlayStartTime:0,gestureStartTime:0,gestureReturnPhase:'welcome',resultsAt:0,clockSource:'tv',lastHostTick:0,seekSerial:0,removedUserIds:[],revision:0});
 let s=def(), users=new Map(), upload=null,feedback=[],cloudManifest=null;
 // This is intentionally volatile: choosing a file on a Windows PC never uploads its bytes.
 // Readiness expires when the HDMI browser disconnects; it is not persisted in storage.
@@ -119,6 +119,7 @@ async function hydrateCloudMedia(){
    s.welcomeMusic={url:wm.url,type:wm.type,id:wm.id,on:false};
   }
   if(settings.musicPlan&&typeof settings.musicPlan==='object')s.musicPlan=settings.musicPlan;
+  if(settings.podiumPlan&&typeof settings.podiumPlan==='object')s.podiumPlan=settings.podiumPlan;
   if(!ENV_SPOTIFY_CLIENT&&/^[A-Za-z0-9]{32}$/.test(settings.spotifyClientId||''))s.spotifyClientId=settings.spotifyClientId;
   if(Number.isSafeInteger(settings.captionsRevision)&&settings.captionsRevision>=0)s.captionsRevision=settings.captionsRevision;
   s.revision++;
@@ -135,7 +136,7 @@ async function saveDurableMediaSettings(){
   video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{...(s.welcomeMusic||{}),on:false},soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},
   subtitles:!!s.subtitles,videoVolume:s.videoVolume??1,subtitleOffset:s.subtitleOffset||0,
   captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,
-  captionsRevision:s.captionsRevision||0,spotifyClientId:s.spotifyClientId||'',musicPlan:s.musicPlan||null,savedAt:new Date().toISOString()
+  captionsRevision:s.captionsRevision||0,spotifyClientId:s.spotifyClientId||'',musicPlan:s.musicPlan||null,podiumPlan:s.podiumPlan||null,savedAt:new Date().toISOString()
  };
  await S3.putManifest(manifest);
  cloudManifest=manifest;
@@ -202,7 +203,7 @@ function publicState(id){
   ?Math.max(0,Math.ceil(GESTURE_MISSION_SECONDS-(s.time-(s.gestureOverlayStartTime||0))))
   :s.phase==='gesture'?Math.max(0,Math.ceil(GESTURE_MISSION_SECONDS-(Date.now()-(s.gestureStartTime||Date.now()))/1000)):0;
  const gestureActive=gestureSeconds>0&&(s.phase==='gesture'||(s.phase==='film'&&s.gestureOverlay));
- return {homeUnlocked:!!s.homeUnlocked,trailerAvailable:!!trailerPath(),trailerPlaying:!!s.trailerPlaying,trailerSerial:s.trailerSerial||0,trailerRevision:s.trailerRevision||0,tvAudio:Date.now()-tvAudioReport.updated<25000?{connected:true,playing:tvAudioReport.playing,blocked:tvAudioReport.blocked,error:tvAudioReport.error}:{connected:false,playing:false,blocked:false,error:''},phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},musicPlan:s.musicPlan||{welcome:{mode:'touch'},end:{mode:'off'}},spotifyClientId:s.spotifyClientId||'',spotifyLinked:!!spotifyAuth?.refreshToken,soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
+ return {homeUnlocked:!!s.homeUnlocked,trailerAvailable:!!trailerPath(),trailerPlaying:!!s.trailerPlaying,trailerSerial:s.trailerSerial||0,trailerRevision:s.trailerRevision||0,tvAudio:Date.now()-tvAudioReport.updated<25000?{connected:true,playing:tvAudioReport.playing,blocked:tvAudioReport.blocked,error:tvAudioReport.error}:{connected:false,playing:false,blocked:false,error:''},phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},musicPlan:s.musicPlan||{welcome:{mode:'touch'},end:{mode:'off'}},podiumPlan:s.podiumPlan||{mode:'own'},spotifyClientId:s.spotifyClientId||'',spotifyLinked:!!spotifyAuth?.refreshToken,soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
   quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,a:q.a,duration:q.type==='zoom'?ZOOM_MISSION_SECONDS:((s.phase==='demo'||s.demoOverlay)?45:30),remaining:a.remaining,accepting:a.accepting,foundCount:q.type==='zoom'?[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length:0,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
   player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)||fs.existsSync(BUNDLED_SUB_FILE)};
 }
@@ -225,7 +226,7 @@ setInterval(()=>{
   s.phase=s.gestureReturnPhase||'welcome';s.playing=false;s.gestureStartTime=0;s.revision++;persist();
  }
 },1000);
-setInterval(()=>{if(s.phase==='results'&&s.resultsAt&&Date.now()-s.resultsAt>=28000){s.phase='end';s.playing=false;s.revision++;persist();}},1000);
+setInterval(()=>{if(s.phase==='results'&&s.resultsAt&&Date.now()-s.resultsAt>=45000){s.phase='end';s.playing=false;s.revision++;persist();}},1000);
 function spotifySelection(value){
  let url;
  try{url=new URL(String(value||'').trim());}catch{return null;}
@@ -269,7 +270,7 @@ async function spotifyAccess(){
 }
 async function handler(req,res){
  const u=new URL(req.url,'http://localhost'),p=u.pathname,m=req.method;
- if(m==='GET'&&(p==='/'||p==='/index.html'||p==='/join'||p==='/control'||p==='/spotify-callback'))return serve(res,path.join(ROOT,'index.html'),mime['.html']);
+ if(m==='GET'&&(p==='/'||p==='/index.html'||p==='/join'||p==='/control'||p==='/quellen'||p==='/spotify-callback'))return serve(res,path.join(ROOT,'index.html'),mime['.html']);
  if((m==='GET'||m==='HEAD')&&p==='/welcome-music.wav'){
   // Standard HTML5 PCM audio for LG WebOS; no Spotify authorization or AudioContext needed.
   const wav=require('./welcome-audio.js')();
@@ -290,6 +291,13 @@ async function handler(req,res){
   return m==='HEAD'?res.end():res.end(wav.subarray(first,last+1));
  }
  if(m==='GET'&&(p==='/app.js'||p==='/style.css'||p==='/quiz-polish.css'||p==='/handout.css'||p==='/spotify-connect.js'||p==='/touch-soundtrack.js'||p==='/chess.js'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
+ if((m==='GET'||m==='HEAD')&&/^\/podium\/(drumroll|p1|p2|p3)\.wav$/.test(p)){
+  const wav=require('./podium-audio.js')(p.slice(8,-4));if(!wav)return send(res,404,{error:'Fehlt'});
+  const range=/^bytes=(\d+)-(\d*)$/.exec(req.headers.range||'');let first=0,last=wav.length-1,status=200;
+  if(range){first=Number(range[1]);if(range[2])last=Math.min(last,Number(range[2]));if(first>last||first>=wav.length){res.writeHead(416,{'Content-Range':'bytes */'+wav.length});return res.end();}status=206;}
+  const h={'Content-Type':'audio/wav','Accept-Ranges':'bytes','Content-Length':String(last-first+1),'Cache-Control':'public, max-age=86400'};if(status===206)h['Content-Range']='bytes '+first+'-'+last+'/'+wav.length;
+  res.writeHead(status,h);return m==='HEAD'?res.end():res.end(wav.subarray(first,last+1));
+ }
  if((m==='GET'||m==='HEAD')&&(p==='/trailer-loop.mp4'||p==='/trailer-poster.jpg')){
   // Feste Dateien im Projekt: stumme Schleife für die Startseite und Standbild.
   const file=path.join(ROOT,p.slice(1));let st;try{st=await fsp.stat(file);}catch{return send(res,404,{error:'Datei fehlt'});}
@@ -663,7 +671,7 @@ async function handler(req,res){
  else if(cmd==='zoomEnd'){endZoom();}
  else if(cmd==='end'){s.phase='end';s.playing=false;}
  else if(cmd==='reset'){
-  const keep={video:s.video,remoteVideo:s.remoteVideo,videoVolume:s.videoVolume??1,videoTitle:s.videoTitle,welcomeMusic:{...(s.welcomeMusic||{url:'',id:'',type:''}),on:false},soundtrack:s.soundtrack,musicPlan:s.musicPlan,spotifyClientId:s.spotifyClientId,subtitles:s.subtitles,captionSize:s.captionSize,captionPosition:s.captionPosition,captionRevision:s.captionsRevision,captionsRevision:s.captionsRevision,cloudCaptions:s.cloudCaptions,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset};
+  const keep={video:s.video,remoteVideo:s.remoteVideo,videoVolume:s.videoVolume??1,videoTitle:s.videoTitle,welcomeMusic:{...(s.welcomeMusic||{url:'',id:'',type:''}),on:false},soundtrack:s.soundtrack,musicPlan:s.musicPlan,podiumPlan:s.podiumPlan,spotifyClientId:s.spotifyClientId,subtitles:s.subtitles,captionSize:s.captionSize,captionPosition:s.captionPosition,captionRevision:s.captionsRevision,captionsRevision:s.captionsRevision,cloudCaptions:s.cloudCaptions,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset};
   s=Object.assign(def(),keep);users=new Map();feedback=[];fsp.writeFile(FEEDBACK_FILE,'[]').catch(()=>{});saveUsers();
  }
  else if(cmd==='videoLocal'){s.video={type:'local',url:null,id:null};localMedia={name:'',size:0,duration:0,lastSeen:0};s.clockSource='tv';s.lastHostTick=0;}
@@ -726,6 +734,20 @@ async function handler(req,res){
    s.musicPlan={welcome:{mode:'touch'},end:{mode:'off'},...(s.musicPlan||{}),[slot]:entry};
    if(slot==='welcome'&&s.phase==='welcome'){if(!s.welcomeMusic)s.welcomeMusic={url:'',type:'',id:'',on:false};s.welcomeMusic.on=mode==='touch';}
  }
+ else if(cmd==='podiumPlan'){
+   // Siegerehrung: own = eigene Fanfaren, spotify = je Platz ein Song, classic = alte Ergebnismusik
+   const mode=String(b.mode||'');
+   if(!['own','spotify','classic','off'].includes(mode))return send(res,400,{error:'Unbekannte Auswahl.'});
+   const plan={...(s.podiumPlan||{}),mode};
+   if(b.place){
+    const place=['p3','p2','p1'].includes(b.place)?b.place:null;if(!place)return send(res,400,{error:'Platz unbekannt.'});
+    if(b.url===''){delete plan[place];}
+    else{const sel=spotifySelection(b.url);if(!sel)return send(res,400,{error:'Bitte einen Spotify-Link zu einem Song einfügen.'});
+     const start=Math.max(0,Math.min(600,Math.round(Number(b.start)||0)));
+     plan[place]={url:sel.url,type:sel.type,id:sel.id,title:String(b.title||'').slice(0,90),start};}
+   }
+   s.podiumPlan=plan;
+ }
  else if(cmd==='spotifyClientSet'){
    const id=String(b.value||'').trim();
    if(!/^[A-Za-z0-9]{32}$/.test(id))return send(res,400,{error:'Die Spotify Client ID hat 32 Buchstaben/Ziffern.'});
@@ -760,7 +782,7 @@ async function handler(req,res){
  else if(cmd==='captionSize'){const n=Number(b.value);if(!Number.isFinite(n)||n<70||n>160)return send(res,400,{error:'Untertitelgröße von 70 bis 160 Prozent'});s.captionSize=n;}
  else if(cmd==='captionPosition'){const n=Number(b.value);if(!Number.isFinite(n)||n<5||n>25)return send(res,400,{error:'Untertitelposition von 5 bis 25 Prozent'});s.captionPosition=n;}
  else return send(res,400,{error:'Unbekannter Befehl'});
- if(['remoteVideoYoutube','remoteVideoLink','remoteVideoClear','videoLocal','filmVolume','videoYoutube','videoCloud','videoLink','videoUpload','videoStored','videoTitle','subtitles','captionSize','captionPosition','captionOffset','spotifySet','spotifyClientSet','spotifyClear','soundtrackSet','musicPlan'].includes(cmd))await saveDurableMediaSettings();
+ if(['remoteVideoYoutube','remoteVideoLink','remoteVideoClear','videoLocal','filmVolume','videoYoutube','videoCloud','videoLink','videoUpload','videoStored','videoTitle','subtitles','captionSize','captionPosition','captionOffset','spotifySet','spotifyClientSet','spotifyClear','soundtrackSet','musicPlan','podiumPlan'].includes(cmd))await saveDurableMediaSettings();
  s.revision++;await persist();return send(res,200,{ok:true,state:publicState()});
  }
  if(m==='POST'&&p==='/api/questions'){
