@@ -1285,3 +1285,127 @@ body.rgTheme .phoneRemoteStatus{border-radius:2px}
  body.rgTheme .rgLinks a{line-height:36px;padding:0 10px;white-space:nowrap}
  body.rgTheme .rgLinks a::after{bottom:4px}
 }
+
+/* ================= Hell-Modus (Schalter ☀︎/☾ oben) ================= */
+.themeToggle{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;min-height:42px;padding:0;border-radius:2px;background:transparent;border:1px solid #ffffff40;color:#fff;font-size:18px;cursor:pointer;flex:0 0 auto}
+.themeToggle:hover{border-color:#7ff0e6;background:#ffffff12}
+.themeToggle .tSun{display:none}
+html.lightMode .themeToggle .tSun{display:inline}html.lightMode .themeToggle .tMoon{display:none}
+.rgBar2 .themeToggle{margin-left:12px}
+.studentBrandRight .themeToggle{margin-right:12px;width:36px;height:36px;min-height:36px;font-size:16px}
+.studentBrandRight{display:flex;align-items:center}
+.phoneRemoteHead .themeToggle{float:right}
+.studentBrand .logo{pointer-events:auto}
+html.lightMode{color-scheme:light}
+html.lightMode body,html.lightMode body.rgTheme{background:#f4f6f7;color:#0d1418;--bg:#f4f6f7;--panel:#ffffff;--panel2:#eef2f4;--stroke:#d7dee2;--text:#0d1418;--muted:#56656f;--aqua:#0a8a80;--ok:#1d7a4f}
+html.lightMode body.rgTheme::before{background:radial-gradient(ellipse at 85% -10%,#bfe9e433,transparent 55%)}
+html.lightMode a{color:#0a7d74}
+/* Menüleisten */
+html.lightMode body.rgTheme .rgBar2,html.lightMode .rgNav.solid{background:#ffffff;border-bottom:1px solid #d7dee2;box-shadow:0 1px 0 #0000000d}
+html.lightMode body.rgTheme .rgLogo,html.lightMode .rgNav.solid .rgLogo{color:#0d1418}
+html.lightMode body.rgTheme .rgLogo b,html.lightMode .rgNav.solid .rgLogo b{color:#0a8a80}
+html.lightMode body.rgTheme .rgLinks a,html.lightMode .rgNav.solid .rgMenu a,html.lightMode .rgNav.solid .rgMenu button{color:#1a252c}
+html.lightMode body.rgTheme .rgLinks a::after,html.lightMode .rgMenu a::after,html.lightMode .rgMenu button::after{background:#0a8a80}
+html.lightMode .rgBar2 .themeToggle,html.lightMode .rgNav.solid .themeToggle,html.lightMode .studentBrand .themeToggle,html.lightMode .phoneRemoteHead .themeToggle{color:#0d1418;border-color:#0d141833}
+html.lightMode .rgNav.solid .rgBurger span{background:#0d1418}
+html.lightMode .rgNav.solid .rgNavCta{background:#0d1418;color:#fff}
+@media (max-width:900px){html.lightMode .rgMenu{background:#fff}html.lightMode .rgMenu a,html.lightMode .rgMenu button{color:#0d1418;border-bottom-color:#0000001a}html.lightMode body.rgMenuOpen .rgNav{background:#fff}html.lightMode body.rgMenuOpen .rgNav .rgLogo{color:#0d1418}html.lightMode body.rgMenuOpen .rgBurger span{background:#0d1418}}
+/* Startseite: Trailer-Bereich bleibt kinoschwarz, darunter hell */
+html.lightMode .rgPage{background:#f4f6f7;color:#0d1418}
+html.lightMode .rgSecHead h2,html.lightMode .rgLocked h2{color:#0d1418}
+html.lightMode .rgSecHead span,html.lightMode .rgLocked span{color:#0a8a80}
+html.lightMode .rgLocked{border-color:#0000001a}html.lightMode .rgLocked p{color:#3d4b54}
+html.lightMode .rgTileText2{background:linear-gradient(150deg,#d9f1ee,#eef5f6)}
+html.lightMode .rgTileText2 h3,html.lightMode .rgTileText2 .rgChapters{color:#0d1418}
+html.lightMode .rgTileText2 span{color:#0a7d74}
+html.lightMode .rgCredits{color:#56656f}html.lightMode .rgCredits h4{color:#1a252c}html.lightMode .rgCredits a{color:#0a7d74}
+html.lightMode .rgGrain{opacity:.025}
+html.lightMode .rgPage+footer,html.lightMode footer{color:#56656f;border-top-color:#d7dee2}
+/* Karten, Flächen */
+html.lightMode body.rgTheme .card,html.lightMode body.rgTheme .phoneRemotePanel,html.lightMode body.rgTheme .centerstage,html.lightMode body.rgTheme .clsLab,html.lightMode body.rgTheme .chessSide,html.lightMode body.rgTheme .mpRow,html.lightMode .clsBottom>*{background:#ffffff;border:1px solid #d7dee2;box-shadow:0 10px 30px #0b1f2f12;color:#0d1418}
+html.lightMode body.rgTheme .card p,html.lightMode .small,html.lightMode .clsLabHead p{color:#56656f}
+html.lightMode body.rgTheme .eyebrow,html.lightMode body.rgTheme .label{color:#0a7d74}
+html.lightMode .page h1,html.lightMode .card h2,html.lightMode .card h3,html.lightMode .clsLabHead h2{color:#0d1418}
+html.lightMode body.rgTheme .status{background:#e7f6ef;border-color:#a9dcc3;color:#1d6b46}
+html.lightMode .linkbox{background:#f1f5f7;border-color:#d7dee2;color:#1a3a46}
+html.lightMode label{color:#2d3b44}
+/* Knöpfe und Felder */
+html.lightMode body.rgTheme main button,html.lightMode body.rgTheme main .btn,html.lightMode body.rgTheme .tDock button,html.lightMode .phoneRemoteGrid button,html.lightMode a.btn{background:#ffffff;border:1px solid #c9d3d8;color:#0d1418}
+html.lightMode body.rgTheme main button:hover,html.lightMode body.rgTheme main .btn:hover{background:#eef6f5;border-color:#0a8a80}
+html.lightMode body.rgTheme main button.primary,html.lightMode body.rgTheme main .btn.primary,html.lightMode body.rgTheme .phoneMainPlay{background:#0d1418!important;border-color:#0d1418!important;color:#fff!important}
+html.lightMode body.rgTheme main button.primary:hover,html.lightMode body.rgTheme main .btn.primary:hover{background:#0a8a80!important;border-color:#0a8a80!important}
+html.lightMode body.rgTheme main button.danger{background:#fdecee;border-color:#e7a7b0;color:#8a1f2d}
+html.lightMode input,html.lightMode select,html.lightMode textarea,html.lightMode body.rgTheme input,html.lightMode body.rgTheme select,html.lightMode body.rgTheme textarea{background:#ffffff;border-color:#c9d3d8;color:#0d1418}
+/* Reiter */
+html.lightMode body.rgTheme .adminTabs button,html.lightMode body.rgTheme .clsTabs button{background:#ffffff;border-color:#d7dee2;color:#0d1418}
+html.lightMode body.rgTheme .adminTabs button.active,html.lightMode body.rgTheme .clsTabs button.on{background:#eef6f5;border-color:#0a8a80;box-shadow:inset 0 -3px 0 #0a8a80}
+html.lightMode .adminStickyStatus{background:rgba(255,255,255,.92)!important;border-color:#a9dcc3!important;color:#1d6b46}
+html.lightMode .chessSeg,html.lightMode .mpSeg,html.lightMode .tdSeg,html.lightMode .hxSeg{background:#eef2f4;border-color:#d7dee2}
+html.lightMode body.rgTheme .chessSeg button.on,html.lightMode body.rgTheme .mpSeg button.on{background:#0d1418;color:#fff}
+/* Quiz */
+html.lightMode body.rgTheme main .answer{background:#ffffff;border-color:#c9d3d8;color:#0d1418}
+html.lightMode body.rgTheme main .answer:hover:not(:disabled){background:#eef6f5;border-color:#0a8a80}
+html.lightMode body.rgTheme main .answer.chosen{border:2px solid #0d1418;background:#e6f4f2}
+html.lightMode body.rgTheme main .answer b{background:#0d1418;color:#fff}
+html.lightMode .quiz h2,html.lightMode .centerstage h2{color:#0d1418}
+html.lightMode .centerstage p{color:#3d4b54}
+html.lightMode .timer{color:#0a8a80}
+html.lightMode .chip{background:#e6f4f2;color:#0a6d65;border-color:#9fd6cf}
+html.lightMode .rank td,html.lightMode .rank th{border-bottom-color:#d7dee2}
+html.lightMode .studentBrand{border-bottom-color:#d7dee2}
+html.lightMode .studentBrandRight{color:#3d4b54}
+/* Lehrer-Panel */
+html.lightMode body.rgTheme .tDock{background:#ffffff;border-left-color:#d7dee2;color:#0d1418;box-shadow:-10px 0 30px #0b1f2f14}
+html.lightMode .tdTabs{border-bottom-color:#d7dee2}
+html.lightMode body.rgTheme .tdTabs button.on{background:#eef6f5;border-color:#0a8a80;box-shadow:inset 0 -3px 0 #0a8a80;color:#0d1418}
+html.lightMode .tdStats div,html.lightMode .tdFb{background:#f4f7f8;border-color:#d7dee2}
+html.lightMode .tdNow{background:#eef6f5;border-color:#a9d9d3}
+html.lightMode .tdBar{background:#dde5e8}
+html.lightMode .tdTable th{border-bottom-color:#d7dee2}html.lightMode .tdTable td{border-bottom-color:#e6ebee}
+html.lightMode .tdFb pre{color:#1a252c}
+/* Schach, Musik-Plan, Handy-Fernbedienung */
+html.lightMode .chessStatus{background:#eef6f5;border-color:#a9d9d3;color:#0d1418}
+html.lightMode .chessMoves{background:#f4f7f8;color:#1a252c}
+html.lightMode .chessBar{color:#1a252c}html.lightMode .chessCaps{color:#3d4b54}
+html.lightMode .chessStats{color:#56656f}
+html.lightMode .phoneRemoteHead h1,html.lightMode .phoneRemoteHead p{color:#0d1418}
+html.lightMode .phoneRemoteStatus{background:#eef6f5;border-color:#a9d9d3;color:#0d1418}
+html.lightMode .hxActions,html.lightMode .hxTools{background:rgba(255,255,255,.95);border-color:#d7dee2;color:#0d1418}
+html.lightMode .hxTools button{background:#fff;border-color:#c9d3d8;color:#0d1418}
+html.lightMode .hxSeg button.on{background:#0d1418;color:#fff}
+html.lightMode .hx{--paper:#ffffff}
+html.lightMode .hxPage{box-shadow:0 10px 30px #0b1f2f1f}
+
+/* Ausnahmen: Menü/Startseiten-Knöpfe nicht wie normale Knöpfe stylen */
+body.rgTheme main .rgMenu button,html.lightMode body.rgTheme main .rgMenu button{background:none!important;border:0!important;border-radius:0;font-size:13px}
+body.rgTheme main .rgBurger,html.lightMode body.rgTheme main .rgBurger{background:none!important;border:0!important}
+body.rgTheme main .rgNavCta{background:#f3f6f8!important;color:#05090d!important;border:0!important}
+body.rgTheme main .rgNavCta:hover{background:#7ff0e6!important}
+body.rgTheme main .rgBtn{background:transparent;border:2px solid #f3f6f8;color:#f3f6f8;font-size:14px;letter-spacing:.06em;border-radius:0}
+body.rgTheme main .rgBtn.rgBtnMain{background:#f3f6f8;color:#05090d}
+body.rgTheme main .rgBtn:hover{background:#f3f6f8;color:#05090d;border-color:#f3f6f8}
+body.rgTheme main .themeToggle{background:transparent;border:1px solid #ffffff40;color:#fff;text-transform:none;letter-spacing:0;font-size:18px}
+html.lightMode body.rgTheme main .rgNav:not(.solid) .rgMenu button,html.lightMode .rgNav:not(.solid) .rgMenu a{color:#fff}
+html.lightMode body.rgTheme main .rgNav.solid .themeToggle,html.lightMode body.rgTheme main .rgBar2 .themeToggle{color:#0d1418;border-color:#0d141833}
+html.lightMode body.rgTheme main .rgNav.solid .rgNavCta{background:#0d1418!important;color:#fff!important}
+/* Kacheln über Bildern bleiben dunkel lesbar */
+html.lightMode .rgTile:not(.rgTileText2) .rgTileText h3,html.lightMode .rgTile:not(.rgTileText2) .rgTileText p{color:#fff}
+html.lightMode .rgTile figcaption a{color:#c9d6de}
+.participantBarActions .themeToggle{width:38px;height:38px;min-height:38px;font-size:16px;margin-right:6px}
+html.lightMode .participantFullBar{background:#ffffff;border-color:#d7dee2;color:#0d1418}
+html.lightMode .participantFullBar .small{color:#56656f}
+html.lightMode .participantBarActions .themeToggle{color:#0d1418;border-color:#0d141833}
+html.lightMode .participantFullBtn{background:#0d1418!important;color:#fff!important}
+/* Hell-Modus: Trailer-Bereich bleibt Kino (weiße Schrift über Video) */
+html.lightMode .rgHero,html.lightMode .rgHero .rgTitle,html.lightMode .rgHero .rgClaim,html.lightMode .rgHero .rgPremiere b{color:#f3f6f8}
+html.lightMode .rgHero .rgTitle span{-webkit-text-stroke-color:#f3f6f8;color:transparent}
+html.lightMode .rgHero .rgPremiere em{color:#c8d6de}
+html.lightMode .rgNav:not(.solid) .rgLogo{color:#fff}
+html.lightMode .rgNav:not(.solid) .rgLogo b{color:#7ff0e6}
+html.lightMode body.rgTheme main .rgNav:not(.solid) .themeToggle{color:#fff;border-color:#ffffff55;background:transparent}
+/* Preis-Karte bleibt dunkel mit heller Schrift */
+html.lightMode .prize h3{color:#f5ce8c}html.lightMode .prize p{color:#c9d6de}
+html.lightMode body.rgTheme main .rgHero .rgBtn{background:transparent;border:2px solid #f3f6f8;color:#f3f6f8}
+html.lightMode body.rgTheme main .rgHero .rgBtn.rgBtnMain,html.lightMode body.rgTheme main .rgHero .rgBtn:hover{background:#f3f6f8;color:#05090d}
+html.lightMode body.rgTheme main .rgLocked .rgBtn{border-color:#0d1418;color:#0d1418}
+html.lightMode body.rgTheme main .rgLocked .rgBtn.rgBtnMain{background:#0d1418;color:#fff}
