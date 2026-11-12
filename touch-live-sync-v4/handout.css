@@ -177,3 +177,5 @@
 @media(max-width:600px){.hxIrBox .hxSteps{grid-template-columns:1fr 1fr}}
 .hxIrBox .hxWork .wb-area,.hxIrBox .hxWork .wb-area textarea{height:110px}
 @media(max-width:600px){.hxIrFig{float:none;display:block;margin:0 auto 8px}}
+/* Schreibfelder im Druck/PDF immer weiß (nicht vom dunklen Seitenthema einfärben lassen) */
+@media print{.hx .wb input,.hx .wb textarea,.hxPage .wb input,.hxPage .wb textarea{background-color:#fff!important;color:#1b2a8a!important;border:1px solid #bbb!important;box-shadow:none!important}}
