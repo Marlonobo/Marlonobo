@@ -602,5 +602,5 @@ function init(){
 init();
 setInterval(poll,1100);
 setInterval(()=>{if(host&&key&&$('partyMain')&&!$('partyMain').hidden)refreshHostRoster();},4000);
-setInterval(()=>{if(host&&state?.phase==='film'&&state?.video?.type!=='none'&&state?.video?.type!=='local')sendHostTick();},1300);
+setInterval(()=>{if(host&&state?.phase==='film'&&state?.video?.type!=='none'&&state?.video?.type!=='local')sendHostTick();},700);
 })();

@@ -1,9 +1,12 @@
 [
   {
     "id": "Q1",
-    "open": 269,
-    "close": 318,
-    "q": "Wer entwickelte 1972 am CERN einen kapazitiven Touchscreen?",
+    "open": 274.14,
+    "start": 293.68,
+    "countdown": 297.88,
+    "close": 327.88,
+    "reveal": 330.83,
+    "q": "Wer hat 1972 am CERN einen kapazitiven Touchscreen entwickelt?",
     "a": [
       "Steve Jobs",
       "Bent Stumpe",
@@ -11,58 +14,66 @@
       "Samuel Hurst"
     ],
     "correct": 1,
-    "chapter": 1,
-    "countdown": 288
+    "chapter": 1
   },
   {
     "id": "Q2",
-    "open": 378,
-    "close": 427,
-    "q": "Gab es schon vor 2007 Smartphones mit Touchscreen?",
+    "open": 390.69,
+    "start": 404.89,
+    "countdown": 409.21,
+    "close": 439.21,
+    "reveal": 442.17,
+    "q": "Gab es schon vor dem iPhone Smartphones mit Touchscreen?",
     "a": [
       "Ja, z. B. den IBM Simon",
-      "Nein",
+      "Nein, erst ab 2007",
       "Erst ab 2010",
       "Nur bei Laptops"
     ],
     "correct": 0,
-    "chapter": 1,
-    "countdown": 397
+    "chapter": 1
   },
   {
     "id": "K2Q1",
-    "open": 605,
-    "close": 655,
+    "open": 617.68,
+    "start": 633.48,
+    "countdown": 637.68,
+    "close": 667.68,
+    "reveal": 669.32,
     "q": "Was erkennt ein kapazitiver Touchscreen bei einer Berührung?",
     "a": [
-      "Veränderung der Kapazität",
+      "Eine Veränderung der elektrischen Kapazität",
       "Nur den Druck des Fingers",
       "Die Farbe des Fingers",
       "Die Temperatur des Bildschirms"
     ],
     "correct": 0,
-    "chapter": 2,
-    "countdown": 625
+    "chapter": 2
   },
   {
     "id": "K2Q2",
-    "open": 740,
-    "close": 785,
-    "q": "Welche Aufgabe haben die Pixel eines Displays?",
+    "open": 752.72,
+    "start": 764.04,
+    "countdown": 767.9,
+    "close": 797.9,
+    "reveal": 799.46,
+    "q": "Welche Aufgabe haben die Pixel?",
     "a": [
       "Sie erkennen den Finger",
-      "Sie erzeugen das sichtbare Bild",
+      "Sie erzeugen das Bild",
       "Sie messen den Druck",
       "Sie speichern die Apps"
     ],
     "correct": 1,
-    "chapter": 2,
-    "countdown": 755
+    "chapter": 2
   },
   {
     "id": "K3Q1",
-    "open": 942,
-    "close": 987,
+    "open": 955.42,
+    "start": 966.18,
+    "countdown": 970.44,
+    "close": 1000.44,
+    "reveal": 1001.84,
     "q": "Welche Technik arbeitet mit zwei Schichten, die sich durch Druck berühren?",
     "a": [
       "Kapazitiv",
@@ -71,13 +82,15 @@
       "Optisch"
     ],
     "correct": 1,
-    "chapter": 3,
-    "countdown": 957
+    "chapter": 3
   },
   {
     "id": "K3Q2",
-    "open": 1181,
-    "close": 1227,
+    "open": 1193.09,
+    "start": 1204.33,
+    "countdown": 1208.37,
+    "close": 1238.37,
+    "reveal": 1239.77,
     "q": "Welche Technik erkennt den Finger, weil er ein unsichtbares Lichtgitter unterbricht?",
     "a": [
       "Resistiv",
@@ -86,16 +99,15 @@
       "SAW"
     ],
     "correct": 2,
-    "chapter": 3,
-    "countdown": 1197
+    "chapter": 3
   },
   {
     "id": "K4Z",
     "type": "zoom",
-    "open": 1343,
-    "close": 1394,
+    "open": 1354.69,
+    "close": 1405.69,
     "duration": 51,
-    "q": "Mitmach-Spiel: Welches Tier versteckt sich im Fenster des Hauses?",
+    "q": "Zoomt ins Bild: Welches Tier versteckt sich im Fenster des Hauses?",
     "a": [
       "Eine Katze",
       "Ein Hund",
@@ -107,23 +119,30 @@
   },
   {
     "id": "K4Q1",
-    "open": 1434,
-    "close": 1495,
-    "q": "Ihr zieht zwei Finger auf einem Foto auseinander … Was passiert dabei im Gerät?",
+    "open": 1447.45,
+    "start": 1474.77,
+    "countdown": 1478.72,
+    "close": 1508.72,
+    "reveal": 1510.28,
+    "q": "Ihr zieht zwei Finger auf einem Foto auseinander, und das Foto wird größer. Was passiert dabei im Gerät?",
     "a": [
-      "Der Bildschirm wird durch den Druck größer",
-      "Der Sensor erkennt zwei Berührungen, die Software berechnet den Zoom",
-      "Die Kamera vergrößert das Bild",
-      "Das Handy wechselt die Bildschirmauflösung"
+      "Der Touchsensor misst, wie fest die Finger drücken",
+      "Sensor erkennt zwei Berührungen, Software berechnet den Zoom",
+      "Die Pixel unter den Fingern werden größer",
+      "Eine Kamera im Display filmt die Finger"
     ],
     "correct": 1,
     "chapter": 4,
-    "countdown": 1465
+    "hint": "Wer entscheidet, welche Geste aus den Berührungen wird?",
+    "fifty": 2
   },
   {
     "id": "K4Q2",
-    "open": 1570,
-    "close": 1614,
+    "open": 1583.72,
+    "start": 1593.52,
+    "countdown": 1597.39,
+    "close": 1627.39,
+    "reveal": 1628.95,
     "q": "Welches Bauteil erkennt, wo wir den Bildschirm berühren?",
     "a": [
       "Der Lautsprecher",
@@ -132,43 +151,49 @@
       "Die Kamera"
     ],
     "correct": 1,
-    "chapter": 4,
-    "countdown": 1584
+    "chapter": 4
   },
   {
     "id": "K5Q1",
-    "open": 1796,
-    "close": 1845,
+    "open": 1808.84,
+    "start": 1823.96,
+    "countdown": 1828.08,
+    "close": 1858.08,
+    "reveal": 1859.64,
     "q": "Warum kann ein Touchscreen im Auto während der Fahrt gefährlich sein?",
     "a": [
       "Er ist zu hell",
       "Man muss hinschauen und sieht nicht auf die Straße",
-      "Er verbraucht zu viel Strom",
-      "Er funktioniert nur im Stand"
+      "Er braucht zu viel Strom",
+      "Er wird beim Fahren heiß"
     ],
     "correct": 1,
-    "chapter": 5,
-    "countdown": 1815
+    "chapter": 5
   },
   {
     "id": "K5Q2",
-    "open": 1919,
-    "close": 1967,
-    "q": "Welche Eigenschaft ist für Touchscreens im Krankenhaus besonders wichtig?",
+    "open": 1933.03,
+    "start": 1947.23,
+    "countdown": 1951.26,
+    "close": 1981.26,
+    "reveal": 1982.9,
+    "q": "Was ist bei Touchscreens im Krankenhaus besonders wichtig?",
     "a": [
       "Sie sind besonders bunt",
-      "Sie funktionieren nur mit einem Stift",
-      "Sie lassen sich gut desinfizieren und auch mit Handschuhen bedienen",
+      "Sie gehen nur mit Stift",
+      "Man kann sie gut desinfizieren und mit Handschuhen bedienen",
       "Sie brauchen keinen Strom"
     ],
     "correct": 2,
-    "chapter": 5,
-    "countdown": 1937
+    "chapter": 5
   },
   {
     "id": "K6Q1",
-    "open": 2071,
-    "close": 2119,
+    "open": 2084.95,
+    "start": 2099.39,
+    "countdown": 2103.02,
+    "close": 2133.02,
+    "reveal": 2134.58,
     "q": "Warum funktioniert ein normaler Handschuh nicht auf dem Smartphone?",
     "a": [
       "Der Stoff leitet keinen Strom",
@@ -177,13 +202,15 @@
       "Das Handy erkennt nur die Farbe der Haut"
     ],
     "correct": 0,
-    "chapter": 6,
-    "countdown": 2089
+    "chapter": 6
   },
   {
     "id": "K6Q2",
-    "open": 2265,
-    "close": 2312,
+    "open": 2278.84,
+    "start": 2292.16,
+    "countdown": 2295.88,
+    "close": 2325.88,
+    "reveal": 2327.52,
     "q": "Was bedeutet haptisches Feedback?",
     "a": [
       "Das Display wird heller",
@@ -192,92 +219,101 @@
       "Der Bildschirm lässt sich falten"
     ],
     "correct": 1,
-    "chapter": 6,
-    "countdown": 2282
+    "chapter": 6
   },
   {
     "id": "K7Q1",
-    "open": 2568,
-    "close": 2622,
-    "q": "Abschlussquiz 1: Welche Reihenfolge stimmt – vom ältesten zum neuesten Gerät?",
+    "open": 2581.35,
+    "start": 2602.27,
+    "countdown": 2604.89,
+    "close": 2634.89,
+    "reveal": 2636.29,
+    "q": "Welche Reihenfolge stimmt – vom ältesten zum neuesten Gerät?",
     "a": [
-      "iPhone → HP-150 → IBM Simon",
+      "IBM Simon → HP-150 → iPhone",
       "HP-150 → IBM Simon → iPhone",
-      "IBM Simon → iPhone → HP-150",
-      "IBM Simon → HP-150 → iPhone"
+      "iPhone → IBM Simon → HP-150",
+      "HP-150 → iPhone → IBM Simon"
     ],
     "correct": 1,
     "chapter": 7,
-    "hint": "Denkt an E. A. Johnson in England – lange bevor es Handys gab.",
-    "fifty": 2,
-    "countdown": 2592
+    "hint": "Der HP-150 war ein Bürocomputer aus den 80er-Jahren.",
+    "fifty": 0
   },
   {
     "id": "K7Q2",
-    "open": 2635,
-    "close": 2687,
-    "q": "Abschlussquiz 2: Welche Technik passt zu welcher Erklärung?",
+    "open": 2648.35,
+    "start": 2667.59,
+    "countdown": 2669.75,
+    "close": 2699.75,
+    "reveal": 2701.15,
+    "q": "Welche Technik passt zu welcher Erklärung?",
     "a": [
-      "Resistiv / Funksignale",
-      "Kapazitiv / Wasserdruck",
-      "Infrarot / Lichtstrahlen",
-      "OLED / Fingerabdrücke"
+      "Resistiv – Ultraschallwellen laufen über das Glas",
+      "SAW – zwei Schichten werden zusammengedrückt",
+      "Infrarot – der Finger unterbricht unsichtbare Lichtstrahlen",
+      "Kapazitiv – eine Kamera erkennt den Schatten des Fingers"
     ],
     "correct": 2,
     "chapter": 7,
-    "hint": "Euer Finger leitet ein kleines bisschen Strom – das misst der Bildschirm.",
-    "fifty": 3,
-    "countdown": 2657
+    "hint": "Denkt an den HP-150 von 1983.",
+    "fifty": 0
   },
   {
     "id": "K7Q3",
-    "open": 2704,
-    "close": 2763,
-    "q": "Abschlussquiz 3: OLED-Display + kapazitiver Touchscreen – welche Aussage stimmt?",
+    "open": 2718.05,
+    "start": 2744.01,
+    "countdown": 2746.36,
+    "close": 2776.36,
+    "reveal": 2778.61,
+    "q": "Ein Handy hat ein OLED-Display und einen kapazitiven Touchscreen. Welche Aussage stimmt?",
     "a": [
-      "Beide erkennen nur den Finger",
-      "OLED erkennt die Berührung",
-      "Der Touchsensor erzeugt das Bild",
-      "OLED macht das Bild, Touchsensor erkennt den Finger"
+      "Das OLED-Display erkennt die Berührung, der Touchsensor macht das Bild",
+      "Das OLED-Display braucht eine Hintergrundbeleuchtung",
+      "Der Touchsensor misst den Druck, das Display misst die Position",
+      "Das OLED-Display macht das Bild, der Touchsensor erkennt den Finger"
     ],
     "correct": 3,
     "chapter": 7,
-    "hint": "Denkt ans Zoomen mit zwei Fingern.",
-    "fifty": 1,
-    "countdown": 2733
+    "hint": "Bild und Berührung sind zwei verschiedene Aufgaben.",
+    "fifty": 0
   },
   {
     "id": "K7Q4",
-    "open": 2780,
-    "close": 2831,
-    "q": "Abschlussquiz 4: Auto mit 50 km/h, 2 Sekunden auf den Touchscreen – wie weit?",
+    "open": 2794.02,
+    "start": 2812.38,
+    "countdown": 2814.65,
+    "close": 2844.65,
+    "reveal": 2846.21,
+    "q": "Ein Auto fährt 50 km/h. Der Fahrer schaut 2 Sekunden auf den Touchscreen. Wie weit fährt er ungefähr, ohne auf die Straße zu schauen?",
     "a": [
-      "Etwa 3 Meter",
-      "Etwa 14 Meter",
-      "Fast 28 Meter",
-      "Etwa 100 Meter"
+      "etwa 3 Meter",
+      "etwa 10 Meter",
+      "fast 28 Meter",
+      "etwa 100 Meter"
     ],
     "correct": 2,
     "chapter": 7,
-    "hint": "Denkt an Supermarkt, Auto und Krankenhaus.",
-    "fifty": 0,
-    "countdown": 2801
+    "hint": "50 km/h sind fast 14 Meter pro Sekunde.",
+    "fifty": 1
   },
   {
     "id": "K7Q5",
-    "open": 2847,
-    "close": 2902,
-    "q": "Abschlussquiz 5: Wassertropfen öffnen eine App – warum?",
+    "open": 2861.09,
+    "start": 2883.61,
+    "countdown": 2885.8,
+    "close": 2915.8,
+    "reveal": 2917.52,
+    "q": "Auf einem Handydisplay liegen Wassertropfen, und plötzlich öffnet sich eine App. Warum?",
     "a": [
-      "Wasser ist leitfähig und kann kapazitive Berührungen auslösen",
-      "Wasser vergrößert die Pixel",
-      "Die Kamera erkennt Tropfen",
-      "Das Display denkt, es regnet"
+      "Wasser leitet Strom und verändert das elektrische Feld – ähnlich wie ein Finger",
+      "Die Tropfen drücken zwei Schichten zusammen",
+      "Die Tropfen unterbrechen ein Lichtgitter",
+      "Das Wasser kühlt das Display ab, und Kälte löst Berührungen aus"
     ],
     "correct": 0,
     "chapter": 7,
-    "hint": "Denkt daran, was Strom leitet.",
-    "fifty": 1,
-    "countdown": 2872
+    "hint": "Welche Technik steckt im Handy – und was leitet Strom?",
+    "fifty": 1
   }
 ]

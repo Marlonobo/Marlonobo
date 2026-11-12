@@ -162,20 +162,48 @@ function labChess(stage){
  const C=window.TouchChess;
  if(!C){stage.innerHTML='<p class="labMsg">Schach wird geladen … bitte Seite neu laden.</p>';return;}
  let level='medium',human='w',s=C.initial(),history=[],sel=-1,targets=[],last=null,thinking=false,timer=null,moves=[],over=null;
- try{const saved=JSON.parse(localStorage.getItem('touch_chess')||'null');if(saved&&saved.s&&Array.isArray(saved.s.b)&&saved.s.b.length===64){({level,human,s,moves}=saved);history=saved.history||[];last=saved.last||null;}}catch{}
+ // Schachuhr wie im Turnier: jede Seite hat ihre eigene Bedenkzeit, sie läuft nur, wenn man am Zug ist; nach jedem Zug gibt es den Zeitbonus.
+ const TCS={off:{label:'Ohne'},'3+2':{base:180,inc:2},'5+3':{base:300,inc:3},'10+5':{base:600,inc:5}};
+ let tc='5+3',clock={w:300000,b:300000},turnStart=performance.now(),flag=null,clockTimer=null;
+ try{const saved=JSON.parse(localStorage.getItem('touch_chess')||'null');if(saved&&saved.s&&Array.isArray(saved.s.b)&&saved.s.b.length===64){({level,human,s,moves}=saved);history=saved.history||[];last=saved.last||null;if(TCS[saved.tc])tc=saved.tc;if(saved.clock&&Number.isFinite(saved.clock.w)&&Number.isFinite(saved.clock.b))clock=saved.clock;flag=saved.flag||null;}}catch{}
  let stats={};try{stats=JSON.parse(localStorage.getItem('touch_chess_stats')||'{}');}catch{}
  const names={easy:'Leicht',medium:'Mittel',hard:'Schwer'};
- stage.innerHTML='<div class="chessWrap"><div class="chessBoardCol"><div class="chessBar chessBarTop"><span id="chBotName">🤖 Bot</span><span class="chessCaps" id="chCapsTop"></span></div>'+
+ stage.innerHTML='<div class="chessWrap"><div class="chessBoardCol"><div class="chessBar chessBarTop"><span id="chBotName">🤖 Bot</span><span class="chessBarRight"><span class="chessCaps" id="chCapsTop"></span><span class="chessClock" id="chClockTop" aria-label="Uhr des Bots"></span></span></div>'+
   '<div class="chessBoard" id="chBoard" role="grid" aria-label="Schachbrett"></div>'+
-  '<div class="chessBar"><span>🧑 Du</span><span class="chessCaps" id="chCapsBottom"></span></div></div>'+
+  '<div class="chessBar"><span>🧑 Du</span><span class="chessBarRight"><span class="chessCaps" id="chCapsBottom"></span><span class="chessClock" id="chClockBottom" aria-label="Deine Uhr"></span></span></div></div>'+
   '<aside class="chessSide"><div class="chessStatus" id="chStatus" role="status"></div>'+
   '<label class="chessLabel">Schwierigkeit</label><div class="chessSeg" id="chLevel">'+['easy','medium','hard'].map(l=>'<button type="button" data-level="'+l+'">'+names[l]+'</button>').join('')+'</div>'+
   '<label class="chessLabel">Deine Farbe</label><div class="chessSeg" id="chColor"><button type="button" data-color="w">♔ Weiß</button><button type="button" data-color="b">♚ Schwarz</button></div>'+
+  '<label class="chessLabel">Bedenkzeit (Minuten + Sekunden pro Zug)</label><div class="chessSeg" id="chTc">'+Object.keys(TCS).map(k=>'<button type="button" data-tc="'+k+'">'+(k==='off'?'Ohne':k)+'</button>').join('')+'</div>'+
   '<div class="chessBtns"><button type="button" class="primary" id="chNew">♟ Neues Spiel</button><button type="button" id="chUndo">↶ Zug zurück</button><button type="button" id="chHint">💡 Tipp</button></div>'+
   '<div class="chessMoves" id="chMoves" aria-label="Zugliste"></div><div class="chessStats" id="chStats"></div>'+
   '<p class="small">Tippe eine Figur an, dann das Zielfeld. Bauern werden automatisch zur Dame.</p></aside></div>';
  const board=el('chBoard');
- function save(){try{localStorage.setItem('touch_chess',JSON.stringify({level,human,s,moves,history,last}));}catch{}}
+ function useClock(){return tc!=='off';}
+ function left(side){return side===s.turn&&running()?clock[side]-(performance.now()-turnStart):clock[side];}
+ function running(){return useClock()&&!flag&&!C.status(s).over;}
+ function fmt(ms){ms=Math.max(0,ms);if(ms<20000)return (Math.floor(ms/100)/10).toFixed(1);const t=Math.ceil(ms/1000);return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');}
+ function freeze(){if(running()){clock[s.turn]=Math.max(0,left(s.turn));turnStart=performance.now();}}
+ function save(){freeze();try{localStorage.setItem('touch_chess',JSON.stringify({level,human,s,moves,history,last,tc,clock,flag}));}catch{}}
+ function resetClock(){const t=TCS[tc];clock=t&&t.base?{w:t.base*1000,b:t.base*1000}:{w:0,b:0};flag=null;turnStart=performance.now();}
+ function flagOver(){if(!flag)return null;const win=flag==='w'?'b':'w',rest=s.b.filter(p=>p&&C.colorOf(p)===win&&p.toLowerCase()!=='k');
+  return (!rest.length||(rest.length===1&&/[nb]/i.test(rest[0])))?{over:true,result:'draw',reason:'Zeit abgelaufen, aber zu wenig Material zum Mattsetzen'}:{over:true,result:win,reason:'Zeit abgelaufen'};}
+ function paintClocks(){
+  const top=el('chClockTop'),bot=el('chClockBottom');if(!top||!bot)return;
+  const botSide=human==='w'?'b':'w';
+  for(const [node,side] of [[top,botSide],[bot,human]]){
+   node.hidden=!useClock();if(!useClock())continue;
+   const ms=left(side);node.textContent=fmt(ms);
+   node.classList.toggle('run',running()&&s.turn===side);node.classList.toggle('low',ms<20000);node.classList.toggle('flag',flag===side);
+  }
+ }
+ function clockTick(){
+  if(!el('chClockTop')){clearInterval(clockTimer);return;}
+  if(running()&&left(s.turn)<=0){clock[s.turn]=0;flag=s.turn;clearTimeout(timer);thinking=false;
+   const fo=flagOver(),key=fo.result==='draw'?'d':fo.result===human?'w':'l';stats[level]=stats[level]||{w:0,l:0,d:0};stats[level][key]++;try{localStorage.setItem('touch_chess_stats',JSON.stringify(stats));}catch{}
+   save();paint();return;}
+  paintClocks();
+ }
  function paintStats(){const t=stats[level]||{w:0,l:0,d:0};el('chStats').innerHTML='Gegen <b>'+names[level]+'</b>: '+t.w+' Siege · '+t.d+' Remis · '+t.l+' Niederlagen';}
  function caps(){
   const start={p:8,n:2,b:2,r:2,q:1},cnt={};for(const p of s.b)if(p)cnt[p]=(cnt[p]||0)+1;
@@ -184,7 +212,7 @@ function labChess(stage){
   el('chCapsTop').textContent=lost(human);el('chCapsBottom').textContent=lost(human==='w'?'b':'w');
  }
  function paint(){
-  const st=C.status(s);over=st.over?st:null;
+  const st=C.status(s);over=flagOver()||(st.over?st:null);
   const order=[...Array(64).keys()];if(human==='b')order.reverse();
   const checkSq=!st.over&&st.check?C.kingSq(s,s.turn):(st.over&&st.reason==='Schachmatt'?C.kingSq(s,s.turn):-1);
   board.innerHTML=order.map(i=>{const p=s.b[i],dark=((i>>3)+(i&7))%2===1,isT=targets.some(m=>m.to===i);
@@ -194,24 +222,25 @@ function labChess(stage){
    return '<button type="button" class="'+cls+'" data-sq="'+i+'" aria-label="'+C.sqName(i)+(p?' '+p:'')+'">'+(p?'<span class="pc '+(C.colorOf(p)==='w'?'pw':'pb')+'">'+CHESS_GLYPH[p]+'︎</span>':'')+coord+fileLbl+'</button>';}).join('');
   document.querySelectorAll('#chLevel [data-level]').forEach(b=>b.classList.toggle('on',b.dataset.level===level));
   document.querySelectorAll('#chColor [data-color]').forEach(b=>b.classList.toggle('on',b.dataset.color===human));
+  document.querySelectorAll('#chTc [data-tc]').forEach(b=>b.classList.toggle('on',b.dataset.tc===tc));
   el('chBotName').textContent='🤖 Bot · '+names[level];
   const msg=el('chStatus');
   if(over){const youWin=over.result===human,draw=over.result==='draw';msg.innerHTML=(draw?'🤝 Remis':youWin?'🏆 Gewonnen!':'🤖 Der Bot gewinnt')+' <small>'+over.reason+'</small>';msg.className='chessStatus '+(draw?'':youWin?'win':'lose');}
   else{msg.textContent=thinking?'🤖 Bot denkt nach …':s.turn===human?(st.check?'⚠️ Schach! Du bist am Zug.':'Du bist am Zug.'):'🤖 Bot ist am Zug.';msg.className='chessStatus'+(thinking?' think':'');}
   const list=el('chMoves');list.innerHTML=moves.length?moves.map((m,i)=>(i%2===0?'<span class="nr">'+(i/2+1)+'.</span>':'')+'<span>'+esc(m)+'</span>').join(''):'<span class="small">Noch keine Züge.</span>';list.scrollTop=list.scrollHeight;
-  caps();paintStats();
+  caps();paintStats();paintClocks();
  }
  function finishCheck(){
   const st=C.status(s);if(!st.over)return;
   const key=st.result==='draw'?'d':st.result===human?'w':'l';
   stats[level]=stats[level]||{w:0,l:0,d:0};stats[level][key]++;try{localStorage.setItem('touch_chess_stats',JSON.stringify(stats));}catch{}
  }
- function play(m){history.push({s,moves:moves.slice(),last});moves.push(C.san(s,m));s=C.make(s,m);last={from:m.from,to:m.to};sel=-1;targets=[];save();finishCheck();}
+ function play(m){if(flag)return;const mover=s.turn;if(running()){clock[mover]=Math.max(0,left(mover))+(TCS[tc].inc||0)*1000;}history.push({s,moves:moves.slice(),last,clock:{...clock}});moves.push(C.san(s,m));s=C.make(s,m);last={from:m.from,to:m.to};turnStart=performance.now();sel=-1;targets=[];save();finishCheck();}
  function botMove(){
   if(C.status(s).over||s.turn===human)return;
   thinking=true;paint();
   timer=setTimeout(()=>{ // kurz warten, damit der Hinweis sichtbar ist
-   const m=C.bestMove(s,level);thinking=false;if(m)play(m);paint();
+   if(flag){thinking=false;paint();return;}const rest=useClock()?left(s.turn):Infinity;const m=C.bestMove(s,rest<15000?'easy':rest<60000&&level==='hard'?'medium':level);thinking=false;if(m)play(m);paint();
   },level==='easy'?350:120);
  }
  board.onclick=e=>{
@@ -224,11 +253,13 @@ function labChess(stage){
  };
  el('chLevel').onclick=e=>{const b=e.target.closest('[data-level]');if(!b||thinking)return;level=b.dataset.level;save();paint();};
  el('chColor').onclick=e=>{const b=e.target.closest('[data-color]');if(!b||thinking)return;human=b.dataset.color;newGame();};
- function newGame(){clearTimeout(timer);thinking=false;s=C.initial();history=[];moves=[];last=null;sel=-1;targets=[];save();paint();botMove();}
+ el('chTc').onclick=e=>{const b=e.target.closest('[data-tc]');if(!b||thinking)return;tc=b.dataset.tc;newGame();};
+ function newGame(){clearTimeout(timer);thinking=false;s=C.initial();history=[];moves=[];last=null;sel=-1;targets=[];resetClock();save();paint();botMove();}
  el('chNew').onclick=newGame;
- el('chUndo').onclick=()=>{if(thinking)return;let h=history.pop();if(h&&h.s.turn!==human)h=history.pop()||h;if(!h)return;({s,moves,last}=h);sel=-1;targets=[];save();paint();};
+ el('chUndo').onclick=()=>{if(thinking||flag)return;let h=history.pop();if(h&&h.s.turn!==human)h=history.pop()||h;if(!h)return;({s,moves,last}=h);if(h.clock)clock={...h.clock};turnStart=performance.now();sel=-1;targets=[];save();paint();};
  el('chHint').onclick=()=>{if(thinking||over||s.turn!==human)return;const m=C.bestMove(s,'medium');if(!m)return;sel=m.from;targets=[m];paint();el('chStatus').textContent='💡 Tipp: '+C.san(s,m);};
- labGame={stop:()=>clearTimeout(timer)};
+ labGame={stop:()=>{clearTimeout(timer);clearInterval(clockTimer);save();}};
+ turnStart=performance.now();clearInterval(clockTimer);clockTimer=setInterval(clockTick,100);
  paint();botMove();
 }
 function labReaction(stage,restart){
@@ -434,20 +465,21 @@ function userPage(){
  if(state.phase==='welcome')body=waiting('Willkommen, '+esc(userName)+'!','Wir beginnen gleich. Bitte schaut auf den Beamer.','✦');
  else if(state.phase==='gesture'||state.sideGame==='gesture')body='<div class="card fingerMissionCard"><div id="fingerMissionMount"></div></div>';
  else if(q&&q.type==='zoom')body=zoomCard(q,p,answered);
- else if(p.reveal&&!(q&&q.accepting)){const r=p.reveal,skipped=r.choice===null;
+ else if(p.reveal&&!(q&&(q.accepting||q.listen))){const r=p.reveal,skipped=r.choice===null;
   body='<div class="card quiz quizReveal '+(r.right?'isRight':'isWrong')+'"><span class="chip">AUFLÖSUNG · FRAGE '+r.nr+'</span><div class="revealIcon" aria-hidden="true">'+(r.right?'✓':skipped?'–':'✗')+'</div><h2>'+(r.right?'Richtig!':skipped?'Keine Antwort abgegeben':'Leider falsch')+'</h2>'+(r.right?'<div class="revealPoints">+'+r.points+' Punkte</div>':'')+'<p class="small">'+esc(r.q)+'</p><div class="revealAnswer"><small>Richtige Antwort</small><b>'+esc(r.answer)+'</b></div><p class="small">Die Dokumentation läuft weiter – die nächste Frage kommt automatisch.</p></div>';}
- else if(q&&!q.accepting)body=waiting('Schau auf den Beamer.','Die Antwortzeit ist vorbei. Gleich kommt im Film die Auflösung.','◉');
+ else if(q&&!q.accepting&&!q.listen)body=waiting('Schau auf den Beamer.','Die Antwortzeit ist vorbei. Gleich kommt im Film die Auflösung.','◉');
   else if(q){const hide=p.hide||[],jk=p.jokers||{},canJ=q.jokers&&q.accepting&&!answered;
   const jbar=q.jokers?'<div class="jokers">'+(jk.fifty?'':'<button class="joker" data-joker="fifty" '+(canJ?'':'disabled')+'>50:50</button>')+(jk.hint?'':'<button class="joker" data-joker="hint" '+(canJ?'':'disabled')+'>💡 Tipp</button>')+(jk.fifty&&jk.hint?'<span class="small">Alle Joker eingesetzt</span>':'<span class="small">Jeder Joker nur einmal im ganzen Abschlussquiz</span>')+'</div>':'';
-  body='<div class="card quiz quizCinematic"><div class="between"><span class="chip">'+(q.jokers?'ABSCHLUSSQUIZ · ':'')+'FRAGE '+(q.index+1)+' / '+q.total+'</span><div class="quizTimerHud"><div id="liveTimer" class="timer">'+q.remaining+' s</div><div class="quizTimeTrack" aria-hidden="true"><i id="quizTimeFill"></i></div><small class="quizTimerCaption" id="quizTimerCaption">⏱ Zeit für deine Antwort</small></div></div>'+jbar+'<h2>'+esc(q.q)+'</h2>'+(p.hint?'<div class="hintbox">💡 '+esc(p.hint)+'</div>':'')+'<div class="answers">'+q.a.map((v,i)=>'<button class="answer'+(answered&&p.choice===i?' chosen':'')+(hide.includes(i)?' gone':'')+'" style="--answer-index:'+i+'" data-choice="'+i+'" '+(answered||!q.accepting||hide.includes(i)?'disabled':'')+'><b>'+String.fromCharCode(65+i)+'</b><span>'+esc(v)+'</span></button>').join('')+'</div><p class="small" style="margin-top:17px">'+(answered?'✓ Deine Antwort ist gespeichert. Ob sie richtig ist, siehst du, sobald im Film die Auflösung kommt. Schau jetzt wieder auf den Beamer.':q.accepting?'Wähle eine Antwort. Jede Frage kann nur einmal beantwortet werden.':'Antwortzeit vorbei. Bitte wieder auf den Beamer schauen.')+'</p></div>';}
+  body='<div class="card quiz quizCinematic"><div class="between"><span class="chip">'+(q.jokers?'ABSCHLUSSQUIZ · ':'')+'FRAGE '+(q.index+1)+' / '+q.total+'</span><div class="quizTimerHud"><div id="liveTimer" class="timer">'+q.remaining+' s</div><div class="quizTimeTrack" aria-hidden="true"><i id="quizTimeFill"></i></div><small class="quizTimerCaption" id="quizTimerCaption">⏱ Zeit für deine Antwort</small></div></div>'+jbar+'<h2>'+esc(q.q)+'</h2>'+(p.hint?'<div class="hintbox">💡 '+esc(p.hint)+'</div>':'')+'<div class="answers">'+q.a.map((v,i)=>'<button class="answer'+(answered&&p.choice===i?' chosen':'')+(hide.includes(i)?' gone':'')+'" style="--answer-index:'+i+'" data-choice="'+i+'" '+(!q.accepting||hide.includes(i)?'disabled':'')+'><b>'+String.fromCharCode(65+i)+'</b><span>'+esc(v)+'</span></button>').join('')+'</div><p class="small" style="margin-top:17px">'+(q.listen?'<span class="listenline">🎧 Hör gut zu – sobald im Film die 30 Sekunden starten, kannst du tippen.</span>':answered&&q.accepting?'✓ Deine Antwort: <b>'+String.fromCharCode(65+p.choice)+'</b>. Du kannst sie noch ändern, bis die Zeit abläuft. Ob sie richtig ist, siehst du, sobald im Film die Auflösung kommt.':q.accepting?'Wähle eine Antwort. Bis die Zeit abläuft, kannst du sie noch ändern.':answered?'✓ Deine Antwort ist gespeichert. Gleich kommt im Film die Auflösung.':'Antwortzeit vorbei. Bitte wieder auf den Beamer schauen.')+'</p></div>';}
  else if(state.phase==='results'||state.phase==='end'||state.phase==='handout')body='<div class="card"><span class="eyebrow">ABSCHLUSS</span><h2>Danke für deine Rückmeldung!</h2><p>Dein Punktestand</p><div class="values">'+(p.score||0)+'</div>'+prizeCard()+zoomSolution()+'<h3>Gemeinsame Rangliste</h3>'+ranking()+'<div class="flex" style="margin-top:23px"><a href="/#handout" class="btn primary">Handout ausfüllen & PDF speichern</a><a href="/" class="btn">🎮 Touch-Labor & Schach</a></div></div>';
+ else if(state.waitReveal)body=waiting('⏱ Zeit vorbei.','Gleich kommt im Film die Lösung – schau auf den Beamer.','◉');
  else body=waiting('Bitte auf den Beamer schauen.','Die Dokumentation läuft. Die nächste Frage erscheint automatisch.','◉');
  // Film + subtitles on every device (phone, iPad, laptop) via the synchronized /watch page.
  const onlineFilm=state.video&&['youtube','url','upload'].includes(state.video.type)||state.remoteVideo&&state.remoteVideo.type!=='none';
  const notes='';
  wrap(page('Die Dokumentation läuft.',isTeacher?'LEHRER · LIVE MITMACHEN':'SCHÜLER · LIVE MITMACHEN',isTeacher?'Teilnehmer: '+esc(userName)+' · Lehrer · '+state.participants+' angemeldet':'👤 '+esc(userName))+body+notes);
  document.querySelectorAll('[data-choice]').forEach(b=>b.onclick=async()=>{
-  if(b.disabled)return;
+  if(b.disabled||b.classList.contains('chosen'))return;
   const choice=Number(b.dataset.choice);
   document.querySelectorAll('[data-choice]').forEach(option=>{option.disabled=true;option.classList.toggle('answerSubmitting',option===b);});
   b.setAttribute('aria-pressed','true');
@@ -2172,7 +2204,7 @@ async function poll(force=false){
  if((role==='admin'||role==='control')&&old?.phase!=='film'&&next.phase==='film'&&next.playing&&window.SpotifyConnect?.connected?.()){
   window.SpotifyConnect.pauseForFilm().catch(()=>{});
  }
- if(role==='join'||role==='teacher'){const player=state.player||{};const q=state.quiz;const missionActive=q?.type==='zoom'||state.phase==='gesture'||state.sideGame==='gesture';const sig=[role,state.phase,state.sideGame||'',q?.id||'',player?.id||'',player?.name||'',q?.accepting||false,missionActive?'mission-stable':player.choice,player.score,missionActive?'no-rerender':state.revision,missionActive?'no-participants-rerender':state.participants,JSON.stringify(player.jokers||{}),(player.hide||[]).join(),player.hint||'',missionActive?'no-results-rerender':JSON.stringify(state.zoomResult||'')].join('|');if(force||renderSignature!==sig){renderSignature=sig;userPage();participantMode();}else if(q){paintQuizTimer(q);if(q?.type==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!state.player?.zoomFound,disabled:!q.accepting});}if((state.phase==='gesture'||state.sideGame==='gesture')&&fingerMissionInstance)fingerMissionInstance.update({remaining:state.gestureRemaining,disabled:state.gestureRemaining<=0});}
+ if(role==='join'||role==='teacher'){const player=state.player||{};const q=state.quiz;const missionActive=q?.type==='zoom'||state.phase==='gesture'||state.sideGame==='gesture';const sig=[role,state.phase,state.sideGame||'',q?.id||'',player?.id||'',player?.name||'',q?.accepting||false,q?.listen||false,player.reveal?player.reveal.nr:'',state.waitReveal||false,missionActive?'mission-stable':player.choice,player.score,missionActive?'no-rerender':state.revision,missionActive?'no-participants-rerender':state.participants,JSON.stringify(player.jokers||{}),(player.hide||[]).join(),player.hint||'',missionActive?'no-results-rerender':JSON.stringify(state.zoomResult||'')].join('|');if(force||renderSignature!==sig){renderSignature=sig;userPage();participantMode();}else if(q){paintQuizTimer(q);if(q?.type==='zoom'&&easterInstance)easterInstance.update({remaining:q.remaining,found:!!state.player?.zoomFound,disabled:!q.accepting});}if((state.phase==='gesture'||state.sideGame==='gesture')&&fingerMissionInstance)fingerMissionInstance.update({remaining:state.gestureRemaining,disabled:state.gestureRemaining<=0});}
  if(role==='join')refreshStudentScoreBadge();
  if(role==='tv'&&old&&old.phase!==next.phase&&['film','trailer'].includes(next.phase)&&window.SpotifyConnect?.webPlayerActive?.())window.SpotifyConnect.pauseWebPlayer().catch(()=>{});
  if(next.spotifyClientId&&window.SpotifyConnect?.setDefaultClientId)window.SpotifyConnect.setDefaultClientId(next.spotifyClientId);
@@ -2225,7 +2257,7 @@ window.addEventListener('hashchange',router);
 router();setInterval(()=>{poll();},900);
 setTimeout(refreshTvAppVersion,2000);
 setInterval(refreshTvAppVersion,20000);
-setInterval(()=>{if(role==='tv'&&state?.phase==='film'&&state.video.type!=='none')sendTick(state.playing);},1100);
+setInterval(()=>{if(role==='tv'&&state?.phase==='film'&&state.video.type!=='none')sendTick(state.playing);},600);
 setInterval(()=>{if(role==='tv')reportWelcomeAudio();},9000);
 setInterval(()=>{if(role==='tv'&&state?.video?.type==='local'&&tvLocalLoaded)announceLocalHDMI();},6000);
 })();

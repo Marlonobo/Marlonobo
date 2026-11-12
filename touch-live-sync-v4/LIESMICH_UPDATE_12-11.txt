@@ -1,0 +1,21 @@
+TOUCH LIVE – Update 12.11.2026 abends (baut auf dem aktuellen Stand von GitHub auf, Commit 0c49c39)
+
+Diese 6 Dateien im Ordner touch-live-sync-v4 ersetzen:
+  app.js, server.js, style.css, questions.json, index.html, party.js
+Alles andere bleibt, wie es ist: Schach, Easter Egg, Siegerehrung, Party, Handout und Spotify.
+
+Neu:
+1. Quiz genau wie im Film (TOUCHSCREEN_FINAL, Stand 12.11.)
+   - Alle 17 Quizzeiten neu aus dem fertigen Film. Vorher war das Quiz 10 bis 14 Sekunden zu früh.
+   - Frage- und Antworttexte Wort für Wort wie im Film. Vorher waren z. B. im Abschlussquiz die Antworten anders sortiert.
+   - Getippt wird erst ab „Ihr habt jetzt 30 Sekunden …“. Vorher steht auf dem iPad „Hör gut zu“.
+   - Die Uhr auf dem iPad zeigt dieselben Sekunden wie der Film, z. B. bei 5:01 noch 27 Sekunden.
+   - Die Antwort lässt sich bis zum Ablauf der Zeit ändern. Es zählt die letzte Antwort.
+   - Lösung und Punkte kommen genau dann, wenn sie im Film kommen. Davor steht „Zeit vorbei – gleich kommt die Lösung“.
+   - Die Webseite zählt zwischen zwei Meldungen des Players weiter, sodass höchstens etwa 1 Sekunde Abstand zum Film bleibt. Der Beamer meldet die Filmzeit jetzt doppelt so oft.
+   - Beim ersten Start nach dem Hochladen übernimmt der Server die neuen Zeiten einmalig (Datei film-cues-2026-11-12-v7.applied) und setzt die Quiz-Korrektur auf 0.
+2. Schach mit Schachuhr wie im echten Schach
+   - Bedenkzeit wählbar: Ohne · 3+2 · 5+3 · 10+5 (Minuten + Sekunden Bonus pro Zug)
+   - Jede Seite hat ihre eigene Uhr. Sie läuft nur, wenn man am Zug ist. Nach jedem Zug kommt der Bonus dazu. Unter 20 Sekunden mit Zehnteln.
+   - Ist die Zeit abgelaufen, ist die Partie verloren. Remis, wenn der Gegner nicht mehr mattsetzen kann.
+   - Der Bot verbraucht auch Bedenkzeit und spielt bei knapper Zeit schneller.

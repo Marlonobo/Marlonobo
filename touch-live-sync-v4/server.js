@@ -55,6 +55,25 @@ if(!fs.existsSync(V4_CUES_MARKER)){
  }catch(e){console.error('V4-Zeitmarken konnten nicht aktualisiert werden:',e.message);}
 }
 
+// 12.11.: Zeiten und Texte genau wie im fertigen Film (Timeline „TOUCHSCREEN_FINAL_v6 (10.11.2026)“, Stand 12.11.).
+// open = Quiz erscheint im Film, start = „Ihr habt jetzt 30 Sekunden …“ (ab da tippen), countdown/close = 30-s-Uhr im Film,
+// reveal = Auflösung im Film. Einmalig auch auf bestehenden Render-Instanzen; quizOffset wird dabei auf 0 gesetzt.
+const V7_CUES_MARKER=path.join(DIR,'film-cues-2026-11-12-v7.applied');
+let migratedV7=false;
+if(!fs.existsSync(V7_CUES_MARKER)){
+ try{
+  const latest=JSON.parse(fs.readFileSync(path.join(ROOT,'questions.json'),'utf8'));
+  for(const target of Q){const source=latest.find(x=>x.id===target.id);if(!source)continue;
+   for(const key of ['open','start','countdown','close','reveal','duration','q','a','correct','hint','fifty']){
+    if(Object.hasOwn(source,key))target[key]=source[key];else delete target[key];
+   }
+  }
+  fs.writeFileSync(QUESTIONS_FILE,JSON.stringify(Q,null,2),'utf8');
+  fs.writeFileSync(V7_CUES_MARKER,new Date().toISOString(),'utf8');
+  migratedV7=true;
+ }catch(e){console.error('V7-Zeitmarken konnten nicht aktualisiert werden:',e.message);}
+}
+
 const def=()=>({homeUnlocked:false,trailerPlaying:false,trailerSerial:0,trailerRevision:0,phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,videoVolume:1,videoTitle:'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{url:'',type:'',id:'',on:false},musicPlan:{welcome:{mode:'touch'},end:{mode:'off'}},podiumPlan:{mode:'own'},spotifyClientId:'',soundtrack:{pause:true,results:true,volume:.25},captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},remoteVideo:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,continuousWatch:false,zoomDismissed:false,zoomOverlay:false,zoomOverlayStartTime:0,demoOverlay:false,gestureOverlay:false,gestureOverlayStartTime:0,gestureStartTime:0,gestureReturnPhase:'welcome',resultsAt:0,clockSource:'tv',lastHostTick:0,seekSerial:0,removedUserIds:[],revision:0});
 let s=def(), users=new Map(), upload=null,feedback=[],cloudManifest=null;
 // This is intentionally volatile: choosing a file on a Windows PC never uploads its bytes.
@@ -70,7 +89,7 @@ const DEFAULT_VIDEO=(()=>{const id=youtubeIdSafe(process.env.DEFAULT_VIDEO_URL||
 function youtubeIdSafe(link){try{return youtubeId(String(link).trim());}catch{return null;}}
 if(DEFAULT_VIDEO&&(!s.video||s.video.type==='none'||s.video.type==='upload'||s.video.type==='local'))s.video=DEFAULT_VIDEO;
 if(process.env.DEFAULT_VIDEO_TITLE&&String(process.env.DEFAULT_VIDEO_TITLE).trim().length>=3)s.videoTitle=String(process.env.DEFAULT_VIDEO_TITLE).trim().slice(0,110);
-if(migratedFilmCues){s.quizOffset=0;try{fs.writeFileSync(STATE_FILE,JSON.stringify(s),'utf8');}catch(e){console.error('Quiz-Offset nicht gesichert:',e.message);}}
+if(migratedFilmCues||migratedV7){s.quizOffset=0;try{fs.writeFileSync(STATE_FILE,JSON.stringify(s),'utf8');}catch(e){console.error('Quiz-Offset nicht gesichert:',e.message);}}
 
 const FEEDBACK_FILE=path.join(DIR,'feedback.json');
 try{const f=JSON.parse(fs.readFileSync(FEEDBACK_FILE,'utf8'));if(Array.isArray(f))feedback=f.slice(-500);}catch{}
@@ -162,8 +181,15 @@ function isTv(req){return secure(req.headers['x-tv-key'],TV);}
 function isCohost(req){return secure(req.headers['x-cohost-key'],COHOST);}
 function isTeacher(req){return secure(req.headers['x-teacher-key'],TEACHER)||isAdmin(req);}
 function isStoragePublisher(req){return isAdmin(req)||isCohost(req);}
+let clockAt=0,clockVal=null;
+function filmNow(){
+ if(clockVal!==s.time){clockVal=s.time;clockAt=Date.now();}
+ if(s.phase==='film'&&s.playing&&clockAt)return s.time+Math.min(1.5,Math.max(0,(Date.now()-clockAt)/1000));
+ return s.time;
+}
+function clockMark(){clockVal=s.time;clockAt=Date.now();}
 function active(){
- let i=-1,remaining=0;
+ let i=-1,remaining=0;const T=filmNow();let listen=false;
  let isDemoOverlay=false,isManualZoomOverlay=false;
  if(s.phase==='film'){
   if(s.continuousWatch&&s.demoOverlay&&Date.now()-s.demoStart<45000){
@@ -171,21 +197,23 @@ function active(){
   }
   const z=ZOOM();
   if(!isDemoOverlay){
-   if(s.zoomOverlay&&z&&s.time>=s.zoomOverlayStartTime&&s.time<s.zoomOverlayStartTime+ZOOM_MISSION_SECONDS){
+   if(s.zoomOverlay&&z&&T>=s.zoomOverlayStartTime&&T<s.zoomOverlayStartTime+ZOOM_MISSION_SECONDS){
     i=Q.findIndex(q=>q.id===z.id);isManualZoomOverlay=true;
    }
-   else if(z&&!s.zoomDismissed&&s.time>=z.open+s.quizOffset&&s.time<z.open+s.quizOffset+ZOOM_MISSION_SECONDS)
+   else if(z&&!s.zoomDismissed&&T>=z.open+s.quizOffset&&T<z.open+s.quizOffset+ZOOM_MISSION_SECONDS)
     i=Q.findIndex(q=>q.id===z.id);
-   else i=Q.findIndex(q=>q.type!=='zoom'&&s.time>=q.open+s.quizOffset&&s.time<q.close+s.quizOffset);
+   else i=Q.findIndex(q=>q.type!=='zoom'&&T>=q.open+s.quizOffset&&T<q.close+s.quizOffset);
   }
  }
  else if(s.phase==='zoom')i=Q.findIndex(q=>q.type==='zoom');
  else if(s.phase==='demo')i=Math.max(0,Math.min(Q.length-1,s.demoIndex));
  if(i<0)return {index:-1,remaining:0,accepting:false};
  const q=Q[i];
- const left=(s.phase==='demo'||isDemoOverlay)?45-(Date.now()-s.demoStart)/1000:q.type==='zoom'?(isManualZoomOverlay?ZOOM_MISSION_SECONDS-(s.time-s.zoomOverlayStartTime):s.phase==='film'?ZOOM_MISSION_SECONDS-(s.time-(q.open+s.quizOffset)):ZOOM_MISSION_SECONDS-(Date.now()-s.zoomStart)/1000):Math.min(30,30-(s.time-((q.countdown??q.open)+s.quizOffset)),q.close+s.quizOffset-s.time);
+ const left=(s.phase==='demo'||isDemoOverlay)?45-(Date.now()-s.demoStart)/1000:q.type==='zoom'?(isManualZoomOverlay?ZOOM_MISSION_SECONDS-(T-s.zoomOverlayStartTime):s.phase==='film'?ZOOM_MISSION_SECONDS-(T-(q.open+s.quizOffset)):ZOOM_MISSION_SECONDS-(Date.now()-s.zoomStart)/1000):Math.min(30,30-(T-((q.countdown??q.open)+s.quizOffset)),q.close+s.quizOffset-T);
  remaining=Math.max(0,Math.ceil(left));
- return {index:i,remaining,accepting:left>0};
+ // Wie im Film: Frage und Antworten sind schon zu sehen, getippt wird erst ab „Ihr habt jetzt 30 Sekunden …“.
+ if(s.phase==='film'&&!isDemoOverlay&&q.type!=='zoom'&&Number.isFinite(q.start)&&T<q.start+s.quizOffset)listen=true;
+ return {index:i,remaining,accepting:left>0&&!listen,listen};
 }
 // Freie Musik für die Siegerehrung (OpenGameArt / Silverman Sound), als Datei im Projekt.
 const PODIUM_DIR=path.join(ROOT,'podium-music');
@@ -195,14 +223,18 @@ function podiumFiles(){const out={};for(const k of['p3','p2','p1']){const f=podi
 // Erst wenn im Film der Haken kommt (Ende der Frage = close), wird aufgelöst.
 const REVEAL_SECONDS=12;
 function pendingQuestion(a=active()){
- if(a.index<0)return null;const q=Q[a.index];if(!q||q.type==='zoom')return null;
+ if(a.index<0){
+  if(s.phase!=='film')return null;const T=filmNow();
+  return Q.find(q=>q.type!=='zoom'&&Number.isFinite(q.reveal)&&T>=q.close+s.quizOffset&&T<q.reveal+s.quizOffset)||null;
+ }
+ const q=Q[a.index];if(!q||q.type==='zoom')return null;
  if((s.phase==='demo'||s.demoOverlay)&&!a.accepting)return null;
  return q;
 }
 function revealQuestion(a=active()){
- if(a.index>=0){const q=Q[a.index];return q&&q.type!=='zoom'&&!pendingQuestion(a)?q:null;}
- if(s.phase!=='film')return null;
- return Q.find(q=>q.type!=='zoom'&&s.time>=q.close+s.quizOffset&&s.time<q.close+s.quizOffset+REVEAL_SECONDS)||null;
+ if(a.index>=0){const q=Q[a.index];return q&&q.type!=='zoom'&&!pendingQuestion(a)&&!a.listen?q:null;}
+ if(s.phase!=='film')return null;const T=filmNow();
+ return Q.find(q=>{if(q.type==='zoom')return false;const r=(Number.isFinite(q.reveal)?q.reveal:q.close)+s.quizOffset;return T>=r&&T<r+REVEAL_SECONDS;})||null;
 }
 const hiddenPoints=(x,pq)=>pq&&x.answers&&x.answers[pq.id]===pq.correct?100:0;
 function publicState(id){
@@ -222,8 +254,8 @@ function publicState(id){
   :s.phase==='gesture'?Math.max(0,Math.ceil(GESTURE_MISSION_SECONDS-(Date.now()-(s.gestureStartTime||Date.now()))/1000)):0;
  const gestureActive=gestureSeconds>0&&(s.phase==='gesture'||(s.phase==='film'&&s.gestureOverlay));
  return {homeUnlocked:!!s.homeUnlocked,trailerAvailable:!!trailerPath(),trailerPlaying:!!s.trailerPlaying,trailerSerial:s.trailerSerial||0,trailerRevision:s.trailerRevision||0,tvAudio:Date.now()-tvAudioReport.updated<25000?{connected:true,playing:tvAudioReport.playing,blocked:tvAudioReport.blocked,error:tvAudioReport.error}:{connected:false,playing:false,blocked:false,error:''},phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},musicPlan:s.musicPlan||{welcome:{mode:'touch'},end:{mode:'off'}},podiumPlan:s.podiumPlan||{mode:'own'},podiumFiles:podiumFiles(),spotifyClientId:s.spotifyClientId||'',spotifyLinked:!!spotifyAuth?.refreshToken,soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
-  quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,a:q.a,duration:q.type==='zoom'?ZOOM_MISSION_SECONDS:((s.phase==='demo'||s.demoOverlay)?45:30),remaining:a.remaining,accepting:a.accepting,foundCount:q.type==='zoom'?[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length:0,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
-  player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)||fs.existsSync(BUNDLED_SUB_FILE)};
+  quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,a:q.a,duration:q.type==='zoom'?ZOOM_MISSION_SECONDS:((s.phase==='demo'||s.demoOverlay)?45:30),remaining:a.remaining,accepting:a.accepting,listen:!!a.listen,foundCount:q.type==='zoom'?[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length:0,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
+  waitReveal:!!(a.index<0&&pq),player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)||fs.existsSync(BUNDLED_SUB_FILE)};
 }
 function startZoom(){const z=ZOOM();if(!z)return false;
  if(s.phase==='film'){
@@ -532,11 +564,11 @@ async function handler(req,res){
  if(m==='POST'&&p==='/api/answer'){
  const b=await read(req,1000),x=users.get(String(b.id||'')),a=active();
  if(!x)return send(res,400,{error:'Bitte erneut anmelden.'});
- if(a.index<0||!a.accepting)return send(res,409,{error:'Die Quizzeit ist vorbei.'});
+ if(a.index<0||!a.accepting)return send(res,409,{error:a.listen?'Gleich geht es los – die 30 Sekunden starten noch.':'Die Quizzeit ist vorbei.'});
  const q=Q[a.index],choice=Number(b.choice);
  if(q.type==='zoom')return send(res,409,{error:'Hier musst du das Easter Egg im Bild finden – eine Antwort anzuklicken reicht nicht.'});
  if(!Number.isInteger(choice)||choice<0||choice>3)return send(res,400,{error:'Antwort ungueltig'});
- if(Object.hasOwn(x.answers,q.id))return send(res,409,{error:'Schon beantwortet.'});
+ if(Object.hasOwn(x.answers,q.id)){const old=x.answers[q.id];if(old===choice)return send(res,200,{ok:true});if(old===q.correct)x.score-=100;}
  x.answers[q.id]=choice;if(choice===q.correct)x.score+=100;saveUsers();
  return send(res,200,{ok:true});
  }
@@ -570,7 +602,7 @@ async function handler(req,res){
   if(!s.playing)return send(res,200,{ok:true,ignored:'presenter_paused',time:s.time,playing:false});
   if(t+.65<s.time)return send(res,200,{ok:true,ignored:'stale_backward_tick',time:s.time,playing:s.playing});
  }
- s.clockSource='host';s.lastHostTick=Date.now();s.time=Math.round(t*100)/100;
+ s.clockSource='host';s.lastHostTick=Date.now();s.time=Math.round(t*100)/100;clockMark();
  const z=ZOOM();if(z&&!s.zoomDone&&s.time>=z.open&&s.time<z.open+20){startZoom();return send(res,200,{ok:true,zoom:true});}
  // Buffering is not a pause command: only presenter actions can pause a shared screening.
  if(!s.continuousWatch)s.playing=!!b.playing;
@@ -584,7 +616,7 @@ async function handler(req,res){
  const b=await read(req,1000);if(s.phase!=='film')return send(res,200,{ok:false});
  if(s.clockSource==='host'&&Date.now()-(s.lastHostTick||0)<20000)return send(res,200,{ok:true,ignored:'host_is_primary'});
  s.clockSource='tv';if(s.video?.type==='local'&&localMedia.lastSeen)localMedia.lastSeen=Date.now();const t=Number(b.time);
- if(Number.isFinite(t)&&t>=0&&t<=20000)s.time=Math.round(t*100)/100;
+ if(Number.isFinite(t)&&t>=0&&t<=20000){s.time=Math.round(t*100)/100;clockMark();}
  const z=ZOOM();if(z&&!s.zoomDone&&s.time>=z.open&&s.time<z.open+20){startZoom();return send(res,200,{ok:true,zoom:true});}
  s.playing=!!b.playing;if(b.ended===true){s.phase='results';s.resultsAt=Date.now();s.playing=false;s.revision++;await persist();}return send(res,200,{ok:true});
  }
