@@ -1896,6 +1896,22 @@ async function sourcesPage(){
    li(link('https://render.com','Render'),'Hosting der Webseite')+
   '</ul></section></div>');
 }
+// Arbeitsblatt: alles aus der Doku ableitbar, keine Rechenaufgaben.
+const MATCH=[
+ ['op','Im <b>Krankenhaus</b>: Eine Ärztin bedient ein Gerät mit <b>Gummihandschuhen</b>, danach wird es desinfiziert.',['resistiv','infrarot']],
+ ['phone','Ein <b>Smartphone</b>, auf dem man Fotos mit <b>zwei Fingern</b> zoomt.',['kapazitiv']],
+ ['board','Eine <b>große Tafel im Klassenraum</b> – man schreibt mit Finger oder irgendeinem Stift.',['infrarot','optisch']],
+ ['pay','Das <b>Kartenterminal</b> an der Supermarktkasse – günstig, mit Druck bedienbar.',['resistiv']],
+ ['fair','Ein riesiger <b>Touch-Tisch auf einer Messe</b>, an dem viele gleichzeitig spielen.',['optisch','infrarot']]
+];
+const RF=[
+ ['pixel','Die Pixel des Displays erkennen, wo man den Bildschirm berührt.','F'],
+ ['simon','Schon vor dem iPhone (2007) gab es Smartphones mit Touchscreen.','R'],
+ ['glove','Ein normaler Handschuh funktioniert auf dem Smartphone, weil der Druck reicht.','F'],
+ ['water','Wassertropfen können auf einem kapazitiven Display eine App öffnen.','R'],
+ ['zoom','Beim Zoomen mit zwei Fingern erkennt der Sensor zwei Berührungen gleichzeitig.','R'],
+ ['haptic','Haptisches Feedback heißt: Das Gerät spielt einen Ton ab.','F']
+];
 function handout(){
  // Handout (A4, 2 Seiten). Jedes Feld kann getippt ODER mit Stift/Finger beschrieben
  // werden (iPad + Apple Pencil). Rechnen machen die Schüler selbst; „Prüfen“ kontrolliert
@@ -1939,20 +1955,20 @@ function handout(){
   sec(2,'Das musst du wissen')+
   '<ol class="hxKey">'+facts.map(([a,b])=>'<li><b>'+esc(a)+'</b> '+esc(b)+'</li>').join('')+'</ol>'+
   '<footer class="hxFoot"><span>Touchscreens · Handout · Marlon Bonsels</span><span>1 / 3</span></footer></section>'+
-  '<section class="hxPage hxBreak">'+head('Arbeitsblatt','Jetzt seid ihr dran','Rechnen, bewerten, entscheiden – tippen oder mit dem Stift schreiben')+
-  sec(3,'Rechnen: Das Lichtgitter der Infrarot-Tafel')+
-  '<div class="hxCalcBox hxIrBox"><svg class="hxIrFig" viewBox="0 0 170 112" role="img" aria-label="Infrarot-Rahmen mit LEDs oben und links, Finger unterbricht Lichtstrahlen"><rect x="14" y="10" width="148" height="92" fill="#f6f9f9" stroke="#5b7f7c"/>'+Array.from({length:12},(_,k)=>'<line x1="'+(20+k*12)+'" y1="10" x2="'+(20+k*12)+'" y2="102" stroke="'+(k===6||k===7?'#d0473a':'#e0a39b')+'" stroke-width="'+(k===6||k===7?1.6:.7)+'"/><circle cx="'+(20+k*12)+'" cy="8" r="2.6" fill="#d0473a"/>').join('')+Array.from({length:7},(_,k)=>'<line x1="14" y1="'+(18+k*12)+'" x2="162" y2="'+(18+k*12)+'" stroke="'+(k===3?'#d0473a':'#e0a39b')+'" stroke-width="'+(k===3?1.6:.7)+'"/><circle cx="11" cy="'+(18+k*12)+'" r="2.6" fill="#d0473a"/>').join('')+'<circle cx="107" cy="54" r="7" fill="#18232b" opacity=".85"/><text x="118" y="70" font-size="9" fill="#18232b">Finger</text></svg><p>In der Doku habt ihr gesehen: Ein <b>Infrarot-Touchscreen</b> hat am Rand kleine LEDs. Gegenüber sitzt jeweils ein Empfänger. So entsteht ein unsichtbares <b>Lichtgitter</b>. Der Finger unterbricht Strahlen von oben <i>und</i> von der Seite – daraus ergibt sich die Position x/y.</p><p>Eine interaktive Tafel im Klassenraum ist <b>160 cm breit</b> und <b>90 cm hoch</b>. Am oberen und am linken Rand sitzt <b>alle 5 mm</b> eine LED. <span class="hxHint">Tipp: erst alles in Millimeter umrechnen (1 cm = 10 mm) · Anzahl = Länge ÷ Abstand</span></p>'+
-  '<div class="hxSteps"><label>a) LEDs oben (Breite)'+wb('hx_ir_x','num','LEDs oben')+'</label><label>b) LEDs links (Höhe)'+wb('hx_ir_y','num','LEDs links')+'</label><label>c) Lichtstrahlen gesamt'+wb('hx_ir_sum','num','Lichtstrahlen gesamt')+'</label><label>d) Finger (15 mm) unterbricht … Strahlen von oben'+wb('hx_ir_finger','num','unterbrochene Strahlen')+'</label><button type="button" class="hxCheck noPrint" data-check="ir">Prüfen</button></div><div class="hxWork"><span>Rechenweg</span>'+wb('hx_ir_work','area','Rechenweg')+'</div><p class="hxCheckMsg noPrint" id="hxCheckIr" aria-live="polite"></p></div>'+
-  sec(4,'Aufgabe: Rechne wie ein Touch-Controller')+
-  '<p class="hxText">Im Smartphone arbeitet ein kleiner Chip, der <b>Touch-Controller</b>. Er misst ständig das Sensorgitter und meldet dem Gerät, wo dein Finger ist. Rechnet zu zweit – Taschenrechner erlaubt.</p>'+
-  '<table class="hxTable hxCalc hxWrite hxTasks"><thead><tr><th>Aufgabe</th><th>So rechnest du</th><th class="c">Ergebnis</th></tr></thead><tbody>'+
-   '<tr><td><b>a) Sensorgitter</b><br>Ein Display hat <b>30</b> Leiterbahnen längs und <b>16</b> quer. An jeder Kreuzung wird gemessen. Wie viele Messpunkte sind das?</td><td class="hxHow">Längs × Quer</td><td class="c">'+wb('hx_q_grid','num','Messpunkte')+'<small>Punkte</small></td></tr>'+
-   '<tr><td><b>b) Abtastrate</b><br>Der Controller misst <b>120-mal pro Sekunde</b> (120 Hz). Wie viele Millisekunden liegen zwischen zwei Messungen?</td><td class="hxHow">1000 ms ÷ Hz</td><td class="c">'+wb('hx_q_hz120','num','Millisekunden bei 120 Hz')+'<small>ms</small></td></tr>'+
-   '<tr><td>Ein Gaming-Handy misst mit <b>240 Hz</b>. Wie viele Millisekunden sind es da?</td><td class="hxHow">1000 ms ÷ Hz</td><td class="c">'+wb('hx_q_hz240','num','Millisekunden bei 240 Hz')+'<small>ms</small></td></tr>'+
-   '<tr><td><b>c) Pixeldichte</b><br>Ein Smartphone-Display hat <b>2400 × 1080</b> Pixel und eine Diagonale von <b>6,5 Zoll</b>. Wie viele Pixel pro Zoll (ppi) sind das?</td><td class="hxHow">√(2400² + 1080²) ÷ 6,5</td><td class="c">'+wb('hx_q_ppi','num','Pixel pro Zoll')+'<small>ppi</small></td></tr>'+
+  '<section class="hxPage hxBreak">'+head('Arbeitsblatt','Jetzt seid ihr dran','Zuordnen, entscheiden, erklären – tippen oder mit dem Stift schreiben')+
+  sec(3,'Welcher Touchscreen passt?')+
+  '<p class="hxText">Entscheidet mit dem Wissen aus der Doku: Welche Touch-Technik passt am besten zur Situation? Schreibt die Technik und einen kurzen Grund dazu.</p>'+
+  '<table class="hxTable hxWrite hxMatch"><thead><tr><th>Situation</th><th>Technik</th><th>Warum?</th></tr></thead><tbody>'+
+   MATCH.map(([k,t])=>'<tr><td>'+t+'</td><td class="hxMT">'+wb('hx_m_'+k,'line','Technik: '+t.replace(/<[^>]+>/g,''))+'</td><td>'+wb('hx_mw_'+k,'line','Grund')+'</td></tr>').join('')+
   '</tbody></table>'+
-  '<div class="hxRow"><button type="button" class="hxCheck noPrint" data-check="task">Ergebnisse prüfen</button><span class="hxCheckMsg noPrint" id="hxCheckTask" aria-live="polite"></span></div>'+
-  '<div class="hxLine"><span>Was bringt eine höhere Abtastrate beim Bedienen?</span>'+wb('hx_decision','line','Was bringt eine höhere Abtastrate')+'</div>'+
+  '<div class="hxRow"><button type="button" class="hxCheck noPrint" data-check="match">Techniken prüfen</button><span class="hxCheckMsg noPrint" id="hxCheckMatch" aria-live="polite"></span></div>'+
+  sec(4,'Stimmt das? Richtig oder falsch')+
+  '<p class="hxText">Kreuzt an. Wenn eine Aussage falsch ist, schreibt daneben, wie es richtig ist.</p>'+
+  '<table class="hxTable hxWrite hxRF"><thead><tr><th>Aussage</th><th class="c">R / F</th><th>Wenn falsch: So ist es richtig</th></tr></thead><tbody>'+
+   RF.map(([k,t],n)=>'<tr><td><b>'+(n+1)+'.</b> '+t+'</td><td class="c"><input type="hidden" data-save="hx_rf_'+k+'"><div class="hxRFBtns" data-rf="hx_rf_'+k+'"><button type="button" data-v="R" aria-label="richtig">R</button><button type="button" data-v="F" aria-label="falsch">F</button></div></td><td>'+wb('hx_rfc_'+k,'line','Korrektur Aussage '+(n+1))+'</td></tr>').join('')+
+  '</tbody></table>'+
+  '<div class="hxRow"><button type="button" class="hxCheck noPrint" data-check="rf">Antworten prüfen</button><span class="hxCheckMsg noPrint" id="hxCheckRf" aria-live="polite"></span></div>'+
+  '<div class="hxCarWhy"><span>5 · Erklärt mit der Doku: Warum ist ein Touchscreen im Auto während der Fahrt gefährlich – und was wäre eine bessere Lösung?</span>'+wb('hx_car_why','area','Touchscreen im Auto')+'</div>'+
   '<footer class="hxFoot"><span>Touchscreens · Handout · Marlon Bonsels</span><span>2 / 3</span></footer></section>';
  const page2='<section class="hxPage hxBreak">'+
   head('Feedbackbogen · anonym','Wie war die Präsentation?','Touchscreens · Interaktive Dokumentation „TOUCH LIVE“')+
@@ -1983,6 +1999,9 @@ function handout(){
   try{x.value=localStorage.getItem(key)||'';}catch{}
   x.oninput=()=>{try{localStorage.setItem(key,x.value);}catch{}saved();x.closest('.wb')?.classList.remove('ok','bad');};
  });
+ const paintRF=()=>paper.querySelectorAll('[data-rf]').forEach(box=>{const v=value(box.dataset.rf);box.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));});
+ paper.querySelectorAll('[data-rf]').forEach(box=>box.querySelectorAll('button').forEach(b=>b.onclick=()=>{const inp=paper.querySelector('[data-save="'+box.dataset.rf+'"]');inp.value=inp.value===b.dataset.v?'':b.dataset.v;try{localStorage.setItem('touch_'+box.dataset.rf,inp.value);}catch{}box.classList.remove('ok','bad');paintRF();saved();}));
+ paintRF();
  // ---------- Stift-Ebene ----------
  let mode='type',color='#1b2a8a',penOnly=false;const undo=[];
  try{penOnly=localStorage.getItem('touch_hx_penonly')==='1';}catch{}
@@ -2042,12 +2061,6 @@ function handout(){
  // ---------- Rechnung prüfen (nur getippte Zahlen) ----------
  const mark=(k,ok)=>{const b=paper.querySelector('[data-wb="'+k+'"]');if(b){b.classList.toggle('ok',ok===true);b.classList.toggle('bad',ok===false);}};
  const near=(a,b)=>Math.abs(a-b)<=0.051;
- function checkTask(){
-  const want=[['hx_q_grid',480,0],['hx_q_hz120',1000/120,.05],['hx_q_hz240',1000/240,.05],['hx_q_ppi',Math.hypot(2400,1080)/6.5,2]];
-  let right=0,wrong=0,open=0;
-  for(const [k,v,tol] of want){const x=num(k);if(x===null){open++;mark(k,null);continue;}const ok=Math.abs(x-v)<=tol+1e-9;mark(k,ok);ok?right++:wrong++;}
-  return {right,wrong,open};
- }
  function checkFeedback(){
   let right=0,wrong=0,open=0,sum=0,complete=true;
   for(const [k,,w] of crit){const b=num('hx_f_'+k),x=num('hx_fp_'+k);
@@ -2060,18 +2073,19 @@ function handout(){
   m.textContent=r.right+r.wrong===0?'Zum Prüfen bitte die Zahlen tippen (Handschrift kann die Seite nicht lesen).':(r.wrong?'✗ '+r.wrong+(r.wrong>1?' Ergebnisse stimmen':' Ergebnis stimmt')+' noch nicht – rot markiert.':'✓ Alles richtig gerechnet!')+(r.open&&r.right+r.wrong?' ('+r.open+' Felder noch leer)':'');
   m.className='hxCheckMsg noPrint '+(r.wrong?'bad':r.right?'ok':'');};
  paper.querySelectorAll('[data-check]').forEach(b=>b.onclick=()=>{
-  if(b.dataset.check==='task')report('hxCheckTask',checkTask());
-  else if(b.dataset.check==='feedback')report('hxCheckFeedback',checkFeedback());
-  else{const want={hx_ir_x:320,hx_ir_y:180,hx_ir_sum:500,hx_ir_finger:3},msg=el('hxCheckIr');let any=false,bad=false;
-   for(const[k,v]of Object.entries(want)){const n=num(k);if(n===null)continue;any=true;const ok=k==='hx_ir_finger'?(n===3||n===4):Math.abs(n-v)<0.5;mark(k,ok);if(!ok)bad=true;}
-   msg.textContent=!any?'Zum Prüfen bitte die Zahlen tippen.':bad?'✗ Noch nicht ganz – hast du alles in Millimeter umgerechnet?':'✓ Richtig! 320 + 180 = 500 Lichtstrahlen. Ein Finger unterbricht in jede Richtung etwa 3 Strahlen – die Mitte davon ist seine Position.';
-   msg.className='hxCheckMsg noPrint '+(msg.textContent.startsWith('✓')?'ok':msg.textContent.startsWith('✗')?'bad':'');}
+  if(b.dataset.check==='feedback')report('hxCheckFeedback',checkFeedback());
+  else if(b.dataset.check==='match'){let right=0,wrong=0,open=0;
+   for(const[k,,ok]of MATCH){const v=value('hx_m_'+k).toLowerCase();if(!v){open++;mark('hx_m_'+k,null);continue;}const good=ok.some(w=>v.includes(w.slice(0,6)));mark('hx_m_'+k,good);good?right++:wrong++;}
+   const m=el('hxCheckMatch');m.textContent=right+wrong===0?'Zum Prüfen bitte die Technik tippen (z. B. „kapazitiv“).':wrong?'✗ '+wrong+' passt noch nicht – schaut in die Tabelle auf Seite 1.':'✓ Alles passend zugeordnet!'+(open?' ('+open+' noch leer)':'');m.className='hxCheckMsg noPrint '+(wrong?'bad':right?'ok':'');}
+  else if(b.dataset.check==='rf'){let right=0,wrong=0,open=0;
+   for(const[k,,ans]of RF){const v=value('hx_rf_'+k),box=paper.querySelector('[data-rf="hx_rf_'+k+'"]');if(!v){open++;box.classList.remove('ok','bad');continue;}const good=v===ans;box.classList.toggle('ok',good);box.classList.toggle('bad',!good);good?right++:wrong++;}
+   const m=el('hxCheckRf');m.textContent=right+wrong===0?'Bitte erst R oder F ankreuzen.':wrong?'✗ '+wrong+' Kreuz'+(wrong>1?'e stimmen':' stimmt')+' noch nicht – rot markiert.':'✓ Alles richtig!'+(open?' ('+open+' noch offen)':'');m.className='hxCheckMsg noPrint '+(wrong?'bad':right?'ok':'');}
  });
  el('printHandout').onclick=()=>{setMode('type');window.print();};
  el('clearHandout').onclick=()=>{
   if(!confirm('Alle Einträge und Zeichnungen im Handout löschen?'))return;
   fields().forEach(x=>{try{localStorage.removeItem('touch_'+x.dataset.save);}catch{}x.value='';});
-  canvases().forEach(c=>{try{localStorage.removeItem('touch_ink_'+c.dataset.ink);}catch{}c.getContext('2d').clearRect(0,0,c.width,c.height);c.parentElement.classList.remove('inked');});
+  canvases().forEach(c=>{try{localStorage.removeItem('touch_ink_'+c.dataset.ink);}catch{}c.getContext('2d').clearRect(0,0,c.width,c.height);c.parentElement.classList.remove('inked');});paintRF();paper.querySelectorAll('[data-rf]').forEach(x=>x.classList.remove('ok','bad'));
   paper.querySelectorAll('.wb').forEach(b=>b.classList.remove('ok','bad'));
  };
  el('sendHandout').onclick=async()=>{
@@ -2081,7 +2095,7 @@ function handout(){
   if(value('hx_good'))lines.push('Das war gut: '+value('hx_good'));
   if(value('hx_better'))lines.push('Nicht so gut: '+value('hx_better'));
   if(value('hx_change'))lines.push('Ändern: '+value('hx_change'));
-  if(value('hx_decision'))lines.push('Höhere Abtastrate bringt: '+value('hx_decision'));
+
   const inked=canvases().some(c=>c.parentElement.classList.contains('inked'));
   if(inked)lines.push('(Teile wurden mit dem Stift geschrieben – die sind nur im PDF des Schülers sichtbar.)');
   if(!lines.length)return alert('Bitte zuerst den Feedbackbogen ausfüllen (getippt). Handschrift kannst du als PDF speichern und abgeben.');

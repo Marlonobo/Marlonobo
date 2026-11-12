@@ -179,3 +179,23 @@
 @media(max-width:600px){.hxIrFig{float:none;display:block;margin:0 auto 8px}}
 /* Schreibfelder im Druck/PDF immer weiß (nicht vom dunklen Seitenthema einfärben lassen) */
 @media print{.hx .wb input,.hx .wb textarea,.hxPage .wb input,.hxPage .wb textarea{background-color:#fff!important;color:#1b2a8a!important;border:1px solid #bbb!important;box-shadow:none!important}}
+/* Aufgabe 3: Welcher Touchscreen passt? · Aufgabe 4: Richtig/Falsch */
+.hxMatch td,.hxRF td{vertical-align:middle}
+.hxMatch td:first-child{width:46%}
+.hxMatch .hxMT{width:20%}
+.hxMatch .wb-line,.hxMatch .wb-line input,.hxRF .wb-line,.hxRF .wb-line input{height:34px}
+.hxRF td:first-child{width:52%}
+.hxRF td.c{width:92px;white-space:nowrap}
+.hxRFBtns{display:inline-flex;gap:6px;border-radius:8px;padding:2px}
+.hx .hxRFBtns button{width:34px;height:34px;min-height:0;padding:0;border:1.5px solid #8aa3ad!important;border-radius:7px;background:#fff!important;color:#33505c!important;font:800 14px/1 Arial,sans-serif;cursor:pointer;box-shadow:none!important;text-transform:none;letter-spacing:0}
+.hx .hxRFBtns button.on{background:#0b6e69!important;border-color:#0b6e69!important;color:#fff!important}
+.hxRFBtns.ok{outline:2px solid #1f9d63}
+.hxRFBtns.bad{outline:2px solid #d0473a}
+@media print{
+ .hxMatch .wb-line,.hxMatch .wb-line input,.hxRF .wb-line,.hxRF .wb-line input{height:24px}
+ .hx .hxRFBtns button{width:26px;height:26px;font-size:11px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ .hxRFBtns.ok,.hxRFBtns.bad{outline:none}
+}
+@media(max-width:600px){.hxMatch td:first-child,.hxRF td:first-child{width:auto}}
+.hxCarWhy{margin-top:16px}.hxCarWhy>span{display:block;font-size:13.5px;font-weight:700;margin-bottom:6px}.hxCarWhy .wb-area,.hxCarWhy .wb-area textarea{height:120px}
+@media print{.hxCarWhy .wb-area,.hxCarWhy .wb-area textarea{height:150px}}
