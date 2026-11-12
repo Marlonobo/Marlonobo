@@ -166,3 +166,14 @@
 .hxTasks small{display:block;font-size:11px;color:var(--soft);margin-top:2px}
 .hxLine>span{white-space:normal!important}
 @media print{.hxTasks td{padding:5px 6px}}
+/* Aufgabe 3: Infrarot-Lichtgitter */
+.hxIrBox{overflow:hidden}
+.hxIrFig{float:right;width:170px;height:auto;margin:0 0 6px 14px}
+.hxIrBox .hxSteps{clear:both}
+.hxIrBox .hxSteps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:14px;align-items:stretch}
+.hxIrBox .hxSteps label{justify-content:space-between}
+.hxIrBox .hxSteps .wb{width:100%}
+.hxIrBox .hxSteps .hxCheck{align-self:end}
+@media(max-width:600px){.hxIrBox .hxSteps{grid-template-columns:1fr 1fr}}
+.hxIrBox .hxWork .wb-area,.hxIrBox .hxWork .wb-area textarea{height:110px}
+@media(max-width:600px){.hxIrFig{float:none;display:block;margin:0 auto 8px}}

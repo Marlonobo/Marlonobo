@@ -1913,7 +1913,7 @@ function handout(){
   ['Wasser leitet auch.','Darum lösen Tropfen auf dem Display manchmal eine Berührung aus.'],
   ['Multitouch = mehrere Punkte gleichzeitig.','Aus den Punkten berechnet die Software Zoomen, Drehen und Wischen.'],
   ['Haptisches Feedback','ist eine kurze Vibration als Antwort – man „spürt“ den Klick.'],
-  ['Im Auto gefährlich:','2 Sekunden Blick aufs Display bei 50 km/h – wie weit fährt man blind? Rechne es unten aus.']
+  ['Im Auto gefährlich:','2 Sekunden Blick aufs Display bei 50 km/h – das sind fast 28 Meter ohne Blick auf die Straße.']
  ];
  const crit=[['inhalt','Inhalt der Doku',25],['verst','Verständlichkeit',20],['inter','Interaktivität (Quiz & Spiele)',25],['technik','Technik & Ablauf',10],['handout','Handout',10],['auftritt','Präsentation (Form, Sprache)',10]];
  // Schreibfeld: getippt (input/textarea) + darüberliegende Stift-Ebene (canvas).
@@ -1940,9 +1940,9 @@ function handout(){
   '<ol class="hxKey">'+facts.map(([a,b])=>'<li><b>'+esc(a)+'</b> '+esc(b)+'</li>').join('')+'</ol>'+
   '<footer class="hxFoot"><span>Touchscreens · Handout · Marlon Bonsels</span><span>1 / 3</span></footer></section>'+
   '<section class="hxPage hxBreak">'+head('Arbeitsblatt','Jetzt seid ihr dran','Rechnen, bewerten, entscheiden – tippen oder mit dem Stift schreiben')+
-  sec(3,'Rechnen: Blindflug im Auto')+
-  '<div class="hxCalcBox"><p>Ein Auto fährt <b>50 km/h</b>. Die Fahrerin schaut <b>2 Sekunden</b> auf den Touchscreen. Wie viele Meter fährt sie „blind“? <span class="hxHint">Tipp: km/h ÷ 3,6 = m/s · Weg = Geschwindigkeit × Zeit</span></p>'+
-  '<div class="hxSteps"><label>Geschwindigkeit in m/s'+wb('hx_car_ms','num','Geschwindigkeit in m/s')+'</label><label>Weg in Metern'+wb('hx_car_m','num','Weg in Metern')+'</label><button type="button" class="hxCheck noPrint" data-check="car">Prüfen</button></div><div class="hxWork"><span>Rechenweg</span>'+wb('hx_car_work','area','Rechenweg')+'</div><p class="hxCheckMsg noPrint" id="hxCheckCar" aria-live="polite"></p></div>'+
+  sec(3,'Rechnen: Das Lichtgitter der Infrarot-Tafel')+
+  '<div class="hxCalcBox hxIrBox"><svg class="hxIrFig" viewBox="0 0 170 112" role="img" aria-label="Infrarot-Rahmen mit LEDs oben und links, Finger unterbricht Lichtstrahlen"><rect x="14" y="10" width="148" height="92" fill="#f6f9f9" stroke="#5b7f7c"/>'+Array.from({length:12},(_,k)=>'<line x1="'+(20+k*12)+'" y1="10" x2="'+(20+k*12)+'" y2="102" stroke="'+(k===6||k===7?'#d0473a':'#e0a39b')+'" stroke-width="'+(k===6||k===7?1.6:.7)+'"/><circle cx="'+(20+k*12)+'" cy="8" r="2.6" fill="#d0473a"/>').join('')+Array.from({length:7},(_,k)=>'<line x1="14" y1="'+(18+k*12)+'" x2="162" y2="'+(18+k*12)+'" stroke="'+(k===3?'#d0473a':'#e0a39b')+'" stroke-width="'+(k===3?1.6:.7)+'"/><circle cx="11" cy="'+(18+k*12)+'" r="2.6" fill="#d0473a"/>').join('')+'<circle cx="107" cy="54" r="7" fill="#18232b" opacity=".85"/><text x="118" y="70" font-size="9" fill="#18232b">Finger</text></svg><p>In der Doku habt ihr gesehen: Ein <b>Infrarot-Touchscreen</b> hat am Rand kleine LEDs. Gegenüber sitzt jeweils ein Empfänger. So entsteht ein unsichtbares <b>Lichtgitter</b>. Der Finger unterbricht Strahlen von oben <i>und</i> von der Seite – daraus ergibt sich die Position x/y.</p><p>Eine interaktive Tafel im Klassenraum ist <b>160 cm breit</b> und <b>90 cm hoch</b>. Am oberen und am linken Rand sitzt <b>alle 5 mm</b> eine LED. <span class="hxHint">Tipp: erst alles in Millimeter umrechnen (1 cm = 10 mm) · Anzahl = Länge ÷ Abstand</span></p>'+
+  '<div class="hxSteps"><label>a) LEDs oben (Breite)'+wb('hx_ir_x','num','LEDs oben')+'</label><label>b) LEDs links (Höhe)'+wb('hx_ir_y','num','LEDs links')+'</label><label>c) Lichtstrahlen gesamt'+wb('hx_ir_sum','num','Lichtstrahlen gesamt')+'</label><label>d) Finger (15 mm) unterbricht … Strahlen von oben'+wb('hx_ir_finger','num','unterbrochene Strahlen')+'</label><button type="button" class="hxCheck noPrint" data-check="ir">Prüfen</button></div><div class="hxWork"><span>Rechenweg</span>'+wb('hx_ir_work','area','Rechenweg')+'</div><p class="hxCheckMsg noPrint" id="hxCheckIr" aria-live="polite"></p></div>'+
   sec(4,'Aufgabe: Rechne wie ein Touch-Controller')+
   '<p class="hxText">Im Smartphone arbeitet ein kleiner Chip, der <b>Touch-Controller</b>. Er misst ständig das Sensorgitter und meldet dem Gerät, wo dein Finger ist. Rechnet zu zweit – Taschenrechner erlaubt.</p>'+
   '<table class="hxTable hxCalc hxWrite hxTasks"><thead><tr><th>Aufgabe</th><th>So rechnest du</th><th class="c">Ergebnis</th></tr></thead><tbody>'+
@@ -2062,9 +2062,9 @@ function handout(){
  paper.querySelectorAll('[data-check]').forEach(b=>b.onclick=()=>{
   if(b.dataset.check==='task')report('hxCheckTask',checkTask());
   else if(b.dataset.check==='feedback')report('hxCheckFeedback',checkFeedback());
-  else{const ms=num('hx_car_ms'),m=num('hx_car_m'),msg=el('hxCheckCar');
-   if(ms!==null)mark('hx_car_ms',Math.abs(ms-50/3.6)<=0.06);if(m!==null)mark('hx_car_m',Math.abs(m-100/3.6)<=0.6);
-   msg.textContent=ms===null&&m===null?'Zum Prüfen bitte die Zahlen tippen.':(ms!==null&&Math.abs(ms-50/3.6)>0.06)||(m!==null&&Math.abs(m-100/3.6)>0.6)?'✗ Noch nicht ganz – schau dir die Formel im Tipp an.':'✓ Richtig! Rund '+fmt(Math.round(100/3.6*10)/10)+' m ohne Blick auf die Straße.';
+  else{const want={hx_ir_x:320,hx_ir_y:180,hx_ir_sum:500,hx_ir_finger:3},msg=el('hxCheckIr');let any=false,bad=false;
+   for(const[k,v]of Object.entries(want)){const n=num(k);if(n===null)continue;any=true;const ok=k==='hx_ir_finger'?(n===3||n===4):Math.abs(n-v)<0.5;mark(k,ok);if(!ok)bad=true;}
+   msg.textContent=!any?'Zum Prüfen bitte die Zahlen tippen.':bad?'✗ Noch nicht ganz – hast du alles in Millimeter umgerechnet?':'✓ Richtig! 320 + 180 = 500 Lichtstrahlen. Ein Finger unterbricht in jede Richtung etwa 3 Strahlen – die Mitte davon ist seine Position.';
    msg.className='hxCheckMsg noPrint '+(msg.textContent.startsWith('✓')?'ok':msg.textContent.startsWith('✗')?'bad':'');}
  });
  el('printHandout').onclick=()=>{setMode('type');window.print();};
