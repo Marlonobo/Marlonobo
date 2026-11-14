@@ -58,13 +58,13 @@ if(!fs.existsSync(V4_CUES_MARKER)){
 // 12.11.: Zeiten und Texte genau wie im fertigen Film (Timeline „TOUCHSCREEN_FINAL_v6 (10.11.2026)“, Stand 12.11.).
 // open = Quiz erscheint im Film, start = „Ihr habt jetzt 30 Sekunden …“ (ab da tippen), countdown/close = 30-s-Uhr im Film,
 // reveal = Auflösung im Film. Einmalig auch auf bestehenden Render-Instanzen; quizOffset wird dabei auf 0 gesetzt.
-const V7_CUES_MARKER=path.join(DIR,'film-cues-2026-11-12-v7.applied');
+const V7_CUES_MARKER=path.join(DIR,'film-cues-2026-11-14-v7b.applied');
 let migratedV7=false;
 if(!fs.existsSync(V7_CUES_MARKER)){
  try{
   const latest=JSON.parse(fs.readFileSync(path.join(ROOT,'questions.json'),'utf8'));
   for(const target of Q){const source=latest.find(x=>x.id===target.id);if(!source)continue;
-   for(const key of ['open','start','countdown','close','reveal','duration','q','a','correct','hint','fifty']){
+   for(const key of ['open','ask','shows','start','countdown','close','reveal','duration','q','a','correct','hint','fifty']){
     if(Object.hasOwn(source,key))target[key]=source[key];else delete target[key];
    }
   }
@@ -247,6 +247,11 @@ function publicState(id){
  if(u){const jk=u.jokers||{};player={id,role:u.role,name:u.name,score:final?u.score:null,liveScore:u.role==='student'?(Number(u.score)||0)-hiddenPoints(u,pq):null,reveal:rq?{nr:normal.indexOf(rq)+1,q:rq.q,answer:rq.a?.[rq.correct]??'',correct:rq.correct,choice:Object.hasOwn(u.answers,rq.id)?u.answers[rq.id]:null,right:u.answers[rq.id]===rq.correct,points:u.answers[rq.id]===rq.correct?100:0}:null,choice:q?u.answers[q.id]??null:null,zoomFound:!!(ZOOM()&&Object.hasOwn(u.answers,ZOOM().id)),zoomPoints:final?(u.zoomPoints||0):null,jokers:{fifty:!!jk.fifty,hint:!!jk.hint}};
   if(q&&jk.fifty===q.id)player.hide=[0,1,2,3].filter(i=>i!==q.correct&&i!==q.fifty);
   if(q&&jk.hint===q.id)player.hint=q.hint||'';}
+ // Wie im Film: die Frage erscheint, wenn sie im Film erscheint (ask), die Antworten A–D nacheinander (shows).
+ let qText=null,qAns=null,qShown=4;
+ if(q&&s.phase==='film'&&!s.demoOverlay&&q.type!=='zoom'){const T=filmNow(),off=s.quizOffset;
+  if(Number.isFinite(q.ask)&&T<q.ask+off)qText='';
+  if(Array.isArray(q.shows)&&q.shows.length===4){qShown=q.shows.filter(x=>T>=x+off).length;qAns=q.a.map((x,k)=>T>=q.shows[k]+off?x:'');}}
  const z=ZOOM();let zoomResult=null;
  if(final&&z){const found=[...users.values()].filter(x=>x.answers[z.id]===z.correct).map(x=>x.name);zoomResult={q:z.q,answer:z.a[z.correct],found:found.length,names:found.slice(0,12),total:[...users.values()].filter(x=>Object.hasOwn(x.answers,z.id)).length};}
  const gestureSeconds=s.phase==='film'&&s.gestureOverlay
@@ -254,7 +259,7 @@ function publicState(id){
   :s.phase==='gesture'?Math.max(0,Math.ceil(GESTURE_MISSION_SECONDS-(Date.now()-(s.gestureStartTime||Date.now()))/1000)):0;
  const gestureActive=gestureSeconds>0&&(s.phase==='gesture'||(s.phase==='film'&&s.gestureOverlay));
  return {homeUnlocked:!!s.homeUnlocked,trailerAvailable:!!trailerPath(),trailerPlaying:!!s.trailerPlaying,trailerSerial:s.trailerSerial||0,trailerRevision:s.trailerRevision||0,tvAudio:Date.now()-tvAudioReport.updated<25000?{connected:true,playing:tvAudioReport.playing,blocked:tvAudioReport.blocked,error:tvAudioReport.error}:{connected:false,playing:false,blocked:false,error:''},phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},musicPlan:s.musicPlan||{welcome:{mode:'touch'},end:{mode:'off'}},podiumPlan:s.podiumPlan||{mode:'own'},podiumFiles:podiumFiles(),spotifyClientId:s.spotifyClientId||'',spotifyLinked:!!spotifyAuth?.refreshToken,soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
-  quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:q.q,a:q.a,duration:q.type==='zoom'?ZOOM_MISSION_SECONDS:((s.phase==='demo'||s.demoOverlay)?45:30),remaining:a.remaining,accepting:a.accepting,listen:!!a.listen,foundCount:q.type==='zoom'?[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length:0,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
+  quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:qText??q.q,a:qAns??q.a,shown:qShown,duration:q.type==='zoom'?ZOOM_MISSION_SECONDS:((s.phase==='demo'||s.demoOverlay)?45:30),remaining:a.remaining,accepting:a.accepting,listen:!!a.listen,foundCount:q.type==='zoom'?[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length:0,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
   waitReveal:!!(a.index<0&&pq),player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)||fs.existsSync(BUNDLED_SUB_FILE)};
 }
 function startZoom(){const z=ZOOM();if(!z)return false;

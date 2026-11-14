@@ -19,3 +19,5 @@ Neu:
    - Jede Seite hat ihre eigene Uhr. Sie läuft nur, wenn man am Zug ist. Nach jedem Zug kommt der Bonus dazu. Unter 20 Sekunden mit Zehnteln.
    - Ist die Zeit abgelaufen, ist die Partie verloren. Remis, wenn der Gegner nicht mehr mattsetzen kann.
    - Der Bot verbraucht auch Bedenkzeit und spielt bei knapper Zeit schneller.
+
+Nachtrag 14.11.: Frage und Antworten erscheinen auf dem iPad wie im Film. Die Frage kommt, wenn sie im Film kommt, die Antworten A–D nacheinander. Geprüft am YouTube-Video E8eMGK5GYVU (Länge 51:11,7) bei Quiz 1, Kapitel 4 Quiz 1 und Abschlussfrage 5: Frage, Antworten, Uhr und Lösung stimmen auf weniger als 0,5 s.
