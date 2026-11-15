@@ -70,7 +70,7 @@ function updateCaptionPreference(){
  const toggle=$('partyCaptionToggle');
  if(toggle){toggle.textContent=watchCaptionsEnabled?'CC Untertitel AUS':'CC Untertitel AN';toggle.setAttribute('aria-pressed',String(watchCaptionsEnabled));}
  if(!watchCaptionsEnabled)capt.hidden=true;
- if(!watchCaptionsEnabled&&ytPlayer&&ytReady){try{ytPlayer.setOption?.('captions','track',{});}catch{}}
+ if(ytPlayer&&ytReady){try{ytPlayer.setOption?.('captions','track',{});ytPlayer.unloadModule?.('captions');}catch{}}
 }
 
 video.addEventListener('error',()=>{

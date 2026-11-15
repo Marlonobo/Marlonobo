@@ -1,0 +1,1908 @@
+WEBVTT
+
+00:00:00.661 --> 00:00:04.775
+Einmal kurz aufs Display tippen –
+und schon passiert etwas.
+
+00:00:04.820 --> 00:00:08.590
+Wir machen das jeden Tag,
+ohne groß darüber nachzudenken.
+
+00:00:08.820 --> 00:00:14.380
+Aber bis das alles so einfach funktioniert
+hat, war es ein ziemlich langer Weg.
+
+00:00:14.420 --> 00:00:19.540
+In dieser Dokumentation schauen wir uns die
+Welt der Touchscreens einmal genauer an.
+
+00:01:00.954 --> 00:01:02.914
+Wir fangen mit der Geschichte an:
+
+00:01:02.954 --> 00:01:05.554
+wann die ersten Touchscreens
+entstanden sind und
+
+00:01:05.594 --> 00:01:08.594
+wie sich die Technik bis
+heute entwickelt hat.
+
+00:01:08.634 --> 00:01:12.594
+Danach geht es darum, wie ein
+Touchscreen überhaupt funktioniert.
+
+00:01:12.634 --> 00:01:16.634
+Anschließend schauen wir uns die
+verschiedenen Touchscreen-Arten an.
+
+00:01:16.714 --> 00:01:21.154
+Dann geht es um Multitouch und darum,
+wie ein Display aufgebaut ist.
+
+00:01:21.194 --> 00:01:26.194
+Außerdem zeigen wir euch, wo Touchscreens
+im Alltag überall eingesetzt werden.
+
+00:01:26.234 --> 00:01:30.034
+Danach beschäftigen wir uns mit den
+Problemen der Technik und schauen,
+
+00:01:30.074 --> 00:01:32.734
+was in der Zukunft noch
+möglich sein könnte.
+
+00:01:32.874 --> 00:01:35.954
+Zum Schluss fassen wir die
+wichtigsten Sachen zusammen.
+
+00:01:35.994 --> 00:01:38.994
+Und damit ihr nicht die ganze
+Zeit nur zuschauen müsst,
+
+00:01:39.034 --> 00:01:44.539
+gibt es zwischendurch Quizfragen, bei
+denen ihr mit euren iPads mitmachen könnt.
+
+00:02:00.860 --> 00:02:03.940
+Kapitel eins: Die
+Geschichte der Touchscreens.
+
+00:02:03.980 --> 00:02:05.780
+Wie hat das alles angefangen?
+
+00:02:05.821 --> 00:02:08.470
+Wir reisen zurück ins Jahr 1965.
+
+00:02:09.180 --> 00:02:12.034
+Smartphones gab es da noch lange nicht.
+
+00:02:15.155 --> 00:02:19.835
+In England hat der Ingenieur
+Eric Arthur Johnson eine Idee:
+
+00:02:19.875 --> 00:02:23.115
+einen Bildschirm, den man
+direkt mit dem Finger bedient.
+
+00:02:23.155 --> 00:02:25.870
+Gedacht war das für die Flugsicherung.
+
+00:02:25.955 --> 00:02:29.203
+Fluglotsen sollten so
+schneller arbeiten können.
+
+00:02:31.211 --> 00:02:35.231
+1969 bekam Johnson dafür ein Patent.
+
+00:02:35.291 --> 00:02:38.371
+Ein Patent zeigt, dass
+es seine Erfindung ist –
+
+00:02:38.411 --> 00:02:41.426
+andere dürfen sie nicht einfach nachbauen.
+
+00:02:41.531 --> 00:02:44.401
+Das war einer der ersten
+wichtigen Schritte.
+
+00:02:46.453 --> 00:02:52.443
+1971 baute Samuel Hurst
+in den USA den Elograph.
+
+00:02:53.173 --> 00:02:56.963
+Daraus wurde später der
+resistive Touchscreen.
+
+00:02:57.003 --> 00:03:01.313
+Dabei zählt der Druck: Zwei
+Schichten werden zusammengedrückt.
+
+00:03:01.353 --> 00:03:04.253
+Was es genau ist, sehen wir später.
+
+00:03:06.586 --> 00:03:10.206
+1972 geht es weiter in
+die Schweiz, ans CERN.
+
+00:03:10.666 --> 00:03:13.481
+Das ist ein riesiges Forschungszentrum.
+
+00:03:13.546 --> 00:03:19.166
+Dort brauchte man für die Steuerung der
+Anlagen sehr viele Schalter und Knöpfe.
+
+00:03:19.386 --> 00:03:23.986
+Der Ingenieur Bent Stumpe
+hatte eine bessere Idee:
+
+00:03:24.026 --> 00:03:26.911
+einen Bildschirm, den man einfach berührt.
+
+00:03:27.226 --> 00:03:29.601
+Sein Touchscreen war kapazitiv.
+
+00:03:30.106 --> 00:03:33.426
+Er merkt, wenn ein Finger das
+elektrische Feld verändert –
+
+00:03:33.466 --> 00:03:36.461
+so funktionieren fast
+alle Smartphones heute.
+
+00:03:39.072 --> 00:03:45.492
+1976 ging am CERN ein neuer
+Teilchenbeschleuniger an den Start: das SPS.
+
+00:03:45.883 --> 00:03:48.818
+In seinem Kontrollraum gab
+es schon Touchscreens –
+
+00:03:48.858 --> 00:03:51.718
+damals war das echte Spitzentechnik.
+
+00:03:53.880 --> 00:03:59.970
+1982 baute Nimish Mehta an der Universität
+Toronto ein frühes Multitouch-System.
+
+00:04:00.920 --> 00:04:03.760
+Es konnte mehrere Berührungen
+gleichzeitig erkennen.
+
+00:04:03.800 --> 00:04:07.180
+Das brauchen wir heute, wenn
+wir mit zwei Fingern zoomen.
+
+00:04:09.683 --> 00:04:15.733
+1983 kam der HP-150 von Hewlett-Packard.
+
+00:04:15.773 --> 00:04:19.823
+Das war ein Computer, den man
+mit dem Finger bedienen konnte.
+
+00:04:19.863 --> 00:04:23.863
+Vor dem Bildschirm liefen
+unsichtbare Infrarot-Lichtstrahlen.
+
+00:04:23.903 --> 00:04:26.463
+Der Finger hat einen Strahl unterbrochen.
+
+00:04:26.503 --> 00:04:29.833
+So wusste der Computer,
+wo man hingetippt hat.
+
+00:04:29.873 --> 00:04:33.282
+Damit war der Touchscreen
+im Büro angekommen.
+
+00:04:34.341 --> 00:04:37.036
+Jetzt seid ihr dran, nehmt eure iPads.
+
+00:04:37.491 --> 00:04:44.531
+Wer hat 1972 am CERN einen
+kapazitiven Touchscreen entwickelt?
+
+00:04:44.741 --> 00:04:48.781
+A: Steve Jobs. B: Bent Stumpe.
+
+00:04:49.351 --> 00:04:53.641
+C: Bill Gates. D: Samuel Hurst.
+
+00:04:53.681 --> 00:04:57.546
+Ihr habt jetzt 30 Sekunden Zeit,
+um die Frage zu beantworten.
+
+00:05:29.836 --> 00:05:33.346
+Richtig ist B: Bent Stumpe.
+
+00:05:33.796 --> 00:05:38.776
+Er hat am CERN einen
+kapazitiven Touchscreen gebaut.
+
+00:05:39.436 --> 00:05:43.069
+Der merkt, wenn unser Finger
+das elektrische Feld verändert.
+
+00:05:43.109 --> 00:05:45.769
+Und jetzt geht die Zeitreise weiter.
+
+00:05:47.720 --> 00:05:50.955
+1994 kam der IBM Simon.
+
+00:05:51.240 --> 00:05:54.960
+Er war eines der ersten
+Smartphones mit Touchscreen.
+
+00:05:55.000 --> 00:06:00.830
+Man konnte telefonieren, Termine speichern,
+Notizen machen und sogar Faxe schicken.
+
+00:06:00.920 --> 00:06:03.995
+Bedient hat man ihn
+meistens mit einem Stift.
+
+00:06:06.072 --> 00:06:06.832
+Am 9.
+
+00:06:06.872 --> 00:06:11.897
+Januar 2007 stellte Steve
+Jobs das erste iPhone vor.
+
+00:06:12.052 --> 00:06:14.412
+Das Neue: ein großer
+Multitouch-Bildschirm.
+
+00:06:14.452 --> 00:06:18.312
+Man konnte tippen, wischen
+und mit zwei Fingern zoomen.
+
+00:06:18.352 --> 00:06:21.462
+Eine feste Tastatur gab es nicht mehr.
+
+00:06:21.502 --> 00:06:25.162
+Aber Achtung: Apple hat den
+Touchscreen nicht erfunden.
+
+00:06:25.202 --> 00:06:29.754
+Das iPhone hat ihn aber für sehr
+viele Menschen ganz normal gemacht.
+
+00:06:30.891 --> 00:06:35.330
+Noch eine Frage: Gab es schon vor dem
+iPhone Smartphones mit Touchscreen?
+
+00:06:35.371 --> 00:06:40.301
+A: Ja, zum Beispiel den IBM Simon.
+B: Nein, erst ab 2007.
+
+00:06:40.491 --> 00:06:44.816
+C: Erst ab 2010. D: Nur bei Laptops.
+
+00:06:44.891 --> 00:06:48.914
+Ihr habt jetzt 30 Sekunden Zeit,
+um die Frage zu beantworten.
+
+00:07:21.447 --> 00:07:22.662
+Richtig ist A.
+
+00:07:23.047 --> 00:07:29.387
+Den IBM Simon gab es schon 1994 – also
+dreizehn Jahre vor dem ersten iPhone.
+
+00:07:29.927 --> 00:07:33.482
+Und die Idee vom Touchscreen
+ist sogar noch viel älter.
+
+00:07:33.767 --> 00:07:36.905
+Große Erfindungen passieren
+eben nicht über Nacht.
+
+00:07:40.647 --> 00:07:43.647
+Nach 2007 ging alles immer schneller.
+
+00:07:43.687 --> 00:07:48.682
+2008 kam das HTC Dream,
+das erste Android-Handy.
+
+00:07:48.887 --> 00:07:53.197
+Es hatte einen Touchscreen und dazu
+noch eine ausziehbare Tastatur.
+
+00:07:55.401 --> 00:07:58.011
+2010 kam das erste iPad.
+
+00:07:58.441 --> 00:08:01.966
+Jetzt wurde auch auf großen
+Tablets mit den Fingern getippt.
+
+00:08:04.130 --> 00:08:11.285
+2012 brachte Microsoft das Surface:
+Touchscreen und Tastatur in einem Gerät.
+
+00:08:13.373 --> 00:08:17.013
+2017 hatte das iPhone X
+keinen Home-Button mehr.
+
+00:08:17.053 --> 00:08:19.233
+Man bediente es mit Gesten.
+
+00:08:21.368 --> 00:08:27.438
+Und 2019 kam das Samsung Galaxy Fold –
+ein Handy, das man aufklappen kann.
+
+00:08:29.376 --> 00:08:33.476
+Heute, im Jahr 2026, sind
+Touchscreens ganz normal.
+
+00:08:33.536 --> 00:08:37.496
+Wir finden sie in Handys und
+Tablets, im Auto, in der Schule,
+
+00:08:37.536 --> 00:08:41.046
+in Krankenhäusern,
+an Geldautomaten und in Fabriken.
+
+00:08:41.136 --> 00:08:46.061
+Aus einer Idee für Fluglotsen ist
+ein Teil unseres Alltags geworden.
+
+00:08:54.567 --> 00:08:58.367
+Aber woher weiß ein Bildschirm
+eigentlich, wo wir ihn berühren?
+
+00:08:58.407 --> 00:09:00.732
+Das erfahren wir im nächsten Kapitel.
+
+00:09:19.532 --> 00:09:22.517
+Kapitel zwei: Wie
+funktioniert ein Touchscreen?
+
+00:09:22.572 --> 00:09:25.252
+Dafür schauen wir in
+ein Smartphone hinein.
+
+00:09:25.292 --> 00:09:29.252
+Wir tippen auf den Bildschirm,
+und das Handy reagiert sofort.
+
+00:09:29.292 --> 00:09:32.397
+Aber woher weiß es, wo unser Finger ist?
+
+00:09:34.641 --> 00:09:39.321
+Unter dem Schutzglas liegt ein
+Gitter aus durchsichtigen Leitungen.
+
+00:09:39.361 --> 00:09:41.161
+Man nennt sie Elektroden.
+
+00:09:41.281 --> 00:09:44.521
+Manche laufen waagerecht,
+manche senkrecht.
+
+00:09:44.561 --> 00:09:47.881
+Zwischen ihnen gibt es ein
+schwaches elektrisches Feld.
+
+00:09:47.921 --> 00:09:50.516
+Unser Finger leitet ein bisschen Strom.
+
+00:09:50.561 --> 00:09:54.096
+Deshalb verändert er das
+Feld genau da, wo wir tippen.
+
+00:09:57.090 --> 00:09:59.530
+Ein kleiner Chip, der Touchcontroller,
+
+00:09:59.570 --> 00:10:03.530
+misst diese Veränderungen –
+und zwar viele Male pro Sekunde.
+
+00:10:03.570 --> 00:10:07.050
+Daraus berechnet er,
+wo genau wir getippt haben.
+
+00:10:07.090 --> 00:10:09.800
+Diese Position schickt er an die Software.
+
+00:10:09.890 --> 00:10:13.750
+Die macht dann das Richtige,
+zum Beispiel eine App öffnen.
+
+00:10:17.964 --> 00:10:23.204
+Quizfrage: Was erkennt ein kapazitiver
+Touchscreen bei einer Berührung?
+
+00:10:23.244 --> 00:10:26.419
+A: eine Veränderung der
+elektrischen Kapazität.
+
+00:10:26.604 --> 00:10:31.044
+B: nur den Druck des Fingers.
+C: die Farbe des Fingers.
+
+00:10:31.084 --> 00:10:33.364
+D: die Temperatur des Bildschirms.
+
+00:10:33.484 --> 00:10:37.429
+Ihr habt jetzt 30 Sekunden Zeit,
+um die Frage zu beantworten.
+
+00:11:09.509 --> 00:11:12.029
+Richtig ist A: Der Bildschirm misst,
+
+00:11:12.069 --> 00:11:15.549
+wie unser Finger die
+elektrische Kapazität verändert.
+
+00:11:15.589 --> 00:11:18.279
+Druck, Farbe oder Temperatur sind egal.
+
+00:11:23.409 --> 00:11:26.549
+Jetzt wissen wir, wie das
+Handy unseren Finger findet.
+
+00:11:27.009 --> 00:11:28.979
+Aber wie entsteht das Bild?
+
+00:11:29.649 --> 00:11:33.369
+Dafür gibt es Pixel, das
+sind winzige Bildpunkte.
+
+00:11:33.489 --> 00:11:37.619
+Jedes Pixel hat kleine
+Lichter in Rot, Grün und Blau.
+
+00:11:37.889 --> 00:11:42.169
+Je nachdem, wie hell sie leuchten,
+entstehen ganz verschiedene Farben.
+
+00:11:42.209 --> 00:11:44.809
+Wichtig: Die Pixel zeigen das Bild.
+
+00:11:44.849 --> 00:11:47.829
+Die Touchsensoren erkennen den Finger.
+
+00:11:47.969 --> 00:11:50.179
+Das sind zwei verschiedene Schichten.
+
+00:11:53.553 --> 00:11:57.523
+Es gibt zwei wichtige Arten
+von Displays: LCD und OLED.
+
+00:11:57.713 --> 00:12:00.633
+LCD bedeutet Flüssigkristall-Bildschirm.
+
+00:12:00.673 --> 00:12:03.753
+Hinten leuchtet eine Lampe,
+die Hintergrundbeleuchtung –
+
+00:12:03.793 --> 00:12:07.243
+heute meistens mit LEDs,
+also Leuchtdioden.
+
+00:12:07.873 --> 00:12:12.153
+Davor steuern Flüssigkristalle,
+wie viel Licht durchkommt.
+
+00:12:12.193 --> 00:12:15.433
+Bei OLED leuchtet jeder Bildpunkt selbst.
+
+00:12:15.473 --> 00:12:20.038
+Deshalb braucht es keine Lampe dahinter,
+und Schwarz ist wirklich schwarz.
+
+00:12:20.273 --> 00:12:23.203
+Wichtig: Das Display macht nur das Bild.
+
+00:12:23.313 --> 00:12:28.575
+Wo wir tippen, erkennt die Touchtechnik –
+das ist eine eigene Schicht.
+
+00:12:33.079 --> 00:12:36.314
+Noch eine Frage: Welche
+Aufgabe haben die Pixel?
+
+00:12:36.359 --> 00:12:40.319
+A: Sie erkennen den Finger.
+B: Sie erzeugen das Bild.
+
+00:12:40.359 --> 00:12:43.999
+C: Sie messen den Druck.
+D: Sie speichern die Apps.
+
+00:12:44.039 --> 00:12:47.654
+Ihr habt jetzt 30 Sekunden Zeit,
+um die Frage zu beantworten.
+
+00:13:19.659 --> 00:13:22.339
+Richtig ist B: Die
+Pixel erzeugen das Bild.
+
+00:13:22.379 --> 00:13:25.709
+Den Finger erkennt der Touchsensor
+in einer eigenen Schicht.
+
+00:13:30.616 --> 00:13:34.236
+Kurze Zusammenfassung:
+Der Finger berührt das Glas,
+
+00:13:34.276 --> 00:13:36.621
+die Sensoren merken die Veränderung,
+
+00:13:36.756 --> 00:13:38.876
+der Controller berechnet die Position,
+
+00:13:38.916 --> 00:13:42.636
+die Software reagiert, und die
+Pixel zeigen das neue Bild.
+
+00:13:42.676 --> 00:13:45.561
+Das alles passiert in einem
+Bruchteil einer Sekunde.
+
+00:13:45.716 --> 00:13:48.556
+Doch nicht jeder
+Touchscreen funktioniert so.
+
+00:13:48.596 --> 00:13:51.961
+Welche Arten es gibt,
+sehen wir im nächsten Kapitel.
+
+00:14:02.889 --> 00:14:05.379
+Kapitel drei: Die verschiedenen
+Touchscreen-Arten.
+
+00:14:05.929 --> 00:14:08.364
+Touchscreens gibt es nicht nur im Handy.
+
+00:14:08.649 --> 00:14:13.454
+Es gibt sie auch in Maschinen, an Automaten
+und in großen Tafeln in der Schule.
+
+00:14:13.609 --> 00:14:15.809
+Und nicht alle funktionieren gleich.
+
+00:14:15.849 --> 00:14:18.809
+Wir schauen uns die fünf
+wichtigsten Arten an.
+
+00:14:26.038 --> 00:14:29.023
+Nummer eins: der kapazitive Touchscreen.
+
+00:14:29.158 --> 00:14:31.758
+Den habt ihr wahrscheinlich
+gerade in der Tasche,
+
+00:14:31.798 --> 00:14:35.113
+denn fast alle modernen
+Smartphones haben einen.
+
+00:14:35.158 --> 00:14:38.078
+Unter dem Glas liegt ein
+Gitter aus Elektroden
+
+00:14:38.118 --> 00:14:40.408
+mit einem schwachen elektrischen Feld.
+
+00:14:40.518 --> 00:14:43.658
+Unser Finger verändert
+dieses Feld an einer Stelle.
+
+00:14:43.798 --> 00:14:46.238
+Der Controller findet diese Stelle.
+
+00:14:46.278 --> 00:14:51.198
+Vorteil: Eine leichte Berührung reicht,
+und er erkennt mehrere Finger gleichzeitig.
+
+00:14:51.238 --> 00:14:54.078
+Nachteil: Mit dicken
+Handschuhen oder einem
+
+00:14:54.118 --> 00:14:57.418
+normalen Plastikstift
+klappt es meistens nicht –
+
+00:14:57.458 --> 00:14:59.153
+die leiten keinen Strom.
+
+00:15:05.898 --> 00:15:08.818
+Nummer zwei: der resistive Touchscreen.
+
+00:15:08.858 --> 00:15:11.298
+Man findet ihn an Maschinen in Fabriken,
+
+00:15:11.338 --> 00:15:16.858
+in älteren Navigationsgeräten oder in
+älteren Spielkonsolen wie dem Nintendo DS.
+
+00:15:17.098 --> 00:15:20.898
+Hier liegen zwei leitfähige
+Schichten übereinander.
+
+00:15:20.938 --> 00:15:24.643
+Winzige Abstandshalter
+halten sie auseinander.
+
+00:15:25.818 --> 00:15:30.018
+Drückt man drauf, berühren sich
+die Schichten an dieser Stelle.
+
+00:15:30.058 --> 00:15:34.128
+Jetzt fließt Strom, und der
+Controller berechnet die Position.
+
+00:15:34.218 --> 00:15:39.133
+Deshalb geht er mit allem, was drückt:
+Finger, Handschuh oder Stift.
+
+00:15:39.258 --> 00:15:42.718
+Dafür erkennt er meistens nur
+eine Berührung auf einmal.
+
+00:15:56.501 --> 00:15:59.261
+Quizfrage: Welche Technik
+arbeitet mit zwei Schichten,
+
+00:15:59.301 --> 00:16:02.541
+die sich durch Druck berühren?
+A: kapazitiv.
+
+00:16:02.581 --> 00:16:06.056
+B: resistiv. C: Infrarot. D: optisch.
+
+00:16:06.181 --> 00:16:10.186
+Ihr habt jetzt 30 Sekunden Zeit,
+um die Frage zu beantworten.
+
+00:16:42.034 --> 00:16:44.314
+Richtig ist B: resistiv.
+
+00:16:44.354 --> 00:16:48.199
+Zwei Schichten werden
+zusammengedrückt – Druck und Kontakt.
+
+00:16:55.621 --> 00:16:57.371
+Nummer drei: Infrarot.
+
+00:16:57.541 --> 00:17:00.781
+Das gibt es oft bei großen
+Tafeln im Klassenraum.
+
+00:17:00.821 --> 00:17:05.421
+Im Rahmen um den Bildschirm sitzen
+kleine Lämpchen für unsichtbares Licht,
+
+00:17:05.461 --> 00:17:07.676
+auf der anderen Seite Empfänger.
+
+00:17:07.781 --> 00:17:11.741
+Zusammen bilden sie ein unsichtbares
+Gitter aus Lichtstrahlen.
+
+00:17:11.781 --> 00:17:14.171
+Der Finger unterbricht einen Strahl.
+
+00:17:14.261 --> 00:17:19.131
+Die Elektronik merkt, welcher Strahl
+fehlt, und findet so die Position.
+
+00:17:19.221 --> 00:17:24.551
+Vorteil: Es liegt keine extra Schicht
+auf dem Bild, also bleibt es sehr klar.
+
+00:17:24.661 --> 00:17:28.076
+Und es geht mit Finger,
+Stift und Handschuh.
+
+00:17:36.028 --> 00:17:37.933
+Nummer vier: SAW.
+
+00:17:38.588 --> 00:17:44.308
+Das steht für Surface Acoustic Wave,
+auf Deutsch Oberflächen-Schallwelle.
+
+00:17:44.348 --> 00:17:47.188
+Am Rand vom Glas sitzen kleine Sender.
+
+00:17:47.228 --> 00:17:49.758
+Die schicken Ultraschall über das Glas.
+
+00:17:49.868 --> 00:17:54.548
+Den können wir nicht hören, weil seine
+Frequenz über unserem Hörbereich liegt.
+
+00:17:54.588 --> 00:17:58.463
+Berührt man das Glas, schluckt
+der Finger einen Teil der Welle.
+
+00:17:58.668 --> 00:18:01.988
+Die Elektronik merkt,
+wo das Signal schwächer wird.
+
+00:18:02.028 --> 00:18:05.383
+SAW findet man zum
+Beispiel an Info-Terminals.
+
+00:18:05.708 --> 00:18:09.488
+Die Oberfläche ist aus
+reinem Glas und sehr robust.
+
+00:18:18.003 --> 00:18:19.407
+Nummer fünf: optisch.
+
+00:18:19.466 --> 00:18:24.502
+Hier sitzen kleine Kameras in den oberen
+Ecken und schauen flach über das Glas.
+
+00:18:24.643 --> 00:18:28.733
+Beide Kameras sehen den Finger,
+jede aus einem anderen Winkel.
+
+00:18:28.778 --> 00:18:32.963
+Wo sich die zwei Blicklinien
+kreuzen, da ist der Finger.
+
+00:18:33.003 --> 00:18:36.543
+Wichtig: Bei Infrarot werden
+Strahlen unterbrochen,
+
+00:18:36.583 --> 00:18:40.063
+bei optischen Systemen
+sehen Kameras den Finger.
+
+00:18:56.275 --> 00:18:58.405
+Alle fünf noch einmal kurz.
+
+00:18:58.515 --> 00:19:02.245
+Kapazitiv: Der Finger
+verändert das elektrische Feld.
+
+00:19:02.435 --> 00:19:06.725
+Typisch im Handy – viele Finger,
+aber meist keine Handschuhe.
+
+00:19:06.765 --> 00:19:10.155
+Resistiv: Zwei Schichten
+werden zusammengedrückt.
+
+00:19:10.195 --> 00:19:14.075
+Typisch an Maschinen – robust,
+aber meist nur ein Finger.
+
+00:19:14.115 --> 00:19:17.355
+Infrarot: Ein Lichtgitter
+wird unterbrochen.
+
+00:19:17.395 --> 00:19:22.215
+Typisch an großen Tafeln – sehr klares
+Bild, braucht aber einen Rahmen.
+
+00:19:22.275 --> 00:19:25.435
+SAW: Ultraschall wird geschluckt.
+
+00:19:25.715 --> 00:19:30.715
+Typisch an Info-Terminals – sehr robust,
+aber nur wenige Berührungen gleichzeitig.
+
+00:19:30.755 --> 00:19:33.240
+Optisch: Kameras sehen den Finger.
+
+00:19:33.315 --> 00:19:37.877
+Typisch an einfachen Kiosk-Bildschirmen –
+nur wenige Finger gleichzeitig.
+
+00:19:53.692 --> 00:19:56.772
+Noch eine Frage: Welche
+Technik erkennt den Finger,
+
+00:19:56.812 --> 00:19:59.492
+weil er ein unsichtbares
+Lichtgitter unterbricht?
+
+00:19:59.532 --> 00:20:03.917
+A: resistiv. B: kapazitiv.
+C: Infrarot. D: SAW.
+
+00:20:04.332 --> 00:20:08.117
+Ihr habt jetzt 30 Sekunden Zeit,
+um die Frage zu beantworten.
+
+00:20:39.972 --> 00:20:41.932
+Richtig ist C: Infrarot.
+
+00:20:41.972 --> 00:20:45.197
+Der Finger unterbricht einen
+unsichtbaren Lichtstrahl.
+
+00:20:54.754 --> 00:20:58.234
+Fünf Techniken – aber im Handy
+und im Tablet hat eine gewonnen:
+
+00:20:58.274 --> 00:21:00.554
+der kapazitive Touchscreen.
+
+00:21:00.594 --> 00:21:03.914
+Denn er kann mehrere Finger
+gleichzeitig erkennen.
+
+00:21:06.725 --> 00:21:09.420
+Kapitel vier: Multitouch
+und Displayaufbau.
+
+00:21:09.466 --> 00:21:13.411
+Multitouch heißt: Der Bildschirm
+erkennt mehrere Finger gleichzeitig.
+
+00:21:13.451 --> 00:21:17.692
+Legen wir zwei Finger auf, ändert
+sich das Feld an zwei Stellen.
+
+00:21:17.732 --> 00:21:21.685
+Der Controller erkennt beide und
+verfolgt jeden Finger einzeln,
+
+00:21:21.725 --> 00:21:23.505
+auch wenn er sich bewegt.
+
+00:21:23.565 --> 00:21:28.405
+Moderne Handys und Tablets schaffen
+so zehn oder mehr Finger auf einmal.
+
+00:21:28.445 --> 00:21:30.805
+Und Multitouch gibt es
+nicht nur bei Apple:
+
+00:21:30.845 --> 00:21:34.305
+Auch Android-Handys, zum
+Beispiel von Samsung oder Google,
+
+00:21:34.445 --> 00:21:38.374
+und viele Laptops mit Touchscreen
+erkennen mehrere Finger gleichzeitig.
+
+00:21:40.266 --> 00:21:43.886
+Aus diesen Berührungen
+macht die Software Gesten.
+
+00:21:44.026 --> 00:21:48.046
+Tippen: kurz drauf, zum
+Beispiel um eine App zu öffnen.
+
+00:21:48.106 --> 00:21:51.346
+Wischen: schnell mit dem
+Finger über den Bildschirm.
+
+00:21:51.466 --> 00:21:55.051
+Scrollen: Der Finger bleibt
+drauf, und die Liste läuft mit.
+
+00:21:55.146 --> 00:21:57.986
+Vergrößern: Zwei Finger gehen auseinander.
+
+00:21:58.026 --> 00:22:00.466
+Verkleinern: Zwei Finger gehen zusammen.
+
+00:22:00.506 --> 00:22:04.884
+Und drehen: Zwei Finger bewegen sich im
+Kreis, zum Beispiel in einer Karten-App.
+
+00:22:10.729 --> 00:22:14.609
+Woher weiß die Software,
+ob wir zoomen oder drehen wollen?
+
+00:22:14.649 --> 00:22:18.449
+Wird der Abstand zwischen den
+Fingern größer, zoomt sie rein.
+
+00:22:18.489 --> 00:22:21.009
+Wird er kleiner, zoomt sie raus.
+
+00:22:21.049 --> 00:22:24.859
+Ändert sich der Winkel zwischen
+den Fingern, dreht sich das Bild.
+
+00:22:24.969 --> 00:22:27.854
+Das rechnet sie viele Male pro Sekunde.
+
+00:22:27.929 --> 00:22:31.129
+Deshalb fühlt es sich so flüssig an.
+
+00:22:34.246 --> 00:22:35.646
+Jetzt seid ihr dran.
+
+00:22:35.686 --> 00:22:39.886
+Öffnet auf euren iPads die
+Mitmachseite von TOUCH LIVE.
+
+00:22:39.926 --> 00:22:44.286
+Probiert es aus: mit zwei
+Fingern rein- und rauszoomen,
+
+00:22:44.326 --> 00:22:46.971
+das Bild drehen und drüberwischen.
+
+00:22:47.126 --> 00:22:50.686
+Oben seht ihr, wie viele
+Finger das iPad gerade erkennt.
+
+00:22:50.726 --> 00:22:53.726
+Und im Bild ist ein kleines
+Geheimnis versteckt.
+
+00:22:53.766 --> 00:22:55.126
+Findet ihr es?
+
+00:23:29.174 --> 00:23:31.389
+Wie ist so ein Display aufgebaut?
+
+00:23:31.494 --> 00:23:36.134
+Wir schauen uns ein iPad der
+sechsten Generation von 2018 an.
+
+00:23:36.294 --> 00:23:38.494
+Ganz oben liegt das Schutzglas,
+
+00:23:38.534 --> 00:23:43.819
+direkt darunter der Touchsensor,
+auch Digitizer genannt.
+
+00:23:43.974 --> 00:23:46.939
+Beim iPad 6 sind die beiden ein Bauteil.
+
+00:23:47.174 --> 00:23:50.574
+Darunter kommt das LCD mit
+der Hintergrundbeleuchtung.
+
+00:23:50.614 --> 00:23:55.854
+Darin stecken mehrere dünne Schichten,
+die das Licht steuern und verteilen.
+
+00:23:55.894 --> 00:23:59.214
+Dünne Kabel verbinden
+alles mit der Hauptplatine.
+
+00:24:00.134 --> 00:24:04.189
+Dort sitzen die Touchcontroller,
+die die Berührung auswerten.
+
+00:24:07.806 --> 00:24:12.326
+Quizfrage: Ihr zieht zwei Finger
+auf einem Foto auseinander,
+
+00:24:12.366 --> 00:24:16.081
+und das Foto wird größer.
+Was passiert dabei im Gerät?
+
+00:24:16.286 --> 00:24:20.211
+A: Der Touchsensor misst,
+wie fest die Finger drücken.
+
+00:24:20.846 --> 00:24:23.686
+B: Der Sensor erkennt zwei Berührungen,
+
+00:24:23.726 --> 00:24:27.616
+und die Software berechnet
+aus ihrem Abstand den Zoom.
+
+00:24:27.806 --> 00:24:30.786
+C: Die Pixel unter den
+Fingern werden größer.
+
+00:24:31.086 --> 00:24:34.626
+D: Eine Kamera im
+Display filmt die Finger.
+
+00:24:34.766 --> 00:24:38.471
+Ihr habt jetzt 30 Sekunden Zeit,
+um die Frage zu beantworten.
+
+00:25:10.469 --> 00:25:11.764
+Richtig ist B.
+
+00:25:11.829 --> 00:25:14.364
+Der Touchsensor erkennt zwei Berührungen.
+
+00:25:14.629 --> 00:25:21.079
+Die Software merkt, dass ihr Abstand größer
+wird, und vergrößert deshalb das Bild.
+
+00:25:25.897 --> 00:25:29.617
+Hier seht ihr die Schichten noch
+einmal genau: oben das Schutzglas,
+
+00:25:29.657 --> 00:25:32.282
+darunter der Touchsensor
+und ganz unten das LCD.
+
+00:25:33.017 --> 00:25:37.627
+Der Touchsensor erkennt, wo wir
+tippen, und das LCD zeigt das Bild.
+
+00:25:37.817 --> 00:25:40.737
+Nur wenn alle Schichten
+genau zusammenpassen,
+
+00:25:40.777 --> 00:25:45.022
+fühlt es sich an, als würden
+wir das Bild direkt berühren.
+
+00:25:59.898 --> 00:26:01.998
+Was passiert also beim Zoomen?
+
+00:26:02.058 --> 00:26:06.498
+Zwei Finger liegen auf dem Glas.
+Der Sensor meldet zwei Stellen.
+
+00:26:06.538 --> 00:26:11.058
+Der Touchcontroller berechnet die
+Positionen und schickt sie an die Software.
+
+00:26:11.098 --> 00:26:16.104
+Die Software merkt: Der Abstand wird
+größer – also vergrößert sie das Bild.
+
+00:26:16.428 --> 00:26:19.560
+Und die Pixel zeigen sofort das neue Bild.
+
+00:26:23.996 --> 00:26:28.436
+Letzte Frage: Welches Bauteil erkennt,
+wo wir den Bildschirm berühren?
+
+00:26:28.476 --> 00:26:30.756
+A: der Lautsprecher. B: der Touchsensor.
+
+00:26:30.796 --> 00:26:33.376
+C: der Akku. D: die Kamera.
+
+00:26:33.516 --> 00:26:37.141
+Ihr habt jetzt 30 Sekunden Zeit,
+um die Frage zu beantworten.
+
+00:27:09.154 --> 00:27:11.529
+Richtig ist B: der Touchsensor.
+
+00:27:11.794 --> 00:27:14.904
+Der Touchcontroller berechnet
+daraus die Position.
+
+00:27:24.603 --> 00:27:28.048
+Zusammengefasst: Multitouch heißt
+mehrere Finger gleichzeitig.
+
+00:27:28.523 --> 00:27:32.083
+Die Software macht daraus
+Gesten wie Zoomen und Drehen.
+
+00:27:32.123 --> 00:27:36.483
+Und im Display arbeiten Glas,
+Touchsensor und Bildschirm zusammen.
+
+00:27:36.523 --> 00:27:40.223
+Aber wo begegnen uns
+Touchscreens im Alltag?
+
+00:27:40.283 --> 00:27:42.444
+Darum geht es im nächsten Kapitel.
+
+00:27:52.778 --> 00:27:55.438
+Kapitel fünf: Touchscreens im Alltag.
+
+00:27:55.658 --> 00:27:59.373
+Halb sieben, der Wecker klingelt –
+natürlich auf dem Handy.
+
+00:27:59.738 --> 00:28:02.253
+Einmal wischen, und es ist still.
+
+00:28:02.378 --> 00:28:06.958
+Schon morgens schauen viele aufs
+Handy: Nachrichten, Wetter, Chats.
+
+00:28:07.258 --> 00:28:08.818
+Wie oft eigentlich?
+
+00:28:08.858 --> 00:28:12.098
+Eine Studie aus den USA
+hat 2016 mitgezählt:
+
+00:28:12.138 --> 00:28:17.083
+Im Durchschnitt berühren die Leute
+ihr Handy über 2600-mal am Tag.
+
+00:28:20.432 --> 00:28:23.587
+Im Laufe des Tages kann
+das Handy fast alles.
+
+00:28:23.632 --> 00:28:27.192
+Wir schreiben Nachrichten, wischen
+durch Fotos und starten Videos.
+
+00:28:27.232 --> 00:28:30.897
+In einer fremden Stadt
+zeigt uns die Karte den Weg.
+
+00:28:30.992 --> 00:28:33.272
+Mit zwei Fingern zoomen wir rein.
+
+00:28:33.312 --> 00:28:37.172
+Und auf dem Tablet kann man sogar
+zeichnen – fast wie auf Papier.
+
+00:28:41.346 --> 00:28:44.166
+Auch beim Einkaufen gibt
+es überall Touchscreens.
+
+00:28:44.206 --> 00:28:49.656
+An der Selbstbedienungskasse scannen wir
+selbst und tippen uns durch das Bezahlen.
+
+00:28:49.826 --> 00:28:53.306
+Im Schnellrestaurant bestellen
+wir am großen Bildschirm.
+
+00:28:53.346 --> 00:28:56.106
+Und am Ende tippen wir unsere PIN ins
+
+00:28:56.146 --> 00:28:59.876
+Kartenterminal oder halten
+einfach das Handy dran.
+
+00:29:03.882 --> 00:29:08.377
+Am Bahnhof wartet der nächste
+Touchscreen: der Fahrkartenautomat.
+
+00:29:08.522 --> 00:29:11.392
+Ziel eingeben, Ticket wählen, bezahlen.
+
+00:29:11.482 --> 00:29:15.982
+Dazu gibt es Infosäulen, die
+Verbindungen und Wege zeigen.
+
+00:29:16.122 --> 00:29:18.722
+Diese Geräte müssen viel aushalten: Kälte,
+
+00:29:18.762 --> 00:29:21.707
+Hitze und sehr viele
+Berührungen – jeden Tag.
+
+00:29:21.802 --> 00:29:24.302
+Deshalb sind sie besonders robust.
+
+00:29:28.867 --> 00:29:32.387
+Auch im Auto haben Touchscreens
+viele Knöpfe ersetzt:
+
+00:29:32.427 --> 00:29:35.547
+für Navi, Musik und oft
+auch die Klimaanlage.
+
+00:29:35.987 --> 00:29:38.672
+Das sieht modern aus,
+hat aber einen Haken:
+
+00:29:38.712 --> 00:29:43.787
+Einen Touchscreen kann man nicht
+blind ertasten, man muss hinschauen.
+
+00:29:43.827 --> 00:29:47.857
+Wer bei Tempo 50 nur zwei Sekunden
+auf den Bildschirm schaut,
+
+00:29:47.897 --> 00:29:52.507
+fährt fast 28 Meter blind.
+Deshalb gibt es neue Regeln.
+
+00:29:52.547 --> 00:29:58.935
+Euro NCAP ist ein europäisches Programm,
+das neue Autos auf ihre Sicherheit testet.
+
+00:29:59.031 --> 00:30:03.435
+Seit 2026 gibt es dort nur
+volle Punkte, wenn Blinker,
+
+00:30:03.475 --> 00:30:07.342
+Scheibenwischer, Hupe und
+Notruf echte Tasten haben.
+
+00:30:09.381 --> 00:30:14.771
+Quizfrage: Warum kann ein Touchscreen im
+Auto während der Fahrt gefährlich sein?
+
+00:30:14.811 --> 00:30:17.011
+A: Er ist zu hell.
+
+00:30:17.051 --> 00:30:20.131
+B: Man muss hinschauen und
+sieht nicht auf die Straße.
+
+00:30:20.171 --> 00:30:23.921
+C: Er braucht zu viel Strom.
+D: Er wird beim Fahren heiß.
+
+00:30:23.961 --> 00:30:27.826
+Ihr habt jetzt 30 Sekunden Zeit,
+um die Frage zu beantworten.
+
+00:30:59.851 --> 00:31:01.226
+Richtig ist B.
+
+00:31:01.451 --> 00:31:04.611
+Wer auf den Bildschirm schaut,
+schaut nicht auf die Straße.
+
+00:31:04.651 --> 00:31:07.341
+Schon zwei Sekunden
+können gefährlich sein.
+
+00:31:12.050 --> 00:31:16.000
+In Krankenhäusern helfen Touchscreens,
+den Überblick zu behalten.
+
+00:31:16.040 --> 00:31:19.620
+Monitore zeigen Herzschlag,
+Blutdruck und Sauerstoff.
+
+00:31:19.660 --> 00:31:21.625
+Auch Beatmungsgeräte,
+
+00:31:22.060 --> 00:31:26.650
+Infusionspumpen und Ultraschallgeräte
+haben oft eine Touchbedienung.
+
+00:31:26.690 --> 00:31:31.290
+Wichtig ist hier: Die Geräte müssen
+sich gut desinfizieren lassen,
+
+00:31:31.330 --> 00:31:34.926
+und sie müssen auch mit dünnen
+Handschuhen funktionieren.
+
+00:31:39.037 --> 00:31:43.742
+In Fabriken heißen Touchscreens
+oft Bedienpanels oder HMI.
+
+00:31:44.217 --> 00:31:48.017
+HMI steht für Human Machine Interface,
+
+00:31:48.057 --> 00:31:51.167
+also Schnittstelle zwischen
+Mensch und Maschine.
+
+00:31:51.467 --> 00:31:53.827
+Damit starten Mitarbeiter Maschinen,
+
+00:31:53.867 --> 00:31:57.677
+ändern Einstellungen und sehen
+sofort, wenn ein Fehler passiert.
+
+00:31:57.717 --> 00:32:01.477
+Im Lager zeigen Touchgeräte,
+welches Paket wohin muss.
+
+00:32:01.517 --> 00:32:06.037
+Weil man in der Fabrik oft Handschuhe
+trägt und es staubig oder ölig ist,
+
+00:32:06.077 --> 00:32:09.682
+braucht man sehr robuste Touchscreens,
+zum Beispiel resistive.
+
+00:32:13.231 --> 00:32:16.791
+Letzte Frage: Was ist bei Touchscreens
+im Krankenhaus besonders wichtig?
+
+00:32:16.831 --> 00:32:20.631
+A: Sie sind besonders bunt.
+B: Sie gehen nur mit Stift.
+
+00:32:20.671 --> 00:32:25.111
+C: Man kann sie gut desinfizieren
+und mit Handschuhen bedienen.
+
+00:32:25.151 --> 00:32:27.106
+D: Sie brauchen keinen Strom.
+
+00:32:27.231 --> 00:32:31.008
+Ihr habt jetzt 30 Sekunden Zeit,
+um die Frage zu beantworten.
+
+00:33:03.088 --> 00:33:04.623
+Richtig ist C.
+
+00:33:04.928 --> 00:33:09.063
+Im Krankenhaus zählt Sauberkeit,
+und das Personal trägt oft Handschuhe.
+
+00:33:17.869 --> 00:33:20.869
+Vom Wecker am Morgen bis zu
+den Maschinen in der Fabrik:
+
+00:33:20.909 --> 00:33:23.589
+Touchscreens begleiten uns den ganzen Tag.
+
+00:33:23.629 --> 00:33:28.309
+Meistens merken wir es gar nicht mehr.
+Aber perfekt sind sie nicht.
+
+00:33:28.349 --> 00:33:33.074
+Welche Probleme es gibt und wie die Zukunft
+aussieht, seht ihr im nächsten Kapitel.
+
+00:33:37.355 --> 00:33:39.715
+Kapitel sechs: Probleme und Zukunft.
+
+00:33:39.755 --> 00:33:43.155
+Touchscreens sind überall –
+aber perfekt sind sie nicht.
+
+00:33:43.195 --> 00:33:46.591
+Schauen wir uns zuerst an,
+wo es Probleme gibt.
+
+00:33:49.728 --> 00:33:51.568
+Fangen wir mit dem Wasser an.
+
+00:33:51.648 --> 00:33:54.648
+Vielleicht kennt ihr das:
+Das Display ist nass,
+
+00:33:54.688 --> 00:33:58.753
+und plötzlich öffnet sich eine App,
+obwohl man gar nicht getippt hat.
+
+00:33:58.848 --> 00:34:02.888
+Das liegt daran, dass Wasser Strom
+leitet – ähnlich wie unser Finger.
+
+00:34:02.928 --> 00:34:07.368
+Ein Wassertropfen verändert deshalb
+das elektrische Feld im Sensor,
+
+00:34:07.408 --> 00:34:10.728
+und der Bildschirm denkt,
+dort sei ein Finger.
+
+00:34:10.768 --> 00:34:14.088
+Neuere Smartphones filtern
+solche Fehler besser heraus.
+
+00:34:14.128 --> 00:34:17.043
+Ganz verhindern lässt sich das aber nicht.
+
+00:34:20.131 --> 00:34:22.891
+Ein anderes Problem kennt
+jeder aus dem Winter:
+
+00:34:22.931 --> 00:34:25.700
+Mit normalen Handschuhen
+reagiert das Handy nicht.
+
+00:34:25.740 --> 00:34:27.680
+Der Stoff leitet keinen Strom,
+
+00:34:27.720 --> 00:34:31.156
+deshalb kann der Finger das
+elektrische Feld nicht verändern.
+
+00:34:31.196 --> 00:34:33.655
+Es gibt aber spezielle
+Touchscreen-Handschuhe.
+
+00:34:33.714 --> 00:34:37.741
+In den Fingerspitzen sind
+leitende Fäden eingenäht,
+
+00:34:37.781 --> 00:34:40.007
+zum Beispiel aus Silber oder Kupfer.
+
+00:34:40.185 --> 00:34:42.731
+Damit funktioniert der Bildschirm wieder.
+
+00:34:45.310 --> 00:34:49.990
+Erste Frage: Warum funktioniert ein
+normaler Handschuh nicht auf dem Smartphone?
+
+00:34:50.030 --> 00:34:53.990
+A: Der Stoff leitet keinen Strom.
+B: Der Bildschirm ist zu kalt.
+
+00:34:54.030 --> 00:34:55.910
+C: Der Handschuh ist zu leicht.
+
+00:34:55.950 --> 00:34:59.350
+D: Das Handy erkennt
+nur die Farbe der Haut.
+
+00:34:59.390 --> 00:35:02.775
+Ihr habt jetzt 30 Sekunden Zeit,
+um die Frage zu beantworten.
+
+00:35:34.792 --> 00:35:37.152
+Richtig ist A: Der Stoff
+leitet keinen Strom,
+
+00:35:37.192 --> 00:35:39.702
+deshalb merkt der Sensor
+die Berührung nicht.
+
+00:35:44.242 --> 00:35:47.162
+Das größte Problem ist
+ein kaputtes Display.
+
+00:35:47.202 --> 00:35:51.367
+Wenn das Handy herunterfällt,
+bekommt das Schutzglas schnell Risse.
+
+00:35:51.442 --> 00:35:55.722
+Aber das Display besteht aus mehreren
+Schichten: Oben liegt das Schutzglas,
+
+00:35:55.762 --> 00:35:59.627
+darunter der Touchsensor und
+ganz unten die Bildanzeige.
+
+00:35:59.842 --> 00:36:03.332
+Ist nur das Glas kaputt,
+funktioniert das Handy oft noch.
+
+00:36:03.602 --> 00:36:05.562
+Ist der Touchsensor beschädigt,
+
+00:36:05.602 --> 00:36:10.362
+reagiert der Bildschirm an manchen Stellen
+nicht mehr, oder er tippt von selbst.
+
+00:36:10.402 --> 00:36:15.287
+Und wenn die Bildanzeige kaputt ist,
+sieht man Streifen oder schwarze Flecken.
+
+00:36:18.583 --> 00:36:20.143
+Es gibt noch weitere Nachteile.
+
+00:36:20.183 --> 00:36:23.903
+Auf dem Glas bleiben
+Fingerabdrücke und Schmutz zurück.
+
+00:36:23.943 --> 00:36:27.903
+In der Sonne spiegelt das Display,
+und man erkennt kaum etwas.
+
+00:36:27.943 --> 00:36:31.903
+Viele Knöpfe sind sehr klein – das ist
+vor allem für ältere Menschen schwierig.
+
+00:36:31.943 --> 00:36:37.388
+Im Auto lenken Touchscreens ab,
+das haben wir in Kapitel fünf gesehen.
+
+00:36:37.463 --> 00:36:41.823
+Und für blinde Menschen ist eine glatte
+Glasfläche erst einmal ein Problem,
+
+00:36:41.863 --> 00:36:44.623
+denn man kann keine Tasten ertasten.
+
+00:36:44.663 --> 00:36:49.583
+Dafür gibt es Bildschirmleser: Sie
+lesen vor, was auf dem Display steht,
+
+00:36:49.623 --> 00:36:52.603
+und man bedient das Handy
+mit besonderen Gesten.
+
+00:36:55.747 --> 00:36:58.242
+Genug Probleme – jetzt
+schauen wir in die Zukunft.
+
+00:36:58.282 --> 00:37:03.307
+Eine Entwicklung kann man schon
+heute kaufen: faltbare Smartphones.
+
+00:37:03.347 --> 00:37:08.187
+Seit 2019 gibt es Handys, die
+man wie ein Buch aufklappen kann,
+
+00:37:08.227 --> 00:37:09.912
+zum Beispiel von Samsung.
+
+00:37:10.387 --> 00:37:13.867
+Das funktioniert nur,
+weil das Display biegsam ist.
+
+00:37:13.907 --> 00:37:16.347
+Statt einer Glasplatte
+liegt dort ein flexibler
+
+00:37:16.387 --> 00:37:20.417
+OLED-Bildschirm auf einer
+dünnen Kunststoffschicht.
+
+00:37:20.547 --> 00:37:24.907
+Geschützt wird er bei neueren
+Modellen durch ultradünnes Glas.
+
+00:37:24.947 --> 00:37:29.942
+Darunter sitzt ein Scharnier,
+das den Bildschirm sanft biegt.
+
+00:37:32.584 --> 00:37:37.504
+Ein Nachteil von Touchscreens ist,
+dass man Tasten nicht fühlen kann.
+
+00:37:37.544 --> 00:37:39.984
+Hier hilft haptisches Feedback.
+
+00:37:40.024 --> 00:37:44.704
+Ein kleiner Motor im Handy
+erzeugt kurze, genaue Vibrationen.
+
+00:37:44.744 --> 00:37:48.744
+So fühlt sich ein Tipp fast
+wie ein echter Klick an.
+
+00:37:48.904 --> 00:37:53.424
+Forscher arbeiten sogar an Bildschirmen,
+auf denen man Oberflächen spüren kann,
+
+00:37:53.464 --> 00:37:57.009
+zum Beispiel mit feinen
+Vibrationen oder Ultraschall.
+
+00:37:59.043 --> 00:38:01.963
+Zweite Quizfrage: Was
+bedeutet haptisches Feedback?
+
+00:38:02.003 --> 00:38:03.563
+A: Das Display wird heller.
+
+00:38:03.603 --> 00:38:07.003
+B: Das Gerät gibt eine Rückmeldung,
+die man spüren kann.
+
+00:38:07.043 --> 00:38:09.323
+C: Das Handy liest den Text vor.
+
+00:38:09.363 --> 00:38:12.023
+D: Der Bildschirm lässt sich falten.
+
+00:38:12.163 --> 00:38:15.628
+Ihr habt jetzt 30 Sekunden Zeit,
+um die Frage zu beantworten.
+
+00:38:47.732 --> 00:38:49.187
+Richtig ist B.
+
+00:38:49.412 --> 00:38:53.627
+Man spürt die Rückmeldung,
+zum Beispiel als kurze Vibration.
+
+00:38:58.169 --> 00:39:01.279
+Manchmal muss man den Bildschirm
+gar nicht mehr berühren.
+
+00:39:01.929 --> 00:39:05.249
+Bei der berührungslosen
+Bedienung erkennen Kameras,
+
+00:39:05.289 --> 00:39:09.239
+Infrarot- oder Radarsensoren,
+wie sich die Hand bewegt.
+
+00:39:09.279 --> 00:39:13.549
+Eine Wischbewegung in der Luft
+blättert dann zum Beispiel weiter.
+
+00:39:13.769 --> 00:39:18.554
+Das ist hygienisch und praktisch,
+wenn man schmutzige Hände hat.
+
+00:39:18.729 --> 00:39:22.529
+Aber es ist noch nicht so
+genau wie ein echter Touch,
+
+00:39:22.569 --> 00:39:24.914
+und man bekommt keine Rückmeldung.
+
+00:39:27.465 --> 00:39:30.285
+Und wie geht es weiter?
+
+00:39:30.425 --> 00:39:35.345
+In Forschung und Industrie gibt es schon
+aufrollbare und durchsichtige Bildschirme.
+
+00:39:35.385 --> 00:39:39.814
+Fingerabdrucksensoren sitzen
+heute schon unter dem Display.
+
+00:39:39.854 --> 00:39:42.187
+Vielleicht stecken
+Touchscreens bald überall –
+
+00:39:42.227 --> 00:39:45.385
+in Tischen, Fenstern
+oder sogar in Kleidung.
+
+00:39:45.475 --> 00:39:49.179
+Sicher ist nur: Die Technik
+wird weiter verbessert.
+
+00:39:51.823 --> 00:39:53.943
+Im letzten Kapitel fassen
+wir alles zusammen,
+
+00:39:53.983 --> 00:39:57.093
+und ihr könnt noch einmal
+zeigen, was ihr gelernt habt.
+
+00:40:00.812 --> 00:40:04.546
+Kapitel sieben: Fazit.
+Zeit für einen Rückblick.
+
+00:40:08.406 --> 00:40:13.531
+Angefangen hat alles in den Sechzigerjahren
+mit einer Erfindung in England.
+
+00:40:13.766 --> 00:40:18.286
+Danach kamen die Touchscreens am
+CERN, Computer wie der HP-150,
+
+00:40:18.326 --> 00:40:22.819
+die ersten Smartphones und schließlich
+iPhone, iPad und faltbare Handys.
+
+00:40:47.545 --> 00:40:50.305
+Wir haben gesehen, wie
+Touchscreens funktionieren:
+
+00:40:50.345 --> 00:40:55.345
+kapazitiv über das elektrische
+Feld, resistiv über den Druck –
+
+00:40:55.385 --> 00:40:58.435
+und mit Multitouch sogar mit
+mehreren Fingern gleichzeitig.
+
+00:41:15.073 --> 00:41:17.593
+Heute sind Touchscreens
+überall: im Supermarkt,
+
+00:41:17.633 --> 00:41:22.373
+am Fahrkartenautomaten, im Auto,
+im Krankenhaus und in der Fabrik.
+
+00:41:38.903 --> 00:41:43.503
+Perfekt sind sie nicht: Wasser,
+Handschuhe und Risse machen Probleme.
+
+00:41:43.543 --> 00:41:45.423
+Doch faltbare Displays,
+
+00:41:45.463 --> 00:41:50.513
+fühlbares Feedback und die Bedienung
+mit Gesten zeigen, wie es weitergeht.
+
+00:42:10.528 --> 00:42:15.288
+Die Geschichte der Touchscreens zeigt,
+wie sich unsere Technik verändert hat.
+
+00:42:15.328 --> 00:42:17.368
+Was früher eine besondere Erfindung war,
+
+00:42:17.408 --> 00:42:20.548
+gehört heute ganz selbstverständlich
+zu unserem Alltag.
+
+00:42:20.688 --> 00:42:25.928
+Ob Smartphone, Auto oder moderne Industrieanlagen –
+Touchscreens sind fast überall.
+
+00:42:25.968 --> 00:42:28.568
+Und die Entwicklung ist
+noch lange nicht zu Ende.
+
+00:42:28.608 --> 00:42:32.416
+Jetzt seid ihr dran: Zeit
+für das große Abschlussquiz!
+
+00:42:36.254 --> 00:42:37.734
+Jetzt kommt das Abschlussquiz.
+
+00:42:37.774 --> 00:42:40.614
+Die Fragen sind diesmal etwas schwieriger.
+
+00:42:40.654 --> 00:42:45.044
+Überlegt genau und nutzt bei
+Bedarf eure Joker auf der Webseite.
+
+00:42:45.294 --> 00:42:48.464
+Für jede Frage habt ihr 30 Sekunden Zeit.
+
+00:43:01.706 --> 00:43:05.906
+Frage 1: Welche Reihenfolge stimmt –
+vom ältesten zum neuesten Gerät?
+
+00:43:05.946 --> 00:43:09.246
+A: IBM Simon, HP-150, iPhone.
+
+00:43:09.306 --> 00:43:13.506
+B: HP-150, IBM Simon, iPhone.
+
+00:43:13.546 --> 00:43:18.611
+C: iPhone, IBM Simon, HP-150.
+
+00:43:18.746 --> 00:43:22.231
+D: HP-150, iPhone, IBM Simon.
+
+00:43:22.271 --> 00:43:24.639
+Eure 30 Sekunden laufen.
+
+00:43:56.501 --> 00:43:57.956
+Richtig ist B.
+
+00:43:58.137 --> 00:44:06.092
+Der HP-150 kam 1983, der IBM Simon
+1994 und das erste iPhone 2007.
+
+00:44:08.546 --> 00:44:11.946
+Frage 2: Welche Technik
+passt zu welcher Erklärung?
+
+00:44:11.986 --> 00:44:15.786
+A: Resistiv – Ultraschallwellen
+laufen über das Glas.
+
+00:44:15.826 --> 00:44:19.066
+B: SAW – zwei Schichten
+werden zusammengedrückt.
+
+00:44:19.106 --> 00:44:23.546
+C: Infrarot – der Finger unterbricht
+unsichtbare Lichtstrahlen.
+
+00:44:23.586 --> 00:44:27.546
+D: Kapazitiv – eine Kamera
+erkennt den Schatten des Fingers.
+
+00:44:27.586 --> 00:44:29.496
+Eure 30 Sekunden laufen.
+
+00:45:01.332 --> 00:45:02.627
+Richtig ist C.
+
+00:45:02.852 --> 00:45:07.532
+Beim Infrarot-Touchscreen unterbricht
+der Finger unsichtbare Lichtstrahlen.
+
+00:45:07.572 --> 00:45:09.452
+Resistiv arbeitet mit Druck,
+
+00:45:09.492 --> 00:45:14.182
+SAW mit Ultraschall und kapazitiv
+mit dem elektrischen Feld.
+
+00:45:18.489 --> 00:45:23.649
+Frage 3: Ein Handy hat ein OLED-Display
+und einen kapazitiven Touchscreen.
+
+00:45:23.689 --> 00:45:25.549
+Welche Aussage stimmt?
+
+00:45:25.769 --> 00:45:30.849
+A: Das OLED-Display erkennt die Berührung,
+und der Touchsensor macht das Bild.
+
+00:45:30.889 --> 00:45:34.049
+B: Das OLED-Display braucht
+eine Hintergrundbeleuchtung.
+
+00:45:34.089 --> 00:45:38.929
+C: Der Touchsensor misst den Druck,
+und das Display misst die Position.
+
+00:45:38.969 --> 00:45:43.969
+D: Das OLED-Display macht das Bild,
+und der Touchsensor erkennt den Finger.
+
+00:45:44.009 --> 00:45:46.109
+Eure 30 Sekunden laufen.
+
+00:46:18.902 --> 00:46:20.117
+Richtig ist D.
+
+00:46:20.342 --> 00:46:24.552
+Bei OLED leuchten die Bildpunkte
+selbst und machen das Bild.
+
+00:46:24.742 --> 00:46:30.232
+Wo wir tippen, erkennt der kapazitive
+Touchsensor über das elektrische Feld.
+
+00:46:34.385 --> 00:46:37.865
+Frage 4: Ein Auto fährt
+50 Kilometer pro Stunde.
+
+00:46:37.905 --> 00:46:41.130
+Der Fahrer schaut zwei
+Sekunden auf den Touchscreen.
+
+00:46:41.265 --> 00:46:45.625
+Wie weit fährt er ungefähr,
+ohne auf die Straße zu schauen?
+
+00:46:45.665 --> 00:46:50.745
+A: etwa 3 Meter. B: etwa 10 Meter.
+C: fast 28 Meter.
+
+00:46:50.785 --> 00:46:54.405
+D: etwa 100 Meter.
+Eure 30 Sekunden laufen.
+
+00:47:26.403 --> 00:47:27.618
+Richtig ist C.
+
+00:47:27.843 --> 00:47:32.248
+Bei 50 Kilometern pro Stunde fährt
+ein Auto fast 14 Meter pro Sekunde.
+
+00:47:32.323 --> 00:47:37.223
+In zwei Sekunden sind das fast 28
+Meter – ohne Blick auf die Straße.
+
+00:47:41.292 --> 00:47:44.852
+Letzte Frage: Auf einem
+Handydisplay liegen Wassertropfen,
+
+00:47:44.892 --> 00:47:47.487
+und plötzlich öffnet sich eine App. Warum?
+
+00:47:47.532 --> 00:47:52.212
+A: Wasser leitet Strom und verändert das
+elektrische Feld ähnlich wie ein Finger.
+
+00:47:52.252 --> 00:47:55.092
+B: Die Tropfen drücken
+zwei Schichten zusammen.
+
+00:47:55.132 --> 00:47:58.997
+C: Die Tropfen unterbrechen
+ein Lichtgitter.
+
+00:47:59.452 --> 00:48:03.572
+D: Das Wasser kühlt das Display ab,
+und Kälte löst Berührungen aus.
+
+00:48:03.612 --> 00:48:05.552
+Eure 30 Sekunden laufen.
+
+00:48:37.734 --> 00:48:39.270
+Richtig ist A.
+
+00:48:39.414 --> 00:48:43.054
+Ein Handy hat meistens einen
+kapazitiven Touchscreen.
+
+00:48:43.094 --> 00:48:46.624
+Wasser leitet Strom und verändert
+deshalb das elektrische Feld –
+
+00:48:46.664 --> 00:48:50.264
+fast wie ein Finger. Danke fürs Mitraten!
+
+00:48:56.313 --> 00:49:00.673
+Vom Forschungsprojekt in England bis
+zum Smartphone in unserer Tasche:
+
+00:49:00.713 --> 00:49:04.593
+Touchscreens haben verändert,
+wie wir Technik bedienen.
+
+00:49:04.633 --> 00:49:07.713
+Hinter einer einfachen
+Berührung steckt viel Technik.
+
+00:49:07.753 --> 00:49:12.833
+Jetzt wisst ihr, wie sie funktioniert
+und wo sie uns im Alltag begegnet.
+
+00:49:12.873 --> 00:49:14.768
+Vielen Dank fürs Zuschauen!

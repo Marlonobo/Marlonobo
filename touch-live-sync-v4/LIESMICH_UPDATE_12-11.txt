@@ -21,3 +21,10 @@ Neu:
    - Der Bot verbraucht auch Bedenkzeit und spielt bei knapper Zeit schneller.
 
 Nachtrag 14.11.: Frage und Antworten erscheinen auf dem iPad wie im Film. Die Frage kommt, wenn sie im Film kommt, die Antworten A–D nacheinander. Geprüft am YouTube-Video E8eMGK5GYVU (Länge 51:11,7) bei Quiz 1, Kapitel 4 Quiz 1 und Abschlussfrage 5: Frage, Antworten, Uhr und Lösung stimmen auf weniger als 0,5 s.
+
+
+NEU 15.11.: Untertitel fest eingebaut
+- Die Untertitel zur Doku (Stand 12.11., 513 Zeilen) liegen jetzt als untertitel.vtt direkt in der Webseite.
+- Man muss sie im Admin nicht mehr hochladen. Der Admin zeigt: „Untertitel zur Doku sind fest eingebaut“.
+- Wer im Admin trotzdem eine andere Datei hochlädt, bekommt diese angezeigt.
+- Die eigenen Untertitel von YouTube werden im Player ausgeblendet, damit nichts doppelt erscheint.

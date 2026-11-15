@@ -975,7 +975,7 @@ function refreshAdminVideoControls(){
  const capStatus=el('subtitleFileStatus');if(capStatus){
   const loaded=!!state.captionsAvailable;
   capStatus.classList.toggle('ready',loaded);
-  capStatus.textContent=loaded?(state.subtitles===false?'✓ Untertiteldatei ist gespeichert – Untertitel sind momentan AUS.':'✓ Untertiteldatei ist gespeichert und auf LG-TV, PC und Online-Zuschauern aktiviert.'):
+  capStatus.textContent=loaded?(state.captionsBuiltIn?(state.subtitles===false?'✓ Untertitel zur Doku sind fest eingebaut (Stand 12.11.) – momentan AUS.':'✓ Untertitel zur Doku sind fest eingebaut (Stand 12.11.) – kein Hochladen nötig. Aktiv auf TV, PC und bei Online-Zuschauern.'):(state.subtitles===false?'✓ Untertiteldatei ist gespeichert – Untertitel sind momentan AUS.':'✓ Untertiteldatei ist gespeichert und auf LG-TV, PC und Online-Zuschauern aktiviert.')):
    '⚠️ Noch keine SRT-/VTT-Datei geladen. Der AN-Schalter allein erzeugt keine Untertitel. Lade zuerst deine Untertitel hoch.';
  }
  const sound=state.soundtrack||{pause:true,results:true,volume:.25};
@@ -1863,17 +1863,19 @@ function makeYouTube(id){
  if(!el('youtubeTarget')||role!=='tv')return;
  ytPlayer=new YT.Player('youtubeTarget',{
   videoId:id,
-  playerVars:{rel:0,playsinline:1,enablejsapi:1,controls:1,origin:location.origin},
+  playerVars:{rel:0,playsinline:1,enablejsapi:1,controls:1,cc_load_policy:0,iv_load_policy:3,origin:location.origin},
   events:{
-   onReady:()=>{try{if(tvAutoplayMuted)ytPlayer.mute();else ytPlayer.unMute();}catch{}if(state?.phase==='film')ensureMedia();},
+   onReady:()=>{try{if(tvAutoplayMuted)ytPlayer.mute();else ytPlayer.unMute();}catch{}tvHideYouTubeCaptions();if(state?.phase==='film')ensureMedia();},
    onAutoplayBlocked:()=>{
     if(!tvAutoplayMuted){tvAutoplayMuted=true;try{ytPlayer.mute();ytPlayer.playVideo();}catch{tvShowSoundPrompt();}const b=el('tvPlay');if(b)b.textContent='🔊 Ton mit OK einschalten';const unlock=el('tvFilmUnlock');if(unlock)unlock.hidden=false;}
     else tvShowSoundPrompt();
    },
-   onStateChange:e=>{if(e.data===1){tvSoundBlocked=false;}}
+   onStateChange:e=>{if(e.data===1){tvSoundBlocked=false;tvHideYouTubeCaptions();}}
   }
  });
 }
+// Eigene Untertitel der Webseite laufen über dem Film. YouTubes eigene Untertitel ausblenden, damit nichts doppelt erscheint.
+function tvHideYouTubeCaptions(){if(!ytPlayer||!state?.subtitles||!state?.captionsAvailable)return;try{ytPlayer.setOption?.('captions','track',{});}catch{}try{ytPlayer.unloadModule?.('captions');ytPlayer.unloadModule?.('cc');}catch{}}
 async function sendTick(playing,ended=false){if(role!=='tv'||!tvKey||state?.phase!=='film')return;
  if(state.video.type==='icloud'||(state.video.type==='local'&&(!tvLocalObjectURL||!tvLocalLoaded))||(state.video.type==='drive'&&el('cloudFrame')?.style.display==='block'))return;
  try{const t=state.video.type==='youtube'&&ytPlayer?ytPlayer.getCurrentTime():videoEl?.currentTime||0;await api('/api/tick','POST',{time:t,playing,ended},tvKey);}catch{}}
@@ -2258,6 +2260,8 @@ router();setInterval(()=>{poll();},900);
 setTimeout(refreshTvAppVersion,2000);
 setInterval(refreshTvAppVersion,20000);
 setInterval(()=>{if(role==='tv'&&state?.phase==='film'&&state.video.type!=='none')sendTick(state.playing);},600);
+// Untertitel am TV direkt an der Filmzeit des Players nachführen (nicht nur bei jeder Abfrage alle 0,9 s).
+setInterval(()=>{if(role==='tv'&&state?.phase==='film'&&state.video?.type==='youtube'&&ytPlayer)updateCaption();},200);
 setInterval(()=>{if(role==='tv')reportWelcomeAudio();},9000);
 setInterval(()=>{if(role==='tv'&&state?.video?.type==='local'&&tvLocalLoaded)announceLocalHDMI();},6000);
 })();
