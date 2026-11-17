@@ -149,12 +149,12 @@
     "open": 1354.69,
     "close": 1405.69,
     "duration": 51,
-    "q": "Zoomt ins Bild: Welches Tier versteckt sich im Fenster des Hauses?",
+    "q": "Zoomt ins Bild: Wo ist das kleine Geheimnis – das bemalte Easter Egg – versteckt?",
     "a": [
-      "Eine Katze",
-      "Ein Hund",
-      "Eine Eule",
-      "Ein Hase"
+      "Im Schilf am Steg",
+      "Im Vogelnest",
+      "Im Fenster",
+      "Unter der Bank"
     ],
     "correct": 0,
     "chapter": 4

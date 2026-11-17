@@ -89,7 +89,7 @@
 /* ---------- Schreibfelder: tippen ODER Stift ---------- */
 .wb{position:relative;display:block;width:100%}
 .wb input,.wb textarea{position:relative;z-index:1;display:block;width:100%;background:transparent;border:0;border-bottom:1px solid #9aa9b3;border-radius:0;padding:4px 6px;font:inherit;font-family:"Segoe Print","Bradley Hand","Comic Sans MS",cursive;color:#1b2a8a;font-size:15px}
-.wb canvas{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;touch-action:auto}
+.wb canvas{position:absolute;top:0;right:0;bottom:0;left:0;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;touch-action:auto}
 .hxInkMode .wb canvas{pointer-events:auto;touch-action:none;cursor:crosshair}
 .hxEraseMode .wb canvas{cursor:cell}
 .hxInkMode .wb{background:rgba(11,110,105,.035);outline:1px dashed rgba(11,110,105,.28);outline-offset:-1px}
@@ -126,7 +126,7 @@
 .hxSeg button{background:transparent;border:0;min-height:36px}
 .hxSeg button.on{background:#6de0d6;color:#06252b}
 .hxColors button{width:36px;min-width:36px;padding:0;position:relative}
-.hxColors button::after{content:"";position:absolute;inset:9px;border-radius:50%;background:var(--c);box-shadow:0 0 0 2px #fff4}
+.hxColors button::after{content:"";position:absolute;top:9px;right:9px;bottom:9px;left:9px;inset:9px;border-radius:50%;background:var(--c);box-shadow:0 0 0 2px #fff4}
 .hxColors button.on{background:#ffffff22}
 .hxColors button.on::after{box-shadow:0 0 0 2px #6de0d6}
 .hxPenOnly{display:flex;align-items:center;gap:6px;margin:0;font-size:13px;font-weight:600;color:#c8dbe5}

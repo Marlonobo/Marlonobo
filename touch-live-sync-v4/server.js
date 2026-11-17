@@ -73,6 +73,15 @@ if(!fs.existsSync(V7_CUES_MARKER)){
   migratedV7=true;
  }catch(e){console.error('V7-Zeitmarken konnten nicht aktualisiert werden:',e.message);}
 }
+// 17.11.: Neue Easter-Egg-Aufgabe in Kapitel 4 – Fragetext und Antworten der Zoom-Aufgabe aus questions.json übernehmen.
+const EGG_MARKER=path.join(DIR,'zoom-egg-2026-11-17.applied');
+if(!fs.existsSync(EGG_MARKER)){
+ try{
+  const latest=JSON.parse(fs.readFileSync(path.join(ROOT,'questions.json'),'utf8')),src=latest.find(x=>x.type==='zoom'),dst=Q.find(x=>x.type==='zoom');
+  if(src&&dst){for(const key of ['q','a','correct'])dst[key]=src[key];if(fs.existsSync(QUESTIONS_FILE))fs.writeFileSync(QUESTIONS_FILE,JSON.stringify(Q,null,2),'utf8');}
+  fs.writeFileSync(EGG_MARKER,new Date().toISOString(),'utf8');
+ }catch(e){console.error('Easter-Egg-Aufgabe konnte nicht übernommen werden:',e.message);}
+}
 
 const def=()=>({homeUnlocked:false,trailerPlaying:false,trailerSerial:0,trailerRevision:0,phase:'welcome',time:0,playing:false,quizOffset:0,subtitleOffset:0,subtitles:true,videoVolume:1,videoTitle:'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:{url:'',type:'',id:'',on:false},musicPlan:{welcome:{mode:'touch'},end:{mode:'off'}},podiumPlan:{mode:'own'},spotifyClientId:'',soundtrack:{pause:true,results:true,volume:.25},captionSize:100,captionPosition:11,captionsRevision:0,cloudCaptions:false,video:{type:'none',id:null,url:null},remoteVideo:{type:'none',id:null,url:null},demoIndex:0,demoStart:0,zoomStart:0,zoomDone:false,continuousWatch:false,zoomDismissed:false,zoomOverlay:false,zoomOverlayStartTime:0,demoOverlay:false,gestureOverlay:false,gestureOverlayStartTime:0,gestureStartTime:0,gestureReturnPhase:'welcome',resultsAt:0,clockSource:'tv',lastHostTick:0,seekSerial:0,removedUserIds:[],revision:0});
 let s=def(), users=new Map(), upload=null,feedback=[],cloudManifest=null;
@@ -237,6 +246,17 @@ function revealQuestion(a=active()){
  return Q.find(q=>{if(q.type==='zoom')return false;const r=(Number.isFinite(q.reveal)?q.reveal:q.close)+s.quizOffset;return T>=r&&T<r+REVEAL_SECONDS;})||null;
 }
 const hiddenPoints=(x,pq)=>pq&&x.answers&&x.answers[pq.id]===pq.correct?100:0;
+// 17.11.: Sekunden bis zur nächsten Quiz-Stelle im Film (Frage, Antwort, Tippen, Uhr, Ende, Auflösung).
+// Die iPads fragen genau dann noch einmal nach, statt bis zur nächsten regulären Abfrage (0,9 s) zu warten.
+function nextCueIn(){
+ if(s.phase!=='film'||!s.playing)return null;
+ const T=filmNow(),off=s.quizOffset||0;let best=Infinity;
+ for(const q of Q){
+  const pts=[q.open,q.ask,...(Array.isArray(q.shows)?q.shows:[]),q.start,q.countdown,q.close,q.reveal,Number.isFinite(q.reveal)?q.reveal+REVEAL_SECONDS:NaN,q.type==='zoom'&&Number.isFinite(q.open)?q.open+ZOOM_MISSION_SECONDS:NaN];
+  for(const p of pts){if(!Number.isFinite(p))continue;const d=p+off-T;if(d>0.001&&d<best)best=d;}
+ }
+ return Number.isFinite(best)?Math.round(best*100)/100:null;
+}
 function publicState(id){
  const a=active(),q=a.index>=0?Q[a.index]:null,u=users.get(String(id||''));
  if(u)u.lastSeen=Date.now();
@@ -260,7 +280,7 @@ function publicState(id){
  const gestureActive=gestureSeconds>0&&(s.phase==='gesture'||(s.phase==='film'&&s.gestureOverlay));
  return {homeUnlocked:!!s.homeUnlocked,trailerAvailable:!!trailerPath(),trailerPlaying:!!s.trailerPlaying,trailerSerial:s.trailerSerial||0,trailerRevision:s.trailerRevision||0,tvAudio:Date.now()-tvAudioReport.updated<25000?{connected:true,playing:tvAudioReport.playing,blocked:tvAudioReport.blocked,error:tvAudioReport.error}:{connected:false,playing:false,blocked:false,error:''},phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},musicPlan:s.musicPlan||{welcome:{mode:'touch'},end:{mode:'off'}},podiumPlan:s.podiumPlan||{mode:'own'},podiumFiles:podiumFiles(),spotifyClientId:s.spotifyClientId||'',spotifyLinked:!!spotifyAuth?.refreshToken,soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
   quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:qText??q.q,a:qAns??q.a,shown:qShown,duration:q.type==='zoom'?ZOOM_MISSION_SECONDS:((s.phase==='demo'||s.demoOverlay)?45:30),remaining:a.remaining,accepting:a.accepting,listen:!!a.listen,foundCount:q.type==='zoom'?[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length:0,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
-  waitReveal:!!(a.index<0&&pq),player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)||fs.existsSync(BUNDLED_SUB_FILE),captionsBuiltIn:!s.cloudCaptions&&!fs.existsSync(SUB_FILE)&&fs.existsSync(BUNDLED_SUB_FILE)};
+  waitReveal:!!(a.index<0&&pq),player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)||fs.existsSync(BUNDLED_SUB_FILE),captionsBuiltIn:!s.cloudCaptions&&!fs.existsSync(SUB_FILE)&&fs.existsSync(BUNDLED_SUB_FILE),nextCue:nextCueIn()};
 }
 function startZoom(){const z=ZOOM();if(!z)return false;
  if(s.phase==='film'){
@@ -372,7 +392,8 @@ async function handler(req,res){
  }
  if(m==='GET'&&p==='/touchscreen-motiv.svg')return serve(res,path.join(ROOT,'touchscreen-motiv.svg'),'image/svg+xml');
  if(m==='GET'&&p==='/easter-scene.svg')return serve(res,path.join(ROOT,'easter-scene.svg'),'image/svg+xml');
- if(m==='GET'&&(p==='/easter-game.js'||p==='/easter-game.css'||p==='/finger-mission.js'||p==='/finger-mission.css'))return serve(res,path.join(ROOT,p.slice(1)),p.endsWith('.js')?'application/javascript; charset=utf-8':'text/css; charset=utf-8');
+ if(m==='GET'&&p==='/easter-egg-scene.svg')return serve(res,path.join(ROOT,'easter-egg-scene.svg'),'image/svg+xml');
+ if(m==='GET'&&(p==='/compat.js'||p==='/easter-game.js'||p==='/easter-game.css'||p==='/finger-mission.js'||p==='/finger-mission.css'))return serve(res,path.join(ROOT,p.slice(1)),p.endsWith('.js')?'application/javascript; charset=utf-8':'text/css; charset=utf-8');
  if(m==='GET'&&p==='/easter-demo')return serve(res,path.join(ROOT,'easter-demo.html'),'text/html; charset=utf-8');
  if(m==='GET'&&p==='/touch-icon.svg')return serve(res,path.join(ROOT,'touch-icon.svg'),'image/svg+xml');
  if(m==='GET'&&p==='/site.webmanifest')return serve(res,path.join(ROOT,'site.webmanifest'),'application/manifest+json; charset=utf-8');
@@ -560,11 +581,13 @@ async function handler(req,res){
  if(!z||!(s.phase==='zoom'||(s.phase==='film'&&Q[a.index]?.id===z.id))||a.index<0||!a.accepting)return send(res,409,{error:'Die Easter-Egg-Suche läuft gerade nicht mehr.'});
  if(Object.hasOwn(x.answers,z.id))return send(res,409,{error:'Easter Egg wurde bereits gefunden.'});
  const px=Number(b.x),py=Number(b.y),zoom=Number(b.zoom);
- if(!Number.isFinite(px)||!Number.isFinite(py)||!Number.isFinite(zoom)||px<0||px>1000||py<0||py>620||zoom<2||zoom>7.05)return send(res,400,{error:'Zoome ins Bild und tippe das versteckte Objekt an.'});
- if(Math.abs(px-746)>31||Math.abs(py-332)>28)return send(res,400,{error:'Noch nicht gefunden. Tipp: Suche am Dachfenster der Berghütte. Kein Punktabzug.'});
+ if(!Number.isFinite(px)||!Number.isFinite(py)||!Number.isFinite(zoom)||px<0||px>1000||py<0||py>620||zoom>8.05)return send(res,400,{error:'Zoome ins Bild und tippe das versteckte Objekt an.'});
+ if(zoom<3.95)return send(res,400,{error:'Erst auf mindestens 400 % zoomen, dann das Ei antippen.'});
+ // 17.11.: Neues Wimmelbild – das bemalte Easter Egg steckt im Schilf am Steg (Bildpunkt 447/476).
+ if(Math.abs(px-447)>10||Math.abs(py-476)>10)return send(res,400,{error:'Noch nicht gefunden. Kein Punktabzug – weitersuchen!'});
  const bonus=Math.min(130,Math.max(0,Math.round(a.remaining/ZOOM_MISSION_SECONDS*130/10)*10)),points=170+bonus;
  x.answers[z.id]=z.correct;x.zoomPoints=points;x.score+=points;saveUsers();
- return send(res,200,{ok:true,correct:true,points,message:'Mission erfüllt! Die Katze wurde entdeckt und deine Punkte wurden gespeichert.'});
+ return send(res,200,{ok:true,correct:true,points,message:'Mission erfüllt! Das Easter Egg wurde entdeckt und deine Punkte wurden gespeichert.'});
  }
  if(m==='POST'&&p==='/api/answer'){
  const b=await read(req,1000),x=users.get(String(b.id||'')),a=active();

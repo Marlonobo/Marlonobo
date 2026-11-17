@@ -24,12 +24,12 @@
 .egg-tools-help{margin-left:auto;max-width:420px;color:#b4d3df;font-size:clamp(10px,1.3vw,13px);line-height:1.4}
 .egg-hint{padding:10px 13px;margin-top:13px;border-radius:11px;background:#08263c;border-left:3px solid #7ee9dc;color:#d7e9ee;font-size:clamp(12px,1.45vw,15px)}
 .egg-celebration[hidden]{display:none!important}
-.egg-celebration{position:absolute;inset:0;z-index:12;background:linear-gradient(145deg,#082232df,#041422f2);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:5px;isolation:isolate;overflow:hidden;animation:eggWin .45s ease-out both}
+.egg-celebration{position:absolute;top:0;right:0;bottom:0;left:0;inset:0;z-index:12;background:linear-gradient(145deg,#082232df,#041422f2);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:5px;isolation:isolate;overflow:hidden;animation:eggWin .45s ease-out both}
 .egg-star{font-size:clamp(45px,8vw,104px);filter:drop-shadow(0 5px 25px #ffe27b99);animation:eggBounce 1.1s cubic-bezier(.1,.9,.2,1.2) both}
 .egg-celebration h4{font-size:clamp(25px,5vw,60px);font-weight:950;line-height:1.06;letter-spacing:-.04em;color:#fef6ca;margin:0;text-shadow:0 4px 24px #000b}
 .egg-celebration p{font-size:clamp(12px,1.8vw,20px);color:#e0f5fa;margin:8px 12px}
 .egg-celebration strong{color:#94f9ee;font-size:clamp(20px,3.4vw,35px)}
-.egg-confetti{position:absolute;inset:0;pointer-events:none;z-index:-1;background-image:radial-gradient(circle,#f8d359 0 3px,transparent 4px),radial-gradient(circle,#62e2ed 0 3px,transparent 4px),radial-gradient(circle,#f59cd0 0 3px,transparent 4px);background-size:76px 119px,121px 87px,157px 147px;animation:eggConfetti 8s linear infinite}
+.egg-confetti{position:absolute;top:0;right:0;bottom:0;left:0;inset:0;pointer-events:none;z-index:-1;background-image:radial-gradient(circle,#f8d359 0 3px,transparent 4px),radial-gradient(circle,#62e2ed 0 3px,transparent 4px),radial-gradient(circle,#f59cd0 0 3px,transparent 4px);background-size:76px 119px,121px 87px,157px 147px;animation:eggConfetti 8s linear infinite}
 .egg-game.egg-shake .egg-tap{animation:eggShake .4s ease-in-out}
 @keyframes eggConfetti{from{background-position:0 0,29px -39px,74px -30px}to{background-position:0 760px,29px 870px,74px 930px}}
 @keyframes eggWin{from{opacity:0;transform:scale(1.1)}to{opacity:1;transform:scale(1)}}
@@ -72,7 +72,7 @@
  overflow:hidden
 }
 .egg-mission30::before{
- content:"";position:absolute;inset:0 0 auto;height:130px;pointer-events:none;
+ content:"";position:absolute;top:0;right:0;bottom:auto;left:0;inset:0 0 auto;height:130px;pointer-events:none;
  background:linear-gradient(120deg,#ffffff04,transparent 45%,#55e6d00d)
 }
 .egg-mission-progress{height:7px;border-radius:99px;overflow:hidden;background:#062239;border:1px solid #519aa78a;margin:0 0 16px;box-shadow:inset 0 2px 6px #0008}
@@ -178,3 +178,25 @@
  .egg-mission30 .egg-btn{transition:none}
  .egg-mission30.egg-found .egg-stage{box-shadow:none}
 }
+/* 17.11.: Live-Messung über dem Bild – „Oben seht ihr, wie viele Finger das iPad gerade erkennt.“ */
+.egg-meter{display:grid;grid-template-columns:1.25fr repeat(5,minmax(0,1fr));gap:7px;margin:0 0 12px}
+.egg-meter>div{min-width:0;background:#092134;border:1px solid #3f7489;border-radius:12px;padding:7px 9px;text-align:center;transition:border-color .2s,background .2s}
+.egg-meter small{display:block;font:700 10px/1.3 Consolas,monospace;letter-spacing:.08em;text-transform:uppercase;color:#9dbecb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.egg-meter strong{display:block;font:900 clamp(15px,1.9vw,21px)/1.25 Arial,sans-serif;color:#e8f8ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.egg-meter .egg-meter-main{background:#0d3a45;border-color:#5de2cb}
+.egg-meter .egg-meter-main strong{font-size:clamp(24px,3.2vw,34px);color:#77fae1}
+.egg-meter .egg-meter-ok{border-color:#5de2cb;background:#123e3d}
+.egg-meter .egg-meter-ok strong{color:#77fae1}
+.egg-meter .egg-meter-pulse{animation:eggMeterPulse .45s ease-out}
+@keyframes eggMeterPulse{0%{box-shadow:0 0 0 0 #77fae199}100%{box-shadow:0 0 0 10px #77fae100}}
+@media(max-width:760px){.egg-meter{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.egg-meter>div{padding:5px 6px}.egg-meter small{font-size:9px}}
+@media (prefers-reduced-motion:reduce){.egg-meter .egg-meter-pulse{animation:none}}
+
+/* Ältere Safari-Versionen (< 15) kennen aspect-ratio nicht: Bildfläche trotzdem im Format 1000:620. */
+@supports not (aspect-ratio:1/1){.egg-stage{height:0;padding-top:62%}.egg-stage>.egg-svg{position:absolute;top:0;left:0;width:100%;height:100%}}
+/* Meldung im Bild nur kurz zeigen (blendet nach gut 3 s aus). */
+.egg-tap{transition:opacity .35s ease}
+.egg-tap:not(.egg-tap-on){opacity:0}
+/* Bildtitel oben links darf die Zoom-Anzeige oben rechts nicht überdecken. */
+.egg-location{max-width:calc(100% - 100px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:420px){.egg-meter small{white-space:normal;letter-spacing:.03em;font-size:8.5px;line-height:1.15;min-height:2.3em;display:flex;align-items:center;justify-content:center}.egg-meter strong{font-size:15px}.egg-meter .egg-meter-main strong{font-size:22px}}

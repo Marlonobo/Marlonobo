@@ -71,7 +71,7 @@
   }
   function pointerdown(e){
    if(frozen||completed)return;
-   e.preventDefault();box.setPointerCapture?.(e.pointerId);
+   e.preventDefault();try{box.setPointerCapture?.(e.pointerId);}catch{}
    active.set(e.pointerId,{x:e.clientX,y:e.clientY});snapshot();
   }
   function pointermove(e){
