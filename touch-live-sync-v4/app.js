@@ -211,7 +211,7 @@ function labChess(stage){
   const botSide=human==='w'?'b':'w';
   for(const [node,side] of [[top,botSide],[bot,human]]){
    node.hidden=!useClock();if(!useClock())continue;
-   const ms=left(side);node.textContent=fmt(ms);
+   const ms=left(side),txt=fmt(ms);if(node.textContent!==txt)node.textContent=txt; // nur bei Änderung schreiben (spart Neuzeichnen)
    node.classList.toggle('run',running()&&s.turn===side);node.classList.toggle('low',ms<20000);node.classList.toggle('flag',flag===side);
   }
  }
@@ -508,9 +508,22 @@ function userPage(){
   catch(e){alert(e.message);renderSignature='';await poll();}
  });
  document.querySelectorAll('[data-joker]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await api('/api/joker','POST',{id:userId,type:b.dataset.joker});}catch(e){alert(e.message);}renderSignature='';await poll();});
+ // 17.11. (iPad 8): Während der Zoom-Aufgabe den festen Deko-Hintergrund ausblenden – sonst muss Safari ihn bei jeder Fingerbewegung mit neu zusammensetzen.
+ document.body.classList.toggle('eggMissionOn',q?.type==='zoom');
+ if(q&&q.type!=='zoom')markQuizStill(q);
  if(q?.type==='zoom')initEaster();else if(q)paintQuizTimer(q);
  if(isTeacher)teacherDock();
  if(state.phase==='gesture'||state.sideGame==='gesture')initGesture();
+}
+// 17.11.: Wird dieselbe Frage neu aufgebaut (Antwort getippt, nächste Antwort erscheint), sollen die schon sichtbaren
+// Teile nicht noch einmal einblenden. Vorher blinkte die ganze Karte bei jedem Tippen (auf älteren iPads deutlich sichtbar).
+let quizSeen={id:null,shown:new Set()};
+function markQuizStill(q){
+ const card=document.querySelector('.card.quiz.quizCinematic');if(!card)return;
+ const same=quizSeen.id===q.id;
+ if(same){card.classList.add('quizStill');if(quizSeen.hadQ)card.classList.add('quizStillQ');card.querySelectorAll('.answer[data-choice]').forEach(b=>{if(quizSeen.shown.has(Number(b.dataset.choice)))b.classList.add('wasShown');});}
+ else quizSeen={id:q.id,shown:new Set(),hadQ:false};
+ (q.a||[]).forEach((v,i)=>{if(v!=='')quizSeen.shown.add(i);});if(q.q)quizSeen.hadQ=true;
 }
 function zoomCard(q,p,answered){return '<section class="easter-live"><div class="between" style="margin-bottom:10px"><span class="chip">🎯 KAPITEL 4 · 30-SEKUNDEN-MISSION</span><span class="small">Bereits gefunden: '+(q.foundCount||0)+' von '+state.participants+'</span></div><div id="easterMount"></div><p class="small" style="margin-top:12px">'+(p.zoomFound?'✅ RICHTIG! Du hast das Easter Egg gefunden. Deine Punkte werden oben direkt aktualisiert.':!q.accepting?'Die Suche ist beendet. Das Easter Egg steckte im Schilf am Steg. Pinch-to-Zoom, Drehen, Pan und Tap sind echte Touchscreen-Gesten.':'30-SEKUNDEN-MISSION: Auf 400 % zoomen, das Bild absuchen und das bunt bemalte Easter Egg antippen. Oben siehst du live, wie viele Finger das iPad erkennt. Schnell sein gibt Bonuspunkte!')+'</p></section>';}
 function initEaster(){

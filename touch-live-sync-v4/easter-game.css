@@ -200,3 +200,11 @@
 /* Bildtitel oben links darf die Zoom-Anzeige oben rechts nicht überdecken. */
 .egg-location{max-width:calc(100% - 100px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:420px){.egg-meter small{white-space:normal;letter-spacing:.03em;font-size:8.5px;line-height:1.15;min-height:2.3em;display:flex;align-items:center;justify-content:center}.egg-meter strong{font-size:15px}.egg-meter .egg-meter-main strong{font-size:22px}}
+/* 17.11. (iPad 8): Bild auf eigener Grafikebene. Beim Zoomen wird nur das Bild neu gezeichnet,
+   nicht Rahmen, Schatten und Einblendungen darum herum. Messwerte ändern nur ihr eigenes Kästchen. */
+.egg-stage{isolation:isolate}
+.egg-stage>.egg-svg{will-change:transform}
+.egg-location,.egg-zoom-indicator,.egg-tap{will-change:transform}
+.egg-meter>div{contain:layout paint}
+/* Die zwei Schilder über dem Bild ohne Unschärfe-Filter: der müsste sonst bei jeder Bewegung neu berechnet werden. */
+.egg-location,.egg-zoom-indicator{backdrop-filter:none;-webkit-backdrop-filter:none;background:#031726e6}

@@ -44,3 +44,10 @@ NEU 17.11. abends: Flüssig auf iPad 8. Generation (32 GB, A12, 3 GB RAM)
 - Zoomen/Drehen/Wischen: höchstens einmal pro Bildschirmbild neu zeichnen.
 - iPad bleibt während der Doku wach (Bildschirm-Wachhalten, Safari ab iPadOS 16.4). Nach dem Entsperren holt die Seite sofort den aktuellen Stand.
 - Gemessen (Chrome mit 6-fach gedrosselter CPU): Zoom-Aufgabe ohne lange Bilder, Quiz 0,09–0,20 s nach der Filmstelle, 51 Minuten Film ohne Speicherzuwachs; Server mit 35 iPads: 1,7 % CPU.
+
+NEU 17.11. spät: Safari (WebKit) geprüft und schneller gemacht
+- Getestet mit der echten Safari-Engine (WebKit 2.52): Quiz 0,12–0,15 s nach der Filmstelle, Zoom-Aufgabe, Ei finden, Schach (Worker), Beamer mit Untertiteln – ohne Fehler.
+- Zoom-Aufgabe: Bild auf eigener Grafikebene, Schilder ohne Unschärfe-Filter, Deko-Leuchten während der Aufgabe aus, Messwerte nur bei Änderung schreiben (in WebKit ca. 8-mal mehr Bilder pro Sekunde).
+- Quiz: Nach dem Tippen blinkt die Karte nicht mehr (Antworten werden nicht neu eingeblendet).
+- Startseite/Touch-Labor: bewegtes Filmkorn auf iPads/Handys aus (große Ebene, lief dauernd). Schachuhr schreibt nur bei Änderung.
+- Firefox konnte hier nicht installiert werden (Download gesperrt).

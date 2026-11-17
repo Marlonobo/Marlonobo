@@ -53,21 +53,23 @@ function possiblePoints(seconds){return 170+Math.min(130,Math.max(0,Math.round((
  function constrain(){const maxX=(z-1)*VIEW.w/2+80,maxY=(z-1)*VIEW.h/2+80;pan.x=clamp(pan.x,-maxX,maxX);pan.y=clamp(pan.y,-maxY,maxY);}
  function normRot(d){d=d%360;if(d>180)d-=360;if(d<=-180)d+=360;return d;}
  function svgPx(){const m=svg.getScreenCTM?.();return m?Math.hypot(m.a,m.b)||1:1;}
- let lastFingers=-1;
+ let lastFingers=-1,lastOk=null;const shown=new Map();
+ function setTxt(node,v){if(shown.get(node)===v)return;shown.set(node,v);node.textContent=v;}
  function metrics(){
   const n=pointers.size;
-  if(n!==lastFingers){lastFingers=n;mFingers.textContent=String(n);mFingers.parentNode.classList.remove('egg-meter-pulse');void mFingers.offsetWidth;if(n)mFingers.parentNode.classList.add('egg-meter-pulse');}
-  mDist.textContent=n>=2&&curDist?Math.round(curDist)+' px':'–';
-  mZoom.textContent=Math.round(z*100)+' %';mZoom.parentNode.classList.toggle('egg-meter-ok',z>=MINZ);
-  mRot.textContent=Math.round(normRot(rot))+'°';
-  mPan.textContent=Math.round(Math.hypot(pan.x,pan.y)*svgPx())+' px';
-  mTap.textContent=lastTap?lastTap.x+' | '+lastTap.y:'–';mTap.title=lastTap?'x '+lastTap.x+' px, y '+lastTap.y+' px':'';
+  if(n!==lastFingers){lastFingers=n;mFingers.textContent=String(n);mFingers.parentNode.classList.remove('egg-meter-pulse');if(n){void mFingers.offsetWidth;mFingers.parentNode.classList.add('egg-meter-pulse');}}
+  // Nur schreiben, was sich geändert hat (spart Neuberechnungen der Seite auf älteren iPads).
+  setTxt(mDist,n>=2&&curDist?Math.round(curDist)+' px':'–');
+  setTxt(mZoom,Math.round(z*100)+' %');const ok=z>=MINZ;if(ok!==lastOk){lastOk=ok;mZoom.parentNode.classList.toggle('egg-meter-ok',ok);}
+  setTxt(mRot,Math.round(normRot(rot))+'°');
+  setTxt(mPan,Math.round(Math.hypot(pan.x,pan.y)*svgPx())+' px');
+  setTxt(mTap,lastTap?lastTap.x+' | '+lastTap.y:'–');
  }
  // Neu zeichnen höchstens einmal pro Bildschirmbild (flüssig auch auf älteren iPads).
  let rafId=0;
  function requestDraw(){if(rafId)return;const raf=global.requestAnimationFrame||(f=>setTimeout(f,16));rafId=raf(()=>{rafId=0;draw();});}
  function flushDraw(){if(rafId){(global.cancelAnimationFrame||clearTimeout)(rafId);rafId=0;draw();}}
- function draw(){if(z>=MINZ&&!hasZoomed){hasZoomed=true;lessonZoom.classList.add('egg-step-done');missionStatus();playSound('tap');}constrain();world.setAttribute('transform','translate('+pan.x+' '+pan.y+') translate('+VIEW.cx+' '+VIEW.cy+') rotate('+normRot(rot)+') scale('+z+') translate(-'+VIEW.cx+' -'+VIEW.cy+')');counter.textContent=Math.round(z*100)+' %';game.classList.toggle('egg-zoomed',z>=MINZ);metrics();}
+ function draw(){if(z>=MINZ&&!hasZoomed){hasZoomed=true;lessonZoom.classList.add('egg-step-done');missionStatus();playSound('tap');}constrain();world.setAttribute('transform','translate('+pan.x+' '+pan.y+') translate('+VIEW.cx+' '+VIEW.cy+') rotate('+normRot(rot)+') scale('+z+') translate(-'+VIEW.cx+' -'+VIEW.cy+')');setTxt(counter,Math.round(z*100)+' %');game.classList.toggle('egg-zoomed',z>=MINZ);metrics();}
  function rotateAt(deg,anchor){
   if(!deg)return;const a=anchor||{x:VIEW.cx,y:VIEW.cy},r=deg*Math.PI/180,vx=a.x-VIEW.cx-pan.x,vy=a.y-VIEW.cy-pan.y;
   pan.x=a.x-VIEW.cx-(vx*Math.cos(r)-vy*Math.sin(r));pan.y=a.y-VIEW.cy-(vx*Math.sin(r)+vy*Math.cos(r));rot=normRot(rot+deg);

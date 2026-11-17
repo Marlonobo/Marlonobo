@@ -1531,3 +1531,14 @@ html.hasPhoneRemote body{background:#071724}
  .studentLiveScore{gap:6px;padding:6px 8px}
  .studentLiveScoreLabel{font-size:12px;overflow:hidden;text-overflow:ellipsis;min-width:0}
 }
+
+/* 17.11. (iPad 8): Deko-Leuchten im Hintergrund während der Zoom-Aufgabe aus (spart Rechenzeit beim Zoomen). */
+body.eggMissionOn::before{display:none!important}
+
+/* 17.11. (iPad 8): Das bewegte Filmkorn ist eine Ebene in vierfacher Bildschirmgröße und läuft dauernd.
+   Auf Tablets und Handys aus – spart Grafikspeicher und Rechenzeit, optisch kaum sichtbar (6 % Deckkraft). */
+@media (pointer:coarse){.rgGrain{display:none!important;animation:none!important}}
+
+/* 17.11.: Gleiche Frage neu aufgebaut → nichts noch einmal einblenden (kein Blinken beim Tippen). */
+body.studentEntry .quiz.quizStill,.quiz.quizStillQ h2,.quiz.quizStillQ h3{animation:none!important}
+body.studentEntry .quiz .answer.wasShown:not(.answerSubmitting),.quizCinematic .answer.wasShown:not(.answerSubmitting){animation:none!important;opacity:1}
