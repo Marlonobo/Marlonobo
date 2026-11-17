@@ -37,3 +37,10 @@ NEU 17.11.: Neue Easter-Egg-Aufgabe, Live-Messung, alle Geräte
 - PC: Mausrad zoomt zuverlässig (die Seite scrollt dabei nicht weg), Knopf ↻ oder Taste R dreht.
 - Quiz noch genauer: Die iPads fragen genau zur nächsten Filmstelle nach. Im Test auf 8 Geräteprofilen kamen Frage, Tippen und Auflösung 0,04–0,27 s nach der Filmstelle.
 - Ältere Geräte: klare Meldung „Browser zu alt“ statt leerer Seite; Ersatz für neuere CSS-Funktionen (u. a. für Firefox ESR 115 auf Schul-PCs).
+
+NEU 17.11. abends: Flüssig auf iPad 8. Generation (32 GB, A12, 3 GB RAM)
+- Schach-Bot rechnet im Hintergrund (Web Worker): Brett, Uhr und Tippen frieren nicht mehr ein (vorher bis zu 3 s Stillstand).
+- Easter-Egg-Bild: Hintergrund als vorberechnetes Bild (easter-egg-scene.jpg, 225 KB), nur das Ei und die Halme davor bleiben gestochen scharf. Wird schon beim Anmelden geladen.
+- Zoomen/Drehen/Wischen: höchstens einmal pro Bildschirmbild neu zeichnen.
+- iPad bleibt während der Doku wach (Bildschirm-Wachhalten, Safari ab iPadOS 16.4). Nach dem Entsperren holt die Seite sofort den aktuellen Stand.
+- Gemessen (Chrome mit 6-fach gedrosselter CPU): Zoom-Aufgabe ohne lange Bilder, Quiz 0,09–0,20 s nach der Filmstelle, 51 Minuten Film ohne Speicherzuwachs; Server mit 35 iPads: 1,7 % CPU.

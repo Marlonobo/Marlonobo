@@ -365,7 +365,7 @@ async function handler(req,res){
   res.writeHead(status,headers);
   return m==='HEAD'?res.end():res.end(wav.subarray(first,last+1));
  }
- if(m==='GET'&&(p==='/app.js'||p==='/style.css'||p==='/quiz-polish.css'||p==='/handout.css'||p==='/spotify-connect.js'||p==='/touch-soundtrack.js'||p==='/chess.js'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
+ if(m==='GET'&&(p==='/app.js'||p==='/style.css'||p==='/quiz-polish.css'||p==='/handout.css'||p==='/spotify-connect.js'||p==='/touch-soundtrack.js'||p==='/chess.js'||p==='/chess-worker.js'))return serve(res,path.join(ROOT,p.slice(1)),mime[path.extname(p)]);
  if((m==='GET'||m==='HEAD')&&/^\/podium-music\/p[123]\.(mp3|ogg|wav|m4a)$/.test(p)){
   const file=path.join(PODIUM_DIR,path.basename(p));let st;try{st=await fsp.stat(file);}catch{return send(res,404,{error:'Datei fehlt'});}
   const type={mp3:'audio/mpeg',ogg:'audio/ogg',wav:'audio/wav',m4a:'audio/mp4'}[p.split('.').pop()],size=st.size,headers={'Content-Type':type,'Accept-Ranges':'bytes','Cache-Control':'public, max-age=604800'};
@@ -393,6 +393,7 @@ async function handler(req,res){
  if(m==='GET'&&p==='/touchscreen-motiv.svg')return serve(res,path.join(ROOT,'touchscreen-motiv.svg'),'image/svg+xml');
  if(m==='GET'&&p==='/easter-scene.svg')return serve(res,path.join(ROOT,'easter-scene.svg'),'image/svg+xml');
  if(m==='GET'&&p==='/easter-egg-scene.svg')return serve(res,path.join(ROOT,'easter-egg-scene.svg'),'image/svg+xml');
+ if(m==='GET'&&p==='/easter-egg-scene.jpg')return serve(res,path.join(ROOT,'easter-egg-scene.jpg'),'image/jpeg');
  if(m==='GET'&&(p==='/compat.js'||p==='/easter-game.js'||p==='/easter-game.css'||p==='/finger-mission.js'||p==='/finger-mission.css'))return serve(res,path.join(ROOT,p.slice(1)),p.endsWith('.js')?'application/javascript; charset=utf-8':'text/css; charset=utf-8');
  if(m==='GET'&&p==='/easter-demo')return serve(res,path.join(ROOT,'easter-demo.html'),'text/html; charset=utf-8');
  if(m==='GET'&&p==='/touch-icon.svg')return serve(res,path.join(ROOT,'touch-icon.svg'),'image/svg+xml');

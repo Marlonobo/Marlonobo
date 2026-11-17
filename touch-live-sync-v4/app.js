@@ -158,6 +158,24 @@ function openLab(id){
 // ---------- Schach gegen den Bot ----------
 // Beide Farben nutzen die ausgefüllten Symbole – Weiß wird per CSS hell eingefärbt.
 const CHESS_GLYPH={K:'♚',Q:'♛',R:'♜',B:'♝',N:'♞',P:'♟',k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
+// 17.11.: Der Schach-Bot rechnet in einem Web Worker. Vorher fror die Seite beim Nachdenken bis zu 3 s ein
+// (mittel ~1,7 s, schwer ~3 s auf langsamen Geräten). Ohne Worker-Unterstützung wird wie bisher direkt gerechnet.
+let chessWorker=null,chessReq=0;const chessWait=new Map();
+function chessBot(state,lvl){
+ return new Promise(resolve=>{
+  const direct=()=>setTimeout(()=>{let m=null;try{m=window.TouchChess.bestMove(state,lvl);}catch{}resolve(m);},0);
+  if(chessWorker===null&&window.Worker){
+   try{chessWorker=new Worker('/chess-worker.js?v=20261117');
+    chessWorker.onmessage=e=>{const r=chessWait.get(e.data&&e.data.id);if(r){chessWait.delete(e.data.id);r(e.data.move||null);}};
+    chessWorker.onerror=()=>{const pend=[...chessWait.values()];chessWait.clear();try{chessWorker.terminate();}catch{}chessWorker=false;pend.forEach(r=>r(undefined));};
+   }catch{chessWorker=false;}
+  }
+  if(!chessWorker)return direct();
+  const id=++chessReq;
+  chessWait.set(id,m=>{if(m===undefined)direct();else resolve(m);});
+  try{chessWorker.postMessage({id,state,level:lvl});}catch{chessWait.delete(id);direct();}
+ });
+}
 function labChess(stage){
  const C=window.TouchChess;
  if(!C){stage.innerHTML='<p class="labMsg">Schach wird geladen … bitte Seite neu laden.</p>';return;}
@@ -239,8 +257,11 @@ function labChess(stage){
  function botMove(){
   if(C.status(s).over||s.turn===human)return;
   thinking=true;paint();
-  timer=setTimeout(()=>{ // kurz warten, damit der Hinweis sichtbar ist
-   if(flag){thinking=false;paint();return;}const rest=useClock()?left(s.turn):Infinity;const m=C.bestMove(s,rest<15000?'easy':rest<60000&&level==='hard'?'medium':level);thinking=false;if(m)play(m);paint();
+  timer=setTimeout(async()=>{ // kurz warten, damit der Hinweis sichtbar ist
+   if(flag){thinking=false;paint();return;}const rest=useClock()?left(s.turn):Infinity;const at=s;
+   const m=await chessBot(at,rest<15000?'easy':rest<60000&&level==='hard'?'medium':level);
+   if(s!==at||!thinking)return; // in der Zwischenzeit neues Spiel gestartet
+   thinking=false;if(flag){paint();return;}if(m)play(m);paint();
   },level==='easy'?350:120);
  }
  board.onclick=e=>{
@@ -257,7 +278,7 @@ function labChess(stage){
  function newGame(){clearTimeout(timer);thinking=false;s=C.initial();history=[];moves=[];last=null;sel=-1;targets=[];resetClock();save();paint();botMove();}
  el('chNew').onclick=newGame;
  el('chUndo').onclick=()=>{if(thinking||flag)return;let h=history.pop();if(h&&h.s.turn!==human)h=history.pop()||h;if(!h)return;({s,moves,last}=h);if(h.clock)clock={...h.clock};turnStart=performance.now();sel=-1;targets=[];save();paint();};
- el('chHint').onclick=()=>{if(thinking||over||s.turn!==human)return;const m=C.bestMove(s,'medium');if(!m)return;sel=m.from;targets=[m];paint();el('chStatus').textContent='💡 Tipp: '+C.san(s,m);};
+ el('chHint').onclick=async()=>{if(thinking||over||s.turn!==human)return;const at=s;el('chStatus').textContent='💡 Tipp wird gesucht …';const m=await chessBot(at,'medium');if(!m||s!==at||thinking)return;sel=m.from;targets=[m];paint();el('chStatus').textContent='💡 Tipp: '+C.san(s,m);};
  labGame={stop:()=>{clearTimeout(timer);clearInterval(clockTimer);save();}};
  turnStart=performance.now();clearInterval(clockTimer);clockTimer=setInterval(clockTick,100);
  paint();botMove();
@@ -2262,6 +2283,14 @@ let lastHomeUnlock=null;
 setInterval(()=>{if(role!=='home'||!state)return;const next=!!state.homeUnlocked;if(lastHomeUnlock===null){lastHomeUnlock=next;home();}else if(lastHomeUnlock!==next){lastHomeUnlock=next;home();}},1500);
 window.addEventListener('hashchange',router);
 router();setInterval(()=>{poll();},900);
+// 17.11.: Das iPad soll während der Doku nicht in den Ruhezustand gehen (sonst ist die Frage vorbei, bevor man entsperrt hat).
+// Bildschirm-Wachhalten (Safari ab iPadOS 16.4, Chrome, Edge). Wird beim ersten Tippen angefragt und nach dem Zurückkommen erneuert.
+let screenWake=null;
+async function keepScreenAwake(){try{if(!(role==='join'||role==='teacher')||!('wakeLock' in navigator)||screenWake||document.visibilityState!=='visible')return;screenWake=await navigator.wakeLock.request('screen');screenWake.addEventListener?.('release',()=>{screenWake=null;});}catch{screenWake=null;}}
+document.addEventListener('pointerdown',()=>{keepScreenAwake();},{passive:true});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){keepScreenAwake();if(role==='join'||role==='teacher')poll();}});
+// 17.11.: Bild der Easter-Egg-Aufgabe früh laden, damit es beim Start der Aufgabe nicht erst dekodiert werden muss.
+setTimeout(()=>{if(role==='join'||role==='teacher'){try{const im=new Image();im.decoding='async';im.src='/easter-egg-scene.jpg';window.__eggPreload=im;}catch{}}},4000);
 setTimeout(refreshTvAppVersion,2000);
 setInterval(refreshTvAppVersion,20000);
 setInterval(()=>{if(role==='tv'&&state?.phase==='film'&&state.video.type!=='none')sendTick(state.playing);},600);
