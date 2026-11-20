@@ -1542,3 +1542,8 @@ body.eggMissionOn::before{display:none!important}
 /* 17.11.: Gleiche Frage neu aufgebaut → nichts noch einmal einblenden (kein Blinken beim Tippen). */
 body.studentEntry .quiz.quizStill,.quiz.quizStillQ h2,.quiz.quizStillQ h3{animation:none!important}
 body.studentEntry .quiz .answer.wasShown:not(.answerSubmitting),.quizCinematic .answer.wasShown:not(.answerSubmitting){animation:none!important;opacity:1}
+
+/* 20.11.: Streich-Modus im Admin */
+.prankTag{display:block;margin-top:3px;font-size:11px;font-weight:800;color:#ffd36c;white-space:nowrap}
+.adminPlayerButtons .prankBtn,.adminRosterBulk .prankBtn{border-color:#e5cc75;color:#ffe7a3}
+.adminPlayerButtons .prankBtn.on{background:#5a4512;color:#fff3c9}

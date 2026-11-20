@@ -264,7 +264,7 @@ function publicState(id){
  const rank=[...users.entries()].map(([uid,x])=>({id:uid,name:x.name,role:x.role,score:x.score,answered:Object.keys(x.answers).length})).sort((x,y)=>y.score-x.score||x.name.localeCompare(y.name,'de')).map((x,i)=>({name:x.name,role:x.role,score:x.score,rank:i+1,answered:x.answered}));
  const normal=Q.filter(x=>x.type!=='zoom'),pq=pendingQuestion(a),rq=revealQuestion(a);
  let player=null;
- if(u){const jk=u.jokers||{};player={id,role:u.role,name:u.name,score:final?u.score:null,liveScore:u.role==='student'?(Number(u.score)||0)-hiddenPoints(u,pq):null,reveal:rq?{nr:normal.indexOf(rq)+1,q:rq.q,answer:rq.a?.[rq.correct]??'',correct:rq.correct,choice:Object.hasOwn(u.answers,rq.id)?u.answers[rq.id]:null,right:u.answers[rq.id]===rq.correct,points:u.answers[rq.id]===rq.correct?100:0}:null,choice:q?u.answers[q.id]??null:null,zoomFound:!!(ZOOM()&&Object.hasOwn(u.answers,ZOOM().id)),zoomPoints:final?(u.zoomPoints||0):null,jokers:{fifty:!!jk.fifty,hint:!!jk.hint}};
+ if(u){const jk=u.jokers||{},fake=Number.isFinite(u.fakeScore)?u.fakeScore:null;player={id,role:u.role,name:u.name,score:final?(fake??u.score):null,liveScore:u.role==='student'?(fake??((Number(u.score)||0)-hiddenPoints(u,pq))):null,reveal:rq?{nr:normal.indexOf(rq)+1,q:rq.q,answer:rq.a?.[rq.correct]??'',correct:rq.correct,choice:Object.hasOwn(u.answers,rq.id)?u.answers[rq.id]:null,right:u.answers[rq.id]===rq.correct,points:u.answers[rq.id]===rq.correct?100:0}:null,choice:q?u.answers[q.id]??null:null,zoomFound:!!(ZOOM()&&Object.hasOwn(u.answers,ZOOM().id)),zoomPoints:final?(u.zoomPoints||0):null,jokers:{fifty:!!jk.fifty,hint:!!jk.hint}};
   if(q&&jk.fifty===q.id)player.hide=[0,1,2,3].filter(i=>i!==q.correct&&i!==q.fifty);
   if(q&&jk.hint===q.id)player.hint=q.hint||'';}
  // Wie im Film: die Frage erscheint, wenn sie im Film erscheint (ask), die Antworten A–D nacheinander (shows).
@@ -527,7 +527,7 @@ async function handler(req,res){
     const has=Object.hasOwn(u.answers||{},q.id),choice=has?u.answers[q.id]:null;
     return {id:q.id,status:!has?'unanswered':choice===q.correct?'correct':'wrong',choice,isZoom:q.type==='zoom'};
    });
-   return {id:playerId,name:u.name,role:u.role,online:Number.isFinite(u.lastSeen)&&Date.now()-u.lastSeen<30000,score:u.score||0,answered:answers.filter(a=>a.status!=='unanswered').length,
+   return {id:playerId,name:u.name,role:u.role,online:Number.isFinite(u.lastSeen)&&Date.now()-u.lastSeen<30000,score:u.score||0,fakeScore:Number.isFinite(u.fakeScore)?u.fakeScore:null,answered:answers.filter(a=>a.status!=='unanswered').length,
     correct:answers.filter(a=>a.status==='correct').length,wrong:answers.filter(a=>a.status==='wrong').length,answers};
   }).sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name,'de'));
   return send(res,200,{ok:true,players,questions,participantCount:players.length,phase:s.phase,time:s.time});
@@ -535,8 +535,11 @@ async function handler(req,res){
  if(m==='POST'&&p==='/api/host/participants/manage'){
   if(!isAdmin(req)&&!isCohost(req))return unauthorized(res);
   const b=await read(req,2000),action=String(b.action||'');
-  if(!['rename','reset','delete','resetAll','clearAll'].includes(action))
+  if(!['rename','reset','delete','resetAll','clearAll','prank','prankOff','prankOffAll'].includes(action))
    return send(res,400,{error:'Aktion nicht erlaubt.'});
+  // Streich-Modus: Der Schüler sieht auf seinem Gerät einen anderen Punktestand. Die echten Punkte bleiben gespeichert,
+  // Admin, Lehrkraft, Rangliste und Siegerehrung zählen immer die echten Punkte.
+  if(action==='prankOffAll'){for(const u of users.values())delete u.fakeScore;saveUsers();s.revision++;await persist();return send(res,200,{ok:true,action,participants:users.size});}
   if(action==='resetAll'||action==='clearAll'){
    if(action==='clearAll'){
     s.removedUserIds=[...new Set([...(s.removedUserIds||[]),...users.keys()])].slice(-500);
@@ -550,11 +553,16 @@ async function handler(req,res){
    if(!/^[a-f0-9]{32}$/.test(id)||!users.has(id))return send(res,404,{error:'Teilnehmer nicht gefunden. Liste aktualisieren.'});
    if(action==='delete'){users.delete(id);s.removedUserIds=[...new Set([...(s.removedUserIds||[]),id])].slice(-500);}
    else if(action==='reset'){
-    const u=users.get(id);u.answers={};u.score=0;u.jokers={};u.zoomPoints=0;
+    const u=users.get(id);u.answers={};u.score=0;u.jokers={};u.zoomPoints=0;delete u.fakeScore;
    }else if(action==='rename'){
     const name=String(b.name||'').trim().replace(/\s+/g,' ').slice(0,26);
     if(name.length<2||name.length>26||/[<>\x00-\x1f]/.test(name))return send(res,400,{error:'Bitte einen Namen mit 2–26 gültigen Zeichen eingeben.'});
     const u=users.get(id);u.name=name;u.adminRenamed=true;
+   }else if(action==='prank'){
+    const v=Math.round(Number(b.value));
+    if(!Number.isFinite(v)||v<0||v>99999)return send(res,400,{error:'Bitte eine Punktzahl von 0 bis 99999 eingeben.'});
+    users.get(id).fakeScore=v;
+   }else if(action==='prankOff'){delete users.get(id).fakeScore;
    }
   }
   saveUsers();s.revision++;await persist();

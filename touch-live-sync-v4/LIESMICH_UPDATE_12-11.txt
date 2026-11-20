@@ -51,3 +51,8 @@ NEU 17.11. spät: Safari (WebKit) geprüft und schneller gemacht
 - Quiz: Nach dem Tippen blinkt die Karte nicht mehr (Antworten werden nicht neu eingeblendet).
 - Startseite/Touch-Labor: bewegtes Filmkorn auf iPads/Handys aus (große Ebene, lief dauernd). Schachuhr schreibt nur bei Änderung.
 - Firefox konnte hier nicht installiert werden (Download gesperrt).
+
+NEU 20.11.: Streich-Modus
+- Admin → Teilnehmer → bei einem Namen „😜 Streich“: Zahl eingeben – der Schüler sieht auf seinem Gerät diesen Punktestand.
+- Echte Punkte bleiben gespeichert. Admin, Lehrkraft, Rangliste und Siegerehrung zählen immer die echten Punkte.
+- „😜 Streich beenden“ (oder „Alle Streiche beenden“) zeigt sofort wieder den echten Stand. Geht auch, während die Doku läuft.
