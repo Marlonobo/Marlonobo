@@ -64,8 +64,8 @@ function home(){
  const hasTrailer=!!state?.trailerAvailable;
  const loopSrc='/trailer-loop.mp4',poster='/trailer-poster.jpg';
  const media='<video class="rgBgVideo" id="clsTrailer" autoplay muted loop playsinline preload="auto" poster="'+poster+'" src="'+loopSrc+'"></video>';
- // Premiere laut Trailer: 20.11.
- const prem=new Date(2026,10,20),days=Math.ceil((prem-new Date(new Date().toDateString()))/864e5);
+ // Premiere: Freitag, 27.11.2026 (verschoben vom 20.11.)
+ const prem=new Date(2026,10,27),days=Math.ceil((prem-new Date(new Date().toDateString()))/864e5);
  const premTxt=days>1?'Noch '+days+' Tage':days===1?'Morgen':days===0?'Heute':'Jetzt verfügbar';
  const nav='<header class="rgNav" id="rgNav"><a class="rgLogo" href="/" aria-label="TOUCH LIVE Start">TOUCH<b>LIVE</b></a>'+
   '<nav class="rgMenu" id="rgMenu" aria-label="Hauptmenü">'+
@@ -76,7 +76,7 @@ function home(){
  const hero=nav+'<section class="rgHero" id="rgTop">'+media+'<div class="rgShade"></div>'+
   '<div class="rgHeroInner"><span class="rgKicker">TOUCH LIVE · INTERAKTIVE DOKUMENTATION · LERNFELD 14</span>'+
   '<h1 class="rgTitle">TOUCH<span>SCREEN</span></h1><p class="rgClaim">Geschichte, Technik und Zukunft – erlebt mit deinen eigenen Fingern.</p>'+
-  '<div class="rgPremiere"><span>PREMIERE</span><b>20.11.</b><em>'+premTxt+'</em></div>'+
+  '<div class="rgPremiere"><span>PREMIERE</span><b>Fr 27.11.</b><em>'+premTxt+'</em></div>'+
   '<div class="rgActions"><button type="button" class="rgBtn rgBtnMain" data-go="trailer">▶ Trailer ansehen</button>'+(open?'<button type="button" class="rgBtn" data-go="lab">🎮 Touch-Labor &amp; Schach</button><a class="rgBtn" href="#handout">📝 Handout</a>':'<a class="rgBtn" href="/join">🎮 Zum Quiz</a>')+'</div>'+
   '</div><div class="rgScroll" aria-hidden="true">▼</div></section>';
  const tiles='<section class="rgTiles"><header class="rgSecHead"><span>DIE DOKU</span><h2>Sieben Kapitel. Ein Bildschirm, den jeder kennt.</h2></header><div class="rgGrid">'+
@@ -85,11 +85,11 @@ function home(){
   homeTile('hand','KAPITEL 5 · ALLTAG','Überall Touch','Smartphone, Kasse, Fahrkartenautomat, Auto: Touchscreens sind heute fast überall – und jeder bedient sie ohne Anleitung.')+
   '<article class="rgTile rgTileText2"><div class="rgTileText"><span>KAPITEL 3–7</span><h3>Fünf Arten · Multitouch · Probleme &amp; Zukunft</h3><ol class="rgChapters">'+CH.map(v=>'<li>'+esc(v)+'</li>').join('')+'</ol></div></article>'+
   '</div></section>';
- const lab=open?'<section class="clsLab" id="lab"><div class="clsLabHead"><div><span class="eyebrow">NACH DER DOKU · TOUCH-LABOR</span><h2>Fünf Spiele. Echte Messwerte.</h2><p>Alles läuft direkt im Browser – am besten auf dem iPad mit den Fingern. Dein Gerät misst dabei, was der Touchscreen erkennt.</p></div></div>'+
-  '<div class="clsTabs" role="tablist">'+[['chess','♟️','Schach gegen Bot','Leicht · Mittel · Schwer'],['egg','🔎','Easter Egg','Zoomen, Verschieben, Tippen'],['finger','🖐️','Finger-Messlabor','Abstand, Zoom, Drehwinkel'],['react','⚡','Reaktionstest','Wie schnell tippst du?'],['multi','✋','Multitouch-Zähler','Wie viele Finger erkennt dein Gerät?']].map(([id,ic,t,sub])=>'<button type="button" role="tab" data-lab="'+id+'"><span>'+ic+'</span><b>'+t+'</b><small>'+sub+'</small></button>').join('')+'</div>'+
+ const lab=open?'<section class="clsLab" id="lab"><div class="clsLabHead"><div><span class="eyebrow">NACH DER DOKU · TOUCH-LABOR</span><h2>Neun Spiele. Echte Messwerte.</h2><p>Alles läuft direkt im Browser – am besten auf dem iPad mit den Fingern. Dein Gerät misst dabei, was der Touchscreen erkennt.</p></div></div>'+
+  '<div class="clsTabs" role="tablist">'+[['chess','♟️','Schach gegen Bot','Leicht · Mittel · Schwer'],['egg','🔎','Easter Egg','Zoomen, Verschieben, Tippen'],['finger','🖐️','Finger-Messlabor','Abstand, Zoom, Drehwinkel'],['react','⚡','Reaktionstest','Wie schnell tippst du?'],['multi','✋','Multitouch-Zähler','Wie viele Finger erkennt dein Gerät?'],['aim','🎯','Treffsicherheit','Wie genau trifft dein Finger?'],['swipe','👆','Wisch-Sprint','Richtung und Tempo deiner Wischer'],['piano','🎹','Finger-Klavier','Mehrere Finger, mehrere Töne'],['memory','🧠','Touch-Memory','Begriffe aus der Doku']].map(([id,ic,t,sub])=>'<button type="button" role="tab" data-lab="'+id+'"><span>'+ic+'</span><b>'+t+'</b><small>'+sub+'</small></button>').join('')+'</div>'+
   '<div class="clsStage" id="labStage"></div></section>'+
   '<section class="clsBottom"><a class="clsHandout" href="#handout"><span class="eyebrow">ZUM ABSCHLUSS</span><h3>Handout ausfüllen</h3><p>Wissen, Arbeitsblatt und Feedbackbogen – tippen oder mit dem Apple Pencil schreiben.</p><b>Handout öffnen →</b></a><div class="clsChapters"><span class="eyebrow">NACH DER SIEGEREHRUNG</span><h3 style="margin:8px 0">Doku noch einmal?</h3><p class="small">Die ganze Dokumentation mit Untertiteln auf deinem Gerät.</p><a class="btn" href="/watch">🎬 Doku ansehen</a></div></section>'
-  :'<section class="rgLocked"><div><span>NACH DER SIEGEREHRUNG</span><h2>Touch-Labor, Schach &amp; Handout</h2><p>Sobald die Doku vorbei ist, öffnet sich hier das Touch-Labor mit Schach gegen den Bot, Finger-Messung und Reaktionstest.</p></div><a class="rgBtn rgBtnMain" href="/join">🎮 Jetzt zum Quiz</a></section>';
+  :'<section class="rgLocked"><div><span>NACH DER SIEGEREHRUNG</span><h2>Touch-Labor, Schach &amp; Handout</h2><p>Sobald die Doku vorbei ist, öffnet sich hier das Touch-Labor mit neun Spielen: Schach gegen den Bot, Finger-Messung, Reaktionstest, Finger-Klavier, Touch-Memory und mehr.</p></div><a class="rgBtn rgBtnMain" href="/join">🎮 Jetzt zum Quiz</a></section>';
  const credits='<section class="rgCredits"><h4>Bildquellen</h4><ul>'+Object.values(HOME_IMG).map(i=>'<li><a href="'+i.page+'" target="_blank" rel="noopener noreferrer">'+esc(i.alt)+'</a> – '+esc(i.credit)+', via Wikimedia Commons</li>').join('')+'</ul></section>';
  let introSeen=false;try{introSeen=sessionStorage.getItem('touch_intro')==='1';}catch{}
  const intro='',introHtml='<div class="rgIntro" id="rgIntro" aria-hidden="true"><div class="rgBar rgBarTop"></div><div class="rgBar rgBarBottom"></div><div class="rgIntroText"><span class="rgIntroPre">Friedrich-Dessauer-Schule präsentiert</span><span class="rgIntroLogo">TOUCH<b>LIVE</b></span><span class="rgIntroSub">Eine interaktive Dokumentation</span></div><button type="button" class="rgSkip" id="rgSkip">Überspringen ›</button></div>';
@@ -152,6 +152,10 @@ function openLab(id){
   if(window.FingerMission){labGame=window.FingerMission.mount(el('labMount'),{remaining:30});countdown(30,r=>labGame?.update?.({remaining:r,disabled:r<=0}));}
  }else if(id==='chess')labChess(stage);
  else if(id==='react')labReaction(stage,restart);
+ else if(id==='aim')labAim(stage);
+ else if(id==='swipe')labSwipe(stage);
+ else if(id==='piano')labPiano(stage);
+ else if(id==='memory')labMemory(stage);
  else labMultitouch(stage);
  const r=el('labRestart');if(r)r.onclick=()=>openLab(id);
 }
@@ -321,6 +325,130 @@ function labMultitouch(stage){
  const up=e=>{pts.delete(e.pointerId);draw();};
  pad.addEventListener('pointerdown',down);pad.addEventListener('pointermove',move);['pointerup','pointercancel','pointerleave'].forEach(t=>pad.addEventListener(t,up));
  el('mtReset').onclick=()=>{max=0;span=0;pts.clear();draw();};
+}
+// ---------- 25.11.: Vier neue Spiele im Touch-Labor (nach der Präsentation) ----------
+// Alle mit echten Touch-Messwerten, ohne externe Bibliotheken, leicht genug für ältere iPads.
+const labShuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const labAvg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+// 🎯 Treffsicherheit: Die Ziele werden immer kleiner – wie genau trifft der Finger?
+function labAim(stage){
+ const ROUNDS=15;let round=0,hits=0,offs=[],times=[],shownAt=0,cur=null,run=false;
+ stage.innerHTML='<div class="labAim"><div class="labStats"><div><small>Ziel</small><strong id="amRound">0 / '+ROUNDS+'</strong></div><div><small>Treffer</small><strong id="amHits">0</strong></div><div><small>Ø Abweichung</small><strong id="amOff">–</strong></div><div><small>Ø Zeit</small><strong id="amTime">–</strong></div></div>'+
+  '<div class="labArena" id="amArena"><button type="button" class="labStart" id="amStart">🎯 Start</button><div class="amTarget" id="amTarget" hidden></div><p class="labMsg" id="amMsg">15 Ziele, jedes kleiner als das letzte. Tippe genau in die Mitte!</p></div></div>';
+ const arena=el('amArena'),target=el('amTarget'),msg=el('amMsg');
+ function place(){
+  const r=arena.getBoundingClientRect(),size=Math.round(84-(round/(ROUNDS-1))*64); // von 84 px bis 20 px
+  const x=size/2+12+Math.random()*Math.max(1,r.width-size-24),y=size/2+12+Math.random()*Math.max(1,r.height-size-70);
+  cur={x,y,size};target.style.width=target.style.height=size+'px';target.style.left=(x-size/2)+'px';target.style.top=(y-size/2)+'px';target.hidden=false;shownAt=performance.now();
+  msg.textContent='Ziel '+(round+1)+' von '+ROUNDS+' · '+size+' px';
+ }
+ function mark(x,y,hit){const m=document.createElement('div');m.className='amMark'+(hit?' hit':'');m.style.left=x+'px';m.style.top=y+'px';arena.appendChild(m);setTimeout(()=>m.remove(),900);}
+ arena.addEventListener('pointerdown',e=>{
+  if(!run||!cur||e.target.closest('.labStart'))return;e.preventDefault();
+  const r=arena.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top,d=Math.hypot(x-cur.x,y-cur.y),hit=d<=cur.size/2;
+  times.push(performance.now()-shownAt);offs.push(d);if(hit)hits++;round++;mark(x,y,hit);
+  el('amRound').textContent=round+' / '+ROUNDS;el('amHits').textContent=hits;el('amOff').textContent=Math.round(labAvg(offs))+' px';el('amTime').textContent=Math.round(labAvg(times))+' ms';
+  if(round>=ROUNDS){run=false;cur=null;target.hidden=true;
+   msg.innerHTML='Fertig: <b>'+hits+' von '+ROUNDS+'</b> getroffen, im Schnitt <b>'+Math.round(labAvg(offs))+' px</b> neben der Mitte.<br><small>Ein Finger ist etwa 1 cm breit – viel breiter als ein Mauszeiger. Darum sind Knöpfe auf Touchscreens groß: Apple empfiehlt mindestens 44 × 44 Punkte.</small>';
+   el('amStart').hidden=false;el('amStart').textContent='↻ Nochmal';return;}
+  place();
+ });
+ el('amStart').onclick=()=>{round=0;hits=0;offs=[];times=[];run=true;el('amStart').hidden=true;el('amHits').textContent='0';el('amOff').textContent=el('amTime').textContent='–';el('amRound').textContent='0 / '+ROUNDS;place();};
+ labGame={stop:()=>{run=false;}};
+}
+// 👆 Wisch-Sprint: In die angezeigte Richtung wischen – so schnell wie möglich.
+function labSwipe(stage){
+ const ROUNDS=20,DIRS={up:['⬆','nach oben'],down:['⬇','nach unten'],left:['⬅','nach links'],right:['➡','nach rechts']};
+ let round=0,ok=0,speeds=[],need=null,start=null,t0=0,run=false,tick=null;
+ stage.innerHTML='<div class="labSwipe"><div class="labStats"><div><small>Runde</small><strong id="swRound">0 / '+ROUNDS+'</strong></div><div><small>Richtig</small><strong id="swOk">0</strong></div><div><small>Ø Tempo</small><strong id="swSpeed">–</strong></div><div><small>Zeit</small><strong id="swTime">–</strong></div></div>'+
+  '<div class="labArena" id="swArena"><button type="button" class="labStart" id="swStart">👆 Start</button><div class="swArrow" id="swArrow" hidden></div><p class="labMsg" id="swMsg">20 Pfeile: Wische jeweils in die Richtung – so schnell du kannst.</p></div></div>';
+ const arena=el('swArena'),arrow=el('swArrow'),msg=el('swMsg');
+ function nextArrow(){const k=Object.keys(DIRS);let d;do{d=k[Math.floor(Math.random()*4)];}while(d===need&&Math.random()<.6);need=d;arrow.textContent=DIRS[d][0];arrow.hidden=false;arrow.classList.remove('pop');void arrow.offsetWidth;arrow.classList.add('pop');msg.textContent='Wische '+DIRS[d][1]+'!';}
+ arena.addEventListener('pointerdown',e=>{if(!run||e.target.closest('.labStart'))return;e.preventDefault();try{arena.setPointerCapture(e.pointerId);}catch{}start={x:e.clientX,y:e.clientY,t:performance.now(),id:e.pointerId};});
+ arena.addEventListener('pointerup',e=>{
+  if(!run||!start||e.pointerId!==start.id)return;
+  const dx=e.clientX-start.x,dy=e.clientY-start.y,dist=Math.hypot(dx,dy),dt=Math.max(1,performance.now()-start.t);start=null;
+  if(dist<40){msg.textContent='Zu kurz – richtig wischen!';return;}
+  const dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');
+  round++;speeds.push(dist/dt*1000);const good=dir===need;if(good)ok++;
+  arena.classList.remove('swGood','swBad');void arena.offsetWidth;arena.classList.add(good?'swGood':'swBad');
+  el('swRound').textContent=round+' / '+ROUNDS;el('swOk').textContent=ok;el('swSpeed').textContent=Math.round(labAvg(speeds))+' px/s';
+  if(round>=ROUNDS){run=false;clearInterval(tick);arrow.hidden=true;const secs=(performance.now()-t0)/1000;el('swTime').textContent=secs.toFixed(1).replace('.',',')+' s';
+   msg.innerHTML='Fertig: <b>'+ok+' von '+ROUNDS+'</b> richtig in <b>'+secs.toFixed(1).replace('.',',')+' s</b> · schnellster Wisch <b>'+Math.round(Math.max(...speeds))+' px/s</b>.<br><small>So erkennt ein Touchscreen eine Wischgeste: Er misst, wo der Finger aufsetzt und wo er loslässt – daraus berechnet er Richtung und Tempo.</small>';
+   el('swStart').hidden=false;el('swStart').textContent='↻ Nochmal';return;}
+  nextArrow();
+ });
+ arena.addEventListener('pointercancel',()=>{start=null;});
+ el('swStart').onclick=()=>{round=0;ok=0;speeds=[];run=true;need=null;el('swStart').hidden=true;t0=performance.now();el('swOk').textContent='0';el('swSpeed').textContent='–';el('swRound').textContent='0 / '+ROUNDS;
+  clearInterval(tick);tick=setInterval(()=>{el('swTime').textContent=((performance.now()-t0)/1000).toFixed(1).replace('.',',')+' s';},100);nextArrow();};
+ labGame={stop:()=>{run=false;clearInterval(tick);}};
+}
+// 🎹 Finger-Klavier: Jeder Finger ist ein eigener Ton – Multitouch zum Hören.
+function labPiano(stage){
+ const KEYS=[['C',261.63],['D',293.66],['E',329.63],['F',349.23],['G',392.00],['A',440.00],['H',493.88],['C′',523.25]];
+ // „Alle meine Entchen“ (Volkslied, nur die Töne)
+ const SONG='C D E F G G A A A A G A A A A G F F F F E E D D D D C'.split(' ').map(n=>'CDEFGAH'.indexOf(n));
+ let ac=null,voices=new Map(),max=0,songOn=false,pos=0;
+ stage.innerHTML='<div class="labPiano"><div class="labStats"><div><small>Finger jetzt</small><strong id="pnNow">0</strong></div><div><small>Maximum</small><strong id="pnMax">0</strong></div><div><small>Ton</small><strong id="pnNote">–</strong></div><div><small>Lied</small><strong id="pnSong">–</strong></div></div>'+
+  '<div class="pnKeys" id="pnKeys">'+KEYS.map((k,i)=>'<div class="pnKey" data-k="'+i+'"><span>'+k[0]+'</span></div>').join('')+'</div>'+
+  '<div class="pnBar"><button type="button" id="pnSongBtn">🎵 Lied-Modus: „Alle meine Entchen“</button><p class="small" id="pnMsg">Spiel mit mehreren Fingern gleichzeitig – jeder Finger ist ein eigener Ton. Wische über die Tasten für eine Tonleiter. Kein Ton? Lautstärke und Stummschalter am iPad prüfen.</p></div></div>';
+ const keysEl=el('pnKeys'),msg=el('pnMsg');
+ function audio(){
+  if(!ac){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;try{ac=new C();}catch{return null;}try{if(navigator.audioSession)navigator.audioSession.type='playback';}catch{}}
+  if(ac.state==='suspended')ac.resume().catch(()=>{});return ac;
+ }
+ const keyAt=x=>{const r=keysEl.getBoundingClientRect();return Math.max(0,Math.min(KEYS.length-1,Math.floor((x-r.left)/r.width*KEYS.length)));};
+ function paint(){const on=new Set([...voices.values()].map(v=>v.k));keysEl.querySelectorAll('.pnKey').forEach((d,i)=>{d.classList.toggle('on',on.has(i));d.classList.toggle('next',songOn&&SONG[pos]===i);});max=Math.max(max,voices.size);el('pnNow').textContent=voices.size;el('pnMax').textContent=max;}
+ function hit(k){
+  el('pnNote').textContent=KEYS[k][0];
+  if(songOn){
+   if(k===SONG[pos]){pos++;el('pnSong').textContent=pos+' / '+SONG.length;if(pos>=SONG.length){songOn=false;msg.textContent='🎉 Geschafft! „Alle meine Entchen“ komplett gespielt. Nochmal? Tippe auf den Lied-Modus.';el('pnSong').textContent='✓';}}
+   else{const d=keysEl.querySelector('.pnKey[data-k="'+k+'"]');if(d){d.classList.remove('miss');void d.offsetWidth;d.classList.add('miss');}}
+  }
+ }
+ function startVoice(id,k){const a=audio(),v={k,osc:null,g:null};
+  if(a){try{const o=a.createOscillator(),g=a.createGain(),t=a.currentTime;o.type='triangle';o.frequency.value=KEYS[k][1];g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.2,t+0.015);o.connect(g);g.connect(a.destination);o.start(t);v.osc=o;v.g=g;}catch{}}
+  voices.set(id,v);hit(k);paint();}
+ function moveVoice(id,k){const v=voices.get(id);if(!v||v.k===k)return;v.k=k;if(v.osc&&ac)v.osc.frequency.setTargetAtTime(KEYS[k][1],ac.currentTime,0.012);hit(k);paint();}
+ function stopVoice(id){const v=voices.get(id);if(!v)return;voices.delete(id);
+  if(v.osc&&ac){try{const t=ac.currentTime;v.g.gain.cancelScheduledValues(t);v.g.gain.setValueAtTime(Math.max(0.0001,v.g.gain.value),t);v.g.gain.exponentialRampToValueAtTime(0.0001,t+0.25);v.osc.stop(t+0.3);}catch{}}
+  paint();}
+ keysEl.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;e.preventDefault();try{keysEl.setPointerCapture(e.pointerId);}catch{}startVoice(e.pointerId,keyAt(e.clientX));});
+ keysEl.addEventListener('pointermove',e=>{if(voices.has(e.pointerId)){e.preventDefault();moveVoice(e.pointerId,keyAt(e.clientX));}});
+ ['pointerup','pointercancel','lostpointercapture'].forEach(t=>keysEl.addEventListener(t,e=>stopVoice(e.pointerId)));
+ el('pnSongBtn').onclick=()=>{songOn=true;pos=0;el('pnSong').textContent='0 / '+SONG.length;msg.textContent='Tippe die leuchtende Taste – Ton für Ton, bis das Lied fertig ist.';audio();paint();};
+ labGame={stop:()=>{for(const id of [...voices.keys()])stopVoice(id);if(ac){const a=ac;ac=null;setTimeout(()=>{try{a.close();}catch{}},400);}}};
+}
+// 🧠 Touch-Memory: Begriff und passende Erklärung aus der Doku finden.
+function labMemory(stage){
+ const PAIRS=[['Kapazitiv','Der Finger verändert das elektrische Feld'],['Resistiv','Zwei Schichten werden zusammengedrückt'],['Infrarot','Ein Lichtgitter wird unterbrochen'],['SAW','Ultraschall läuft über das Glas'],['Optisch','Kameras schauen flach über das Glas'],['Bent Stumpe','Touchscreen am CERN, 1972'],['Samuel Hurst','Elograph, 1971'],['iPhone','Vorgestellt am 9. Januar 2007'],['HP-150','Computer mit Infrarot-Strahlen, 1983'],['IBM Simon','1994 – eines der ersten Smartphones'],['Digitizer','Touchsensor unter dem Schutzglas']];
+ const N=6;let cards=[],open=[],found=0,moves=0,t0=0,tick=null,lock=false,best=null;
+ try{best=Number(localStorage.getItem('touch_memory_best'))||null;}catch{}
+ stage.innerHTML='<div class="labMemory"><div class="labStats"><div><small>Paare</small><strong id="meFound">0 / '+N+'</strong></div><div><small>Züge</small><strong id="meMoves">0</strong></div><div><small>Zeit</small><strong id="meTime">0,0 s</strong></div><div><small>Bestwert</small><strong id="meBest">'+(best?best+' Züge':'–')+'</strong></div></div>'+
+  '<div class="meGrid" id="meGrid"></div><div class="pnBar"><button type="button" id="meNew">↻ Neue Karten</button><p class="small" id="meMsg">Finde die Paare: einen Begriff und die passende Erklärung aus der Doku.</p></div></div>';
+ const grid=el('meGrid'),msg=el('meMsg');
+ function deal(){
+  clearInterval(tick);tick=null;open=[];found=0;moves=0;t0=0;lock=false;
+  const pick=labShuffle(PAIRS.slice()).slice(0,N);
+  cards=labShuffle(pick.flatMap((p,i)=>[{pair:i,text:p[0],kind:'term'},{pair:i,text:p[1],kind:'def'}]));
+  grid.innerHTML=cards.map((c,i)=>'<button type="button" class="meCard '+c.kind+'" data-i="'+i+'" aria-label="Karte '+(i+1)+'"><span class="meBack">?</span><span class="meFront">'+esc(c.text)+'</span></button>').join('');
+  el('meFound').textContent='0 / '+N;el('meMoves').textContent='0';el('meTime').textContent='0,0 s';msg.textContent='Finde die Paare: einen Begriff und die passende Erklärung aus der Doku.';
+ }
+ grid.addEventListener('click',e=>{
+  const b=e.target.closest('.meCard');if(!b||lock||b.classList.contains('up')||b.classList.contains('done'))return;
+  if(!t0){t0=performance.now();tick=setInterval(()=>{el('meTime').textContent=((performance.now()-t0)/1000).toFixed(1).replace('.',',')+' s';},100);}
+  b.classList.add('up');open.push(b);
+  if(open.length<2)return;
+  moves++;el('meMoves').textContent=moves;
+  const [a,c]=open,ca=cards[a.dataset.i],cc=cards[c.dataset.i];
+  if(ca.pair===cc.pair&&ca.kind!==cc.kind){a.classList.add('done');c.classList.add('done');open=[];found++;el('meFound').textContent=found+' / '+N;
+   if(found===N){clearInterval(tick);const secs=((performance.now()-t0)/1000).toFixed(1).replace('.',',');
+    if(!best||moves<best){best=moves;try{localStorage.setItem('touch_memory_best',String(best));}catch{}el('meBest').textContent=best+' Züge';}
+    msg.innerHTML='🎉 Alle Paare in <b>'+moves+' Zügen</b> und <b>'+secs+' s</b> gefunden!';}}
+  else{lock=true;setTimeout(()=>{a.classList.remove('up');c.classList.remove('up');open=[];lock=false;},900);}
+ });
+ el('meNew').onclick=deal;deal();
+ labGame={stop:()=>{clearInterval(tick);}};
 }
 function paintQuizTimer(q){
  if(!q||q.type==='zoom')return;

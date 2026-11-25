@@ -1547,3 +1547,40 @@ body.studentEntry .quiz .answer.wasShown:not(.answerSubmitting),.quizCinematic .
 .prankTag{display:block;margin-top:3px;font-size:11px;font-weight:800;color:#ffd36c;white-space:nowrap}
 .adminPlayerButtons .prankBtn,.adminRosterBulk .prankBtn{border-color:#e5cc75;color:#ffe7a3}
 .adminPlayerButtons .prankBtn.on{background:#5a4512;color:#fff3c9}
+/* 25.11.: Neue Spiele im Touch-Labor */
+.amTarget{position:absolute;border-radius:50%;pointer-events:none;background:radial-gradient(circle,#fff 0 10%,#ff8a80 11% 30%,#fff 31% 46%,#ff8a80 47% 66%,#ff8a8033 67%);box-shadow:0 0 22px #ff8a8066}
+.amMark{position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;border:2px solid #ffb4a8;pointer-events:none;animation:amFade .9s ease-out forwards}
+.amMark.hit{border-color:#6de0d6;background:#6de0d655}
+@keyframes amFade{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(1.8)}}
+.swArrow{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);font-size:clamp(90px,18vw,150px);line-height:1;color:#6de0d6;text-shadow:0 0 30px #6de0d677;pointer-events:none}
+.swArrow.pop{animation:swPop .22s ease-out}
+@keyframes swPop{from{transform:translate(-50%,-50%) scale(.6);opacity:.2}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+.labArena.swGood{box-shadow:inset 0 0 0 4px #6de0d6}
+.labArena.swBad{box-shadow:inset 0 0 0 4px #ff8a80}
+.pnKeys{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px;height:min(52vh,380px);touch-action:none;user-select:none;-webkit-user-select:none;margin-bottom:12px}
+.pnKey{position:relative;border-radius:0 0 14px 14px;background:linear-gradient(180deg,#f4f8fb,#d9e4ec);border:1px solid #2b5167;box-shadow:inset 0 -10px 0 #b9c9d4;display:flex;align-items:flex-end;justify-content:center;padding-bottom:16px;transition:transform .05s}
+.pnKey span{font:800 clamp(16px,2.4vw,24px) Consolas,monospace;color:#0b2a3a}
+.pnKey.on{background:linear-gradient(180deg,#bff6f0,#6de0d6);box-shadow:inset 0 -4px 0 #3fb4aa;transform:translateY(3px)}
+.pnKey.next{outline:4px solid #f5ce8c;outline-offset:-4px}
+.pnKey.next span{color:#8a5a00}
+.pnKey.miss{animation:pnMiss .3s ease}
+@keyframes pnMiss{0%,100%{transform:none}30%{transform:translateX(-4px)}60%{transform:translateX(4px)}}
+.pnBar{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+.pnBar p{margin:0;flex:1 1 260px}
+.meGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.meCard{position:relative;min-height:clamp(92px,15vw,132px);padding:10px;border-radius:14px;border:1px solid #2b5167;background:linear-gradient(135deg,#123349,#0a2232);color:#e8f6fb;font:700 clamp(13px,1.6vw,16px)/1.3 inherit;display:flex;align-items:center;justify-content:center;text-align:center;touch-action:manipulation}
+.meCard .meFront{display:none}
+.meCard .meBack{font-size:34px;color:#6de0d6;opacity:.7}
+.meCard.up .meFront,.meCard.done .meFront{display:block}
+.meCard.up .meBack,.meCard.done .meBack{display:none}
+.meCard.up{background:#163f57;border-color:#6de0d6}
+.meCard.term.up,.meCard.term.done{font-size:clamp(15px,1.9vw,19px);color:#f5ce8c}
+.meCard.done{background:linear-gradient(135deg,#1d4a3f,#123c37);border-color:#6de0d6;opacity:.85}
+@media (max-width:620px){.meGrid{grid-template-columns:repeat(3,minmax(0,1fr))}.pnKeys{gap:3px}}
+@media (prefers-reduced-motion:reduce){.amMark,.swArrow.pop,.pnKey.miss{animation:none}}
+/* Start-/Nochmal-Knopf in den Labor-Spielen gut lesbar (wurde vom allgemeinen Knopf-Stil dunkel überschrieben). */
+.clsStage .labStart{background:var(--aqua,#6de0d6)!important;color:#06252b!important;border:0!important;border-radius:999px!important;font-weight:800;text-transform:none!important;letter-spacing:0!important;box-shadow:0 10px 30px #6de0d644}
+.clsStage .meCard{text-transform:none!important;letter-spacing:0!important}
+.clsStage .pnBar button,.clsStage #meNew{text-transform:none}
+.clsStage .meCard.done{background:linear-gradient(135deg,#1d4a3f,#123c37)!important;color:#e8f6fb}
+.clsStage .meCard.term.done{color:#f5ce8c}

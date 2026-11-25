@@ -56,3 +56,10 @@ NEU 20.11.: Streich-Modus
 - Admin → Teilnehmer → bei einem Namen „😜 Streich“: Zahl eingeben – der Schüler sieht auf seinem Gerät diesen Punktestand.
 - Echte Punkte bleiben gespeichert. Admin, Lehrkraft, Rangliste und Siegerehrung zählen immer die echten Punkte.
 - „😜 Streich beenden“ (oder „Alle Streiche beenden“) zeigt sofort wieder den echten Stand. Geht auch, während die Doku läuft.
+
+NEU 25.11.: Vier neue Spiele im Touch-Labor + Termin Freitag 27.11.
+- 🎯 Treffsicherheit: 15 Ziele werden immer kleiner – Messung: Treffer, Abweichung in px, Zeit.
+- 👆 Wisch-Sprint: 20 Pfeile – Richtung, Tempo in px/s, Gesamtzeit.
+- 🎹 Finger-Klavier: jeder Finger ein Ton (Multitouch), Lied-Modus „Alle meine Entchen“.
+- 🧠 Touch-Memory: Begriff + Erklärung aus der Doku (zufällig 6 von 11 Paaren), Bestwert wird gemerkt.
+- Startseite: „Premiere Fr 27.11.“ mit Countdown.
