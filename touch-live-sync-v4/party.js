@@ -445,6 +445,16 @@ async function sendHostTick(ended=false){
   await api('/api/host/tick',{time:t,playing:ended?false:state.playing!==false,ended},true);
  }catch(e){if(ended)showError(e.message);}finally{tickInFlight=false;}
 }
+// 27.11.: Der erste Tipp oder Klick irgendwo auf der Seite schaltet den Filmton ein (Browser verlangen dafür eine Berührung).
+function partyUnlockSound(){
+ if(activated)return;activated=true;try{playBtn.hidden=true;}catch{}
+ try{const v=onlineVideo();
+  if(v&&v.type==='youtube'){if(ytPlayer&&ytReady){ytPlayer.unMute();if(state?.playing)ytPlayer.playVideo();}}
+  else if(video&&video.src){video.muted=false;if(state?.playing)video.play().catch(()=>{activated=false;playBtn.hidden=false;});}
+ }catch{}
+}
+document.addEventListener('pointerdown',partyUnlockSound,true);
+document.addEventListener('keydown',partyUnlockSound,true);
 function connectButtons(){
  $('partyEnable').onclick=async()=>{
   activated=true;playBtn.textContent='▶ Ton erneut aktivieren';playBtn.hidden=true;

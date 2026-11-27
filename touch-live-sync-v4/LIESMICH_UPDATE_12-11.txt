@@ -63,3 +63,9 @@ NEU 25.11.: Vier neue Spiele im Touch-Labor + Termin Freitag 27.11.
 - 🎹 Finger-Klavier: jeder Finger ein Ton (Multitouch), Lied-Modus „Alle meine Entchen“.
 - 🧠 Touch-Memory: Begriff + Erklärung aus der Doku (zufällig 6 von 11 Paaren), Bestwert wird gemerkt.
 - Startseite: „Premiere Fr 27.11.“ mit Countdown.
+
+NEU 27.11.: Filmton wird nicht mehr von der Webseite ausgeschaltet
+- Beamer: Der Film startet immer mit Ton. Nur wenn der Browser Ton ohne vorherigen Klick verbietet, läuft er stumm – dann oben rechts „🔇 Ton ist aus – einmal klicken oder OK drücken“.
+- Jeder Klick, jedes Tippen, jede Taste am Beamer-Gerät schaltet den Ton sofort ein.
+- Admin-Status zeigt „🔇 Beamer ist stumm“ oder „🔊 Ton am Beamer an“.
+- Zuschauer-Seite: erster Tipp irgendwo schaltet den Ton ein.

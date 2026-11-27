@@ -1584,3 +1584,6 @@ body.studentEntry .quiz .answer.wasShown:not(.answerSubmitting),.quizCinematic .
 .clsStage .pnBar button,.clsStage #meNew{text-transform:none}
 .clsStage .meCard.done{background:linear-gradient(135deg,#1d4a3f,#123c37)!important;color:#e8f6fb}
 .clsStage .meCard.term.done{color:#f5ce8c}
+
+/* 27.11.: Kleiner Hinweis oben rechts, nur wenn der Film am Beamer stumm läuft (Browser-Sperre). */
+.tvSoundHint{position:absolute;top:clamp(10px,2.5vh,24px);right:clamp(10px,2vw,24px);z-index:40;min-height:0;padding:10px 16px;border-radius:999px;border:1px solid #ffd36c;background:#2a1d06e6;color:#fff3c9;font:800 clamp(14px,1.3vw,20px)/1.2 Arial,sans-serif;box-shadow:0 6px 20px #0009;cursor:pointer}
