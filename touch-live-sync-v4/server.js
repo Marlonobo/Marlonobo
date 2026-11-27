@@ -180,7 +180,7 @@ function convertSubtitles(raw){
 
 let currentWrite=Promise.resolve();
 function persist(){currentWrite=currentWrite.then(()=>fsp.writeFile(STATE_FILE,JSON.stringify(s))).catch(console.error);return currentWrite;}
-const H={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'};
+const H={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin'};
 function send(res,code,obj){res.writeHead(code,H);res.end(JSON.stringify(obj));}
 function unauthorized(res){send(res,403,{error:'Zugang nicht erlaubt.'});}
 function read(req,limit=2000000){return new Promise((ok,bad)=>{let n=0,all=[];req.on('data',b=>{n+=b.length;if(n>limit){bad(Error('Anfrage zu gross'));req.destroy();return;}all.push(b);});req.on('end',()=>{try{ok(JSON.parse(Buffer.concat(all).toString('utf8')||'{}'));}catch{bad(Error('Ungueltiges JSON'));}});req.on('error',bad);});}
@@ -315,7 +315,7 @@ function spotifySelection(value){
 function youtubeId(link){try{const u=new URL(link);if(['youtu.be','www.youtu.be'].includes(u.hostname))return /^[\w-]{11}$/.test(u.pathname.slice(1,12))?u.pathname.slice(1,12):null;
  if(['youtube.com','www.youtube.com','m.youtube.com','www.youtube-nocookie.com'].includes(u.hostname)){const id=u.searchParams.get('v')||(u.pathname.match(/\/(?:embed|shorts|live)\/([\w-]{11})/)||[])[1];return /^[\w-]{11}$/.test(id||'')?id:null;}}catch{}return null;}
 const mime={'.html':'text/html; charset=utf-8','.js':'application/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.vtt':'text/vtt; charset=utf-8'};
-async function serve(res,file,type){try{const st=await fsp.stat(file);res.writeHead(200,{'Content-Type':type,'Content-Length':st.size,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'});fs.createReadStream(file).pipe(res);}catch{send(res,404,{error:'Datei fehlt'});}}
+async function serve(res,file,type){try{const st=await fsp.stat(file);res.writeHead(200,{'Content-Type':type,'Content-Length':st.size,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin'});fs.createReadStream(file).pipe(res);}catch{send(res,404,{error:'Datei fehlt'});}}
 async function media(req,res){
  let st;try{st=await fsp.stat(VIDEO_FILE);}catch{return send(res,404,{error:'Noch kein Video gespeichert'});}
  const size=st.size,range=req.headers.range;let start=0,end=size-1,code=200;
@@ -485,7 +485,7 @@ async function handler(req,res){
  if(m==='GET'&&p==='/api/storage/status')return send(res,200,{configured:S3.enabled,durable:S3.enabled,settingsReady:!!cloudManifest?.settings,videoReady:!!cloudManifest?.video,subtitlesReady:!!cloudManifest?.captions,maximumBytes:10*1024**3,partSize:16*1024**2});
  if((m==='GET'||m==='HEAD')&&p==='/api/storage/video'){
   if(!S3.enabled)return send(res,503,{error:'Cloud-Speicher nicht eingerichtet.'});
-  res.writeHead(302,{'Location':S3.videoUrl(),'Cache-Control':'private, no-store','Referrer-Policy':'no-referrer'});return res.end();
+  res.writeHead(302,{'Location':S3.videoUrl(),'Cache-Control':'private, no-store','Referrer-Policy':'strict-origin-when-cross-origin'});return res.end();
  }
  if(m==='POST'&&p==='/api/storage/start'){
   if(!isStoragePublisher(req))return unauthorized(res);if(!S3.enabled)return send(res,503,{error:'Dauerhafter S3/R2-Speicher ist noch nicht konfiguriert.'});

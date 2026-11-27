@@ -69,3 +69,8 @@ NEU 27.11.: Filmton wird nicht mehr von der Webseite ausgeschaltet
 - Jeder Klick, jedes Tippen, jede Taste am Beamer-Gerät schaltet den Ton sofort ein.
 - Admin-Status zeigt „🔇 Beamer ist stumm“ oder „🔊 Ton am Beamer an“.
 - Zuschauer-Seite: erster Tipp irgendwo schaltet den Ton ein.
+
+NEU 27.11. mittags: YouTube-Fehler 153 behoben
+- Die Seite schickte YouTube keine Herkunftsangabe (Referrer-Policy „no-referrer“). YouTube verlangt sie seit 2025 und zeigt sonst „Fehler 153 – Fehler bei der Videoplayer-Konfiguration“ (iPad und PC).
+- Jetzt: „strict-origin-when-cross-origin“ (von YouTube empfohlen). Nach außen geht nur die Domain, nie ein Schlüssel aus dem Link.
+- Beamer: YouTube-Fehler werden oben angezeigt, der Player lädt bei vorübergehenden Fehlern einmal automatisch neu.
