@@ -74,3 +74,15 @@ NEU 27.11. mittags: YouTube-Fehler 153 behoben
 - Die Seite schickte YouTube keine Herkunftsangabe (Referrer-Policy „no-referrer“). YouTube verlangt sie seit 2025 und zeigt sonst „Fehler 153 – Fehler bei der Videoplayer-Konfiguration“ (iPad und PC).
 - Jetzt: „strict-origin-when-cross-origin“ (von YouTube empfohlen). Nach außen geht nur die Domain, nie ein Schlüssel aus dem Link.
 - Beamer: YouTube-Fehler werden oben angezeigt, der Player lädt bei vorübergehenden Fehlern einmal automatisch neu.
+
+=== Update 28.11.2026: Ton über AUX / Tontest ===
+- Die Webseite spielt Ton immer über den Standard-Ausgang des Geräts (AUX, Kopfhörer, HDMI, Bluetooth).
+  Welcher Ausgang das ist, stellt das Gerät ein: Windows unten rechts 🔊 → „Lautsprecher/Kopfhörer“ = AUX,
+  iPad: Kabel einstecken genügt.
+- NEU „🔊 Tontest am Beamer“ im Admin (Live-Regie) und in der Handy-Regie (/control):
+  Der Beamer spielt kurz links – rechts – beide. Ergebnis steht im Admin-Status.
+  Ist der Ton am Beamer noch gesperrt, steht das im Admin; nach einem Klick am Beamer startet der Test von selbst.
+- Am Beamer: Taste T spielt den Tontest direkt.
+- Nach dem Ein-/Ausstecken eines Kabels wird der Ton der Webseite automatisch wieder aufgeweckt.
+- iPad: Klavier- und Spiel-Töne werden nach Kabelwechsel/Unterbrechung wieder fortgesetzt.
+- Neue Datei: audio-out.js

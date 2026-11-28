@@ -29,6 +29,7 @@
   if(ctx)return true;
   try{
    ctx=new Ctx();
+   try{global.TouchAudioOut&&global.TouchAudioOut.track(ctx);}catch{}
    master=ctx.createGain();master.gain.value=0;
    master.connect(ctx.destination);
    return true;
@@ -118,7 +119,7 @@
  }
  async function activate(){
   if(!ensure())return false;
-  try{if(ctx.state==='suspended')await ctx.resume();}
+  try{if(ctx.state!=='running')await ctx.resume();}
   catch{return false;}
   if(mode!=='off'){
    nextAt=Math.max(ctx.currentTime+.06,nextAt);

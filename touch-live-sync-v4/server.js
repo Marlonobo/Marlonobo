@@ -88,6 +88,7 @@ let s=def(), users=new Map(), upload=null,feedback=[],cloudManifest=null;
 // This is intentionally volatile: choosing a file on a Windows PC never uploads its bytes.
 // Readiness expires when the HDMI browser disconnects; it is not persisted in storage.
 let localMedia={name:'',size:0,duration:0,lastSeen:0};
+let soundTestReport={serial:0,result:'',updated:0};
 let tvAudioReport={playing:false,blocked:false,error:'',updated:0};
 try{s=Object.assign(def(),JSON.parse(fs.readFileSync(STATE_FILE,'utf8')));}catch{}
 // Public Spotify Client ID (no secret). Env var wins, otherwise the one saved in the admin.
@@ -278,7 +279,7 @@ function publicState(id){
   ?Math.max(0,Math.ceil(GESTURE_MISSION_SECONDS-(s.time-(s.gestureOverlayStartTime||0))))
   :s.phase==='gesture'?Math.max(0,Math.ceil(GESTURE_MISSION_SECONDS-(Date.now()-(s.gestureStartTime||Date.now()))/1000)):0;
  const gestureActive=gestureSeconds>0&&(s.phase==='gesture'||(s.phase==='film'&&s.gestureOverlay));
- return {homeUnlocked:!!s.homeUnlocked,trailerAvailable:!!trailerPath(),trailerPlaying:!!s.trailerPlaying,trailerSerial:s.trailerSerial||0,trailerRevision:s.trailerRevision||0,tvAudio:Date.now()-tvAudioReport.updated<25000?{connected:true,playing:tvAudioReport.playing,blocked:tvAudioReport.blocked,error:tvAudioReport.error}:{connected:false,playing:false,blocked:false,error:''},phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},musicPlan:s.musicPlan||{welcome:{mode:'touch'},end:{mode:'off'}},podiumPlan:s.podiumPlan||{mode:'own'},podiumFiles:podiumFiles(),spotifyClientId:s.spotifyClientId||'',spotifyLinked:!!spotifyAuth?.refreshToken,soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
+ return {homeUnlocked:!!s.homeUnlocked,trailerAvailable:!!trailerPath(),trailerPlaying:!!s.trailerPlaying,trailerSerial:s.trailerSerial||0,trailerRevision:s.trailerRevision||0,soundTest:{serial:Number(s.soundTestSerial)||0,age:s.soundTestAt?Math.max(0,Math.round((Date.now()-s.soundTestAt)/1000)):9999,result:soundTestReport.serial===Number(s.soundTestSerial||0)?soundTestReport.result:''},tvAudio:Date.now()-tvAudioReport.updated<25000?{connected:true,playing:tvAudioReport.playing,blocked:tvAudioReport.blocked,error:tvAudioReport.error}:{connected:false,playing:false,blocked:false,error:''},phase:s.phase,time:s.time,playing:s.playing,revision:s.revision,seekSerial:s.seekSerial||0,continuousWatch:!!s.continuousWatch,sideGame:gestureActive?'gesture':null,gestureRemaining:gestureSeconds,video:s.video,remoteVideo:s.remoteVideo||{type:'none',id:null,url:null},videoTitle:s.videoTitle||'TOUCHSCREEN – Interaktive Dokumentation',welcomeMusic:s.welcomeMusic||{url:'',type:'',id:'',on:false},musicPlan:s.musicPlan||{welcome:{mode:'touch'},end:{mode:'off'}},podiumPlan:s.podiumPlan||{mode:'own'},podiumFiles:podiumFiles(),spotifyClientId:s.spotifyClientId||'',spotifyLinked:!!spotifyAuth?.refreshToken,soundtrack:s.soundtrack||{pause:true,results:true,volume:.25},subtitles:s.subtitles,videoVolume:s.videoVolume??1,localMedia:s.video?.type==='local'?{ready:!!localMedia.lastSeen&&Date.now()-localMedia.lastSeen<20000,name:localMedia.name,size:localMedia.size,duration:localMedia.duration}:null,captionSize:s.captionSize||100,captionPosition:s.captionPosition||11,captionsRevision:s.captionsRevision||0,subtitleOffset:s.subtitleOffset,quizOffset:s.quizOffset,resultsAt:s.resultsAt||0,clockSource:s.clockSource||'tv',tvReloadRequest:s.tvReloadRequest||0,
   quiz:a.index>=0?{index:q.type==='zoom'?-1:normal.indexOf(q),total:normal.length,id:q.id,type:q.type||'quiz',chapter:q.chapter,q:qText??q.q,a:qAns??q.a,shown:qShown,duration:q.type==='zoom'?ZOOM_MISSION_SECONDS:((s.phase==='demo'||s.demoOverlay)?45:30),remaining:a.remaining,accepting:a.accepting,listen:!!a.listen,foundCount:q.type==='zoom'?[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length:0,jokers:!!(q.hint||Number.isInteger(q.fifty)),answeredCount:[...users.values()].filter(x=>Object.hasOwn(x.answers,q.id)).length}:null,
   waitReveal:!!(a.index<0&&pq),player,participants:users.size,ranking:final?rank:[],zoomResult,feedbackCount:feedback.length,captionsAvailable:!!s.cloudCaptions||fs.existsSync(SUB_FILE)||fs.existsSync(BUNDLED_SUB_FILE),captionsBuiltIn:!s.cloudCaptions&&!fs.existsSync(SUB_FILE)&&fs.existsSync(BUNDLED_SUB_FILE),nextCue:nextCueIn(),tvMuted:s.tvMutedAt&&Date.now()-s.tvMutedAt<6000?!!s.tvMuted:null};
 }
@@ -394,7 +395,7 @@ async function handler(req,res){
  if(m==='GET'&&p==='/easter-scene.svg')return serve(res,path.join(ROOT,'easter-scene.svg'),'image/svg+xml');
  if(m==='GET'&&p==='/easter-egg-scene.svg')return serve(res,path.join(ROOT,'easter-egg-scene.svg'),'image/svg+xml');
  if(m==='GET'&&p==='/easter-egg-scene.jpg')return serve(res,path.join(ROOT,'easter-egg-scene.jpg'),'image/jpeg');
- if(m==='GET'&&(p==='/compat.js'||p==='/easter-game.js'||p==='/easter-game.css'||p==='/finger-mission.js'||p==='/finger-mission.css'))return serve(res,path.join(ROOT,p.slice(1)),p.endsWith('.js')?'application/javascript; charset=utf-8':'text/css; charset=utf-8');
+ if(m==='GET'&&(p==='/compat.js'||p==='/audio-out.js'||p==='/easter-game.js'||p==='/easter-game.css'||p==='/finger-mission.js'||p==='/finger-mission.css'))return serve(res,path.join(ROOT,p.slice(1)),p.endsWith('.js')?'application/javascript; charset=utf-8':'text/css; charset=utf-8');
  if(m==='GET'&&p==='/easter-demo')return serve(res,path.join(ROOT,'easter-demo.html'),'text/html; charset=utf-8');
  if(m==='GET'&&p==='/touch-icon.svg')return serve(res,path.join(ROOT,'touch-icon.svg'),'image/svg+xml');
  if(m==='GET'&&p==='/site.webmanifest')return serve(res,path.join(ROOT,'site.webmanifest'),'application/manifest+json; charset=utf-8');
@@ -667,6 +668,14 @@ async function handler(req,res){
    localMedia={name,size,duration:Number.isFinite(duration)&&duration>0?duration:0,lastSeen:Date.now()};
    return send(res,200,{ok:true,ready:true});
   }
+  if(m==='POST'&&p==='/api/tv/sound-test'){
+  if(!isTv(req))return unauthorized(res);
+  const b=await read(req,600);const serial=Number(b.serial);
+  if(!Number.isFinite(serial)||serial!==Number(s.soundTestSerial||0))return send(res,200,{ok:false});
+  const result=['ok','blocked','nosupport','busy'].includes(b.result)?b.result:'';
+  soundTestReport={serial,result,updated:Date.now()};s.revision++;
+  return send(res,200,{ok:true});
+  }
   if(m==='POST'&&p==='/api/tv/audio-status'){
   if(!isTv(req))return unauthorized(res);
   const b=await read(req,1200);
@@ -856,6 +865,8 @@ async function handler(req,res){
    s.welcomeMusic.on=true;
  }
  else if(cmd==='musicOff'){if(s.welcomeMusic)s.welcomeMusic.on=false;}
+ // Tontest: der Beamer spielt links – rechts – beide, damit man AUX-Boxen/HDMI-Ton vor dem Film prüfen kann.
+ else if(cmd==='soundTest'){s.soundTestSerial=(Number(s.soundTestSerial)||0)+1;s.soundTestAt=Date.now();soundTestReport={serial:s.soundTestSerial,result:'',updated:0};}
  else if(cmd==='soundtrackSet'){
   const current=s.soundtrack||{pause:true,results:true,volume:.25};
   const field=String(b.field||'');

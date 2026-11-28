@@ -29,7 +29,7 @@ function mount(container,options={}){
  function worldPt(client){const m=world.getScreenCTM();if(!m)return{x:VIEW.cx,y:VIEW.cy};return new DOMPoint(client.x,client.y).matrixTransform(m.inverse());}
  function playSound(kind){
   if(!soundOn)return;
-  try{const Ctx=global.AudioContext||global.webkitAudioContext;if(!Ctx)return;if(!audioCtx)audioCtx=new Ctx();if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
+  try{const Ctx=global.AudioContext||global.webkitAudioContext;if(!Ctx)return;if(!audioCtx){audioCtx=new Ctx();try{global.TouchAudioOut&&global.TouchAudioOut.track(audioCtx);}catch{}}if(audioCtx.state!=='running')audioCtx.resume().catch(()=>{});
    const notes=kind==='win'?[523,659,784,1047]:kind==='miss'?[270]:[550];
    notes.forEach((f,i)=>{const osc=audioCtx.createOscillator(),gain=audioCtx.createGain(),t=audioCtx.currentTime+(kind==='win'?i*.12:0),dur=kind==='win'?.27:.12;
     osc.type=kind==='win'?'triangle':'sine';osc.frequency.setValueAtTime(f,t);osc.connect(gain);gain.connect(audioCtx.destination);
